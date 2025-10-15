@@ -5,7 +5,7 @@ export default function PricingCardExample() {
     <div className="p-6 max-w-sm">
       <PricingCard
         title="Monthly Plan"
-        price="$59.99"
+        price="$15"
         period="month"
         description="Consistent study, most popular"
         features={[

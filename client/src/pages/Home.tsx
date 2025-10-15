@@ -146,7 +146,7 @@ export default function Home() {
         <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
           <PricingCard
             title="Weekly Plan"
-            price="$24.99"
+            price="$5"
             period="week"
             description="Perfect for intensive exam prep"
             features={[
@@ -161,7 +161,7 @@ export default function Home() {
 
           <PricingCard
             title="Monthly Plan"
-            price="$59.99"
+            price="$15"
             period="month"
             description="Consistent study, most popular"
             features={[
@@ -177,9 +177,9 @@ export default function Home() {
           />
 
           <PricingCard
-            title="90-Day Plan"
-            price="$149.99"
-            period="90 days"
+            title="3-Month Plan"
+            price="$30"
+            period="3 months"
             description="Biggest savings, complete mastery"
             features={[
               "Everything in Monthly Plan",
@@ -188,7 +188,7 @@ export default function Home() {
               "Quarterly performance insights",
               "Access to all future updates"
             ]}
-            onSelect={() => console.log("90-day plan selected")}
+            onSelect={() => console.log("3-month plan selected")}
           />
         </div>
       </section>
