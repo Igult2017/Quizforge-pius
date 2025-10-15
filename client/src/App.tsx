@@ -10,6 +10,7 @@ import Categories from "@/pages/Categories";
 import Quiz from "@/pages/Quiz";
 import Results from "@/pages/Results";
 import Pricing from "@/pages/Pricing";
+import Contact from "@/pages/Contact";
 
 function Router() {
   return (
@@ -19,6 +20,7 @@ function Router() {
       <Route path="/quiz" component={Quiz} />
       <Route path="/results" component={Results} />
       <Route path="/pricing" component={Pricing} />
+      <Route path="/contact" component={Contact} />
       <Route component={NotFound} />
     </Switch>
   );

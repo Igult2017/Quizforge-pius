@@ -213,9 +213,41 @@ export default function Home() {
         </div>
       </section>
 
-      <footer className="border-t py-8">
-        <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
-          <p>&copy; 2025 NursePrep. All rights reserved.</p>
+      <footer className="border-t py-12">
+        <div className="container mx-auto px-4">
+          <div className="grid md:grid-cols-4 gap-8 mb-8">
+            <div>
+              <h3 className="font-bold text-lg mb-4">NursePrep</h3>
+              <p className="text-sm text-muted-foreground">
+                Your complete nursing exam preparation platform
+              </p>
+            </div>
+            <div>
+              <h4 className="font-semibold mb-4">Exams</h4>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li><a href="/categories" className="hover:text-primary transition-colors">NCLEX Practice</a></li>
+                <li><a href="/categories" className="hover:text-primary transition-colors">ATI TEAS Prep</a></li>
+                <li><a href="/categories" className="hover:text-primary transition-colors">HESI A2 Study</a></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-semibold mb-4">Company</h4>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li><a href="/pricing" className="hover:text-primary transition-colors">Pricing</a></li>
+                <li><a href="/contact" className="hover:text-primary transition-colors" data-testid="link-footer-contact">Contact</a></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-semibold mb-4">Contact</h4>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li>support@nurseprep.com</li>
+                <li>+1 (800) NURSE-PREP</li>
+              </ul>
+            </div>
+          </div>
+          <div className="border-t pt-8 text-center text-sm text-muted-foreground">
+            <p>&copy; 2025 NursePrep. All rights reserved.</p>
+          </div>
         </div>
       </footer>
     </div>
