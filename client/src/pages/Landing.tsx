@@ -365,6 +365,35 @@ export default function Landing() {
           </div>
         </div>
       </section>
+
+      {/* Footer Section */}
+      <footer className="bg-gradient-to-br from-blue-600 to-blue-800 text-white">
+        {/* Call to Action - Only for non-authenticated users */}
+        {!isAuthenticated && (
+          <div className="py-12 px-4">
+            <div className="container mx-auto max-w-6xl text-center">
+              <Link href="/signup">
+                <Button 
+                  size="lg"
+                  className="bg-white text-blue-600 hover:bg-blue-50 text-lg px-8"
+                  data-testid="button-footer-start-trial"
+                >
+                  Start Free Trial
+                </Button>
+              </Link>
+            </div>
+          </div>
+        )}
+
+        {/* Copyright */}
+        <div className={`border-t border-white/20 py-6 px-4 ${!isAuthenticated ? '' : 'mt-0'}`}>
+          <div className="container mx-auto max-w-6xl text-center">
+            <p className="text-blue-100">
+              © 2025 NurseBrace. All rights reserved.
+            </p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
