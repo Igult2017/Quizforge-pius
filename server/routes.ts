@@ -373,19 +373,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // Get random questions
+      // Get random questions (up to the requested count)
       const questions = await storage.getRandomQuestions(category, questionCount);
       
       if (questions.length === 0) {
-        return res.status(404).json({ error: "No questions available for this category" });
+        return res.status(404).json({ 
+          error: "No questions available for this category",
+          message: "This category doesn't have any questions yet. Please try another category or contact support."
+        });
       }
+
+      // If we don't have enough questions, use what's available
+      // This allows users to practice even if the database doesn't have the full set
+      const actualQuestionCount = Math.min(questions.length, questionCount);
+      
+      console.log(`Starting quiz: requested ${questionCount}, found ${questions.length}, using ${actualQuestionCount} questions for ${category}`);
 
       // Create quiz attempt
       const attempt = await storage.createQuizAttemptWithAnswers({
         userId: user.id,
         category,
         status: "in_progress",
-        totalQuestions: questions.length,
+        totalQuestions: actualQuestionCount,
         isFreeTrialAttempt,
       }, questions.map(q => q.id));
 
