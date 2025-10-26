@@ -41,13 +41,15 @@ export default function Signup() {
     setIsLoading(true);
 
     try {
-      await signupWithEmail(email, password);
+      const result = await signupWithEmail(email, password);
+      console.log("Signup successful:", result.user.email);
       toast({
         title: "Welcome to NurseBrace!",
         description: "Your account has been created successfully.",
       });
       setLocation("/");
     } catch (error: any) {
+      console.error("Signup error:", error);
       toast({
         variant: "destructive",
         title: "Signup failed",
