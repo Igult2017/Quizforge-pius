@@ -53,7 +53,7 @@ export default function Categories() {
             progress={68}
             color="orange"
             iconSrc={teasIcon}
-            onStart={() => handleStartPractice("ATI TEAS")}
+            onStart={() => handleStartPractice("TEAS")}
           />
 
           <CategoryCard
@@ -68,7 +68,7 @@ export default function Categories() {
             progress={42}
             color="teal"
             iconSrc={hesiIcon}
-            onStart={() => handleStartPractice("HESI A2")}
+            onStart={() => handleStartPractice("HESI")}
           />
         </div>
       </div>
