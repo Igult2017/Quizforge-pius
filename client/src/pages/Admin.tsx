@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -30,6 +30,12 @@ interface User {
   } | null;
 }
 
+interface CurrentUser {
+  id: string;
+  email: string;
+  isAdmin: boolean;
+}
+
 export default function Admin() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
@@ -40,9 +46,27 @@ export default function Admin() {
   const [broadcastSubject, setBroadcastSubject] = useState("");
   const [broadcastMessage, setBroadcastMessage] = useState("");
 
+  // Check if current user is admin
+  const { data: currentUser, isLoading: isCheckingAdmin } = useQuery<CurrentUser>({
+    queryKey: ["/api/auth/me"],
+  });
+
+  // Redirect non-admins
+  useEffect(() => {
+    if (!isCheckingAdmin && currentUser && !currentUser.isAdmin) {
+      toast({
+        title: "Access Denied",
+        description: "You don't have permission to access the admin panel",
+        variant: "destructive",
+      });
+      setLocation("/");
+    }
+  }, [currentUser, isCheckingAdmin, setLocation, toast]);
+
   // Fetch all users
   const { data: users, isLoading } = useQuery<User[]>({
     queryKey: ["/api/admin/users"],
+    enabled: currentUser?.isAdmin === true,
   });
 
   // Grant access mutation
@@ -174,7 +198,7 @@ export default function Admin() {
     }
   };
 
-  if (isLoading) {
+  if (isCheckingAdmin || isLoading) {
     return (
       <div className="min-h-screen bg-background">
         <Header onSignIn={() => setLocation("/login")} onGetStarted={() => setLocation("/signup")} />
@@ -183,6 +207,11 @@ export default function Admin() {
         </div>
       </div>
     );
+  }
+
+  // Don't render if not admin (will be redirected by useEffect)
+  if (!currentUser?.isAdmin) {
+    return null;
   }
 
   return (
