@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, BookOpen, TrendingUp, Award, ArrowRight, Check } from "lucide-react";
+import { CheckCircle2, BookOpen, TrendingUp, Award, ArrowRight, Check, Users, Star, Clock } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { Header } from "@/components/Header";
 import { useUserData } from "@/hooks/useUserData";
@@ -279,6 +279,89 @@ export default function Landing() {
                 </CardFooter>
               </Card>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Why Choose NurseBrace Section */}
+      <section className="py-16 px-4 bg-background">
+        <div className="container mx-auto max-w-6xl">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-bold mb-4">
+              Why Choose <span className="text-primary">NurseBrace</span>
+            </h2>
+            <p className="text-xl text-muted-foreground">
+              Everything you need to pass your nursing exams, all in one place
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
+            {/* Pass Rate Card */}
+            <Card className="text-center">
+              <CardContent className="pt-6">
+                <div className="flex justify-center mb-4">
+                  <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                    <TrendingUp className="h-8 w-8 text-primary" />
+                  </div>
+                </div>
+                <p className="text-sm text-muted-foreground mb-2">Pass Rate</p>
+                <p className="text-4xl font-bold mb-1">95%</p>
+                <p className="text-sm text-muted-foreground">Students improved scores</p>
+              </CardContent>
+            </Card>
+
+            {/* Students Helped Card */}
+            <Card className="text-center">
+              <CardContent className="pt-6">
+                <div className="flex justify-center mb-4">
+                  <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Users className="h-8 w-8 text-primary" />
+                  </div>
+                </div>
+                <p className="text-sm text-muted-foreground mb-2">Students Helped</p>
+                <p className="text-4xl font-bold mb-1">10,000+</p>
+                <p className="text-sm text-muted-foreground">Across the country</p>
+              </CardContent>
+            </Card>
+
+            {/* Student Rating Card */}
+            <Card className="text-center">
+              <CardContent className="pt-6">
+                <div className="flex justify-center mb-4">
+                  <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Star className="h-8 w-8 text-primary" />
+                  </div>
+                </div>
+                <p className="text-sm text-muted-foreground mb-2">Student Rating</p>
+                <p className="text-4xl font-bold mb-1">4.9/5</p>
+                <p className="text-sm text-muted-foreground">Based on reviews</p>
+              </CardContent>
+            </Card>
+
+            {/* Free Trial Card */}
+            <Card className="text-center">
+              <CardContent className="pt-6">
+                <div className="flex justify-center mb-4">
+                  <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Clock className="h-8 w-8 text-primary" />
+                  </div>
+                </div>
+                <p className="text-sm text-muted-foreground mb-2">Free Trial</p>
+                <p className="text-4xl font-bold mb-1">3 Days</p>
+                <p className="text-sm text-muted-foreground">No credit card needed</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Flexible Pricing Description */}
+          <div className="text-center max-w-3xl mx-auto">
+            <h3 className="text-3xl font-bold mb-4">
+              Flexible Pricing for Every <span className="text-primary">Nursing Student</span>
+            </h3>
+            <p className="text-lg text-muted-foreground">
+              One subscription gives you access to all exams: NCLEX-RN, NCLEX-PN, ATI TEAS, 
+              HESI A2, and all nursing question banks. No hidden fees, no surprises.
+            </p>
           </div>
         </div>
       </section>
