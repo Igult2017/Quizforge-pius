@@ -1,9 +1,13 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Header } from "@/components/Header";
 import { QuizQuestion } from "@/components/QuizQuestion";
 import { QuizNavigation } from "@/components/QuizNavigation";
 import { Badge } from "@/components/ui/badge";
 import { useLocation } from "wouter";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { Loader2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -15,50 +19,102 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-//todo: remove mock functionality
-const mockQuestions = [
-  {
-    question: "A nurse is caring for a client who has been prescribed morphine sulfate for pain management. Which of the following assessments is the priority before administering the medication?",
-    options: [
-      "Check the client's blood pressure",
-      "Assess the client's respiratory rate",
-      "Evaluate the client's pain level",
-      "Review the client's allergy history"
-    ],
-    correctAnswer: "Assess the client's respiratory rate"
-  },
-  {
-    question: "Which lab value should be monitored for a patient on warfarin therapy?",
-    options: [
-      "Hemoglobin level",
-      "INR (International Normalized Ratio)",
-      "Serum creatinine",
-      "Blood glucose"
-    ],
-    correctAnswer: "INR (International Normalized Ratio)"
-  },
-  {
-    question: "A patient with heart failure is taking furosemide (Lasix). Which of the following should the nurse monitor?",
-    options: [
-      "Calcium levels",
-      "Potassium levels",
-      "Sodium intake only",
-      "Protein levels"
-    ],
-    correctAnswer: "Potassium levels"
-  }
-];
+interface QuizQuestion {
+  id: number;
+  question: string;
+  options: string[];
+}
+
+interface QuizAttempt {
+  attemptId: number;
+  questions: QuizQuestion[];
+}
 
 export default function Quiz() {
   const [, setLocation] = useLocation();
+  const { toast } = useToast();
   const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [answers, setAnswers] = useState<(string | null)[]>(Array(mockQuestions.length).fill(null));
+  const [answers, setAnswers] = useState<(string | null)[]>([]);
   const [showSubmitDialog, setShowSubmitDialog] = useState(false);
+  const [attemptId, setAttemptId] = useState<number | null>(null);
+  const [questions, setQuestions] = useState<QuizQuestion[]>([]);
+
+  // Get category from URL params or default to NCLEX
+  const category = new URLSearchParams(window.location.search).get("category") || "NCLEX";
+
+  // Start quiz mutation
+  const startQuizMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/quiz/start", {
+        category,
+        userId: 1, // TODO: Get from auth context
+      });
+      return await res.json() as QuizAttempt;
+    },
+    onSuccess: (data) => {
+      setAttemptId(data.attemptId);
+      setQuestions(data.questions);
+      setAnswers(Array(data.questions.length).fill(null));
+    },
+  });
+
+  // Save answer mutation
+  const saveAnswerMutation = useMutation({
+    mutationFn: async ({ questionId, answer }: { questionId: number; answer: string }) => {
+      if (!attemptId) throw new Error("No attempt ID");
+      const res = await apiRequest("POST", `/api/quiz/${attemptId}/answer`, {
+        questionId,
+        userAnswer: answer,
+      });
+      return await res.json();
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to save answer",
+        description: error.message || "Please try selecting your answer again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Submit quiz mutation
+  const submitQuizMutation = useMutation({
+    mutationFn: async () => {
+      if (!attemptId) throw new Error("No attempt ID");
+      const res = await apiRequest("POST", `/api/quiz/${attemptId}/submit`);
+      return await res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/quiz"] });
+      setLocation(`/results?attemptId=${attemptId}`);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to submit quiz",
+        description: error.message || "Please try submitting again.",
+        variant: "destructive",
+      });
+      setShowSubmitDialog(false);
+    },
+  });
+
+  // Start quiz on mount
+  useEffect(() => {
+    startQuizMutation.mutate();
+  }, []);
 
   const handleAnswerSelect = (answer: string) => {
     const newAnswers = [...answers];
     newAnswers[currentQuestion] = answer;
     setAnswers(newAnswers);
+
+    // Save answer to backend
+    if (questions[currentQuestion]) {
+      saveAnswerMutation.mutate({
+        questionId: questions[currentQuestion].id,
+        answer,
+      });
+    }
   };
 
   const handlePrevious = () => {
@@ -68,7 +124,7 @@ export default function Quiz() {
   };
 
   const handleNext = () => {
-    if (currentQuestion < mockQuestions.length - 1) {
+    if (currentQuestion < questions.length - 1) {
       setCurrentQuestion(currentQuestion + 1);
     }
   };
@@ -78,9 +134,58 @@ export default function Quiz() {
   };
 
   const confirmSubmit = () => {
-    console.log("Quiz submitted with answers:", answers);
-    setLocation("/results");
+    submitQuizMutation.mutate();
   };
+
+  // Loading state
+  if (startQuizMutation.isPending) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header isAuthenticated={true} userName="Student" planType="Monthly Plan" />
+        <div className="flex items-center justify-center h-[calc(100vh-200px)]">
+          <div className="text-center">
+            <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4 text-primary" data-testid="loader-quiz-start" />
+            <p className="text-muted-foreground">Loading your quiz...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (startQuizMutation.isError) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header isAuthenticated={true} userName="Student" planType="Monthly Plan" />
+        <div className="flex items-center justify-center h-[calc(100vh-200px)]">
+          <div className="text-center">
+            <p className="text-destructive mb-4">Failed to load quiz. Please try again.</p>
+            <button
+              onClick={() => startQuizMutation.mutate()}
+              className="px-4 py-2 bg-primary text-primary-foreground rounded-md"
+              data-testid="button-retry-quiz"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // No questions state
+  if (questions.length === 0) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header isAuthenticated={true} userName="Student" planType="Monthly Plan" />
+        <div className="flex items-center justify-center h-[calc(100vh-200px)]">
+          <div className="text-center">
+            <p className="text-muted-foreground">No questions available for this category.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -89,35 +194,35 @@ export default function Quiz() {
       <div className="container mx-auto px-4 py-8">
         <div className="mb-6 flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold mb-1">NCLEX Practice Quiz</h1>
+            <h1 className="text-2xl font-bold mb-1" data-testid="text-quiz-title">{category} Practice Quiz</h1>
             <p className="text-muted-foreground">
               Answer all questions and submit when you're ready
             </p>
           </div>
-          <Badge variant="secondary" className="text-sm">
-            Safe and Effective Care Environment
+          <Badge variant="secondary" className="text-sm" data-testid="badge-category">
+            {category}
           </Badge>
         </div>
 
         <div className="max-w-3xl mx-auto space-y-6">
           <QuizQuestion
             questionNumber={currentQuestion + 1}
-            totalQuestions={mockQuestions.length}
-            question={mockQuestions[currentQuestion].question}
-            options={mockQuestions[currentQuestion].options}
+            totalQuestions={questions.length}
+            question={questions[currentQuestion].question}
+            options={questions[currentQuestion].options}
             selectedAnswer={answers[currentQuestion]}
             onAnswerSelect={handleAnswerSelect}
           />
 
           <QuizNavigation
             currentQuestion={currentQuestion + 1}
-            totalQuestions={mockQuestions.length}
+            totalQuestions={questions.length}
             onPrevious={handlePrevious}
             onNext={handleNext}
             onSubmit={handleSubmit}
             canGoBack={currentQuestion > 0}
             canGoNext={answers[currentQuestion] !== null}
-            isLastQuestion={currentQuestion === mockQuestions.length - 1}
+            isLastQuestion={currentQuestion === questions.length - 1}
           />
         </div>
       </div>
@@ -128,14 +233,25 @@ export default function Quiz() {
             <AlertDialogTitle>Submit Quiz?</AlertDialogTitle>
             <AlertDialogDescription>
               Are you sure you want to submit your quiz? You have answered{" "}
-              {answers.filter(a => a !== null).length} out of {mockQuestions.length} questions.
+              {answers.filter(a => a !== null).length} out of {questions.length} questions.
               You won't be able to change your answers after submission.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel data-testid="button-cancel-submit">Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmSubmit} data-testid="button-confirm-submit">
-              Submit Quiz
+            <AlertDialogAction
+              onClick={confirmSubmit}
+              disabled={submitQuizMutation.isPending}
+              data-testid="button-confirm-submit"
+            >
+              {submitQuizMutation.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Submitting...
+                </>
+              ) : (
+                "Submit Quiz"
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

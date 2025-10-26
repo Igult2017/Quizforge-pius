@@ -4,58 +4,84 @@ import { QuestionReview } from "@/components/QuestionReview";
 import { Button } from "@/components/ui/button";
 import { RotateCcw, Home } from "lucide-react";
 import { useLocation } from "wouter";
+import { useQuery } from "@tanstack/react-query";
+import { Loader2 } from "lucide-react";
 
-//todo: remove mock functionality
-const mockReviewQuestions = [
-  {
-    question: "A nurse is caring for a client who has been prescribed morphine sulfate for pain management. Which of the following assessments is the priority before administering the medication?",
-    userAnswer: "Assess the client's respiratory rate",
-    correctAnswer: "Assess the client's respiratory rate",
-    options: [
-      "Check the client's blood pressure",
-      "Assess the client's respiratory rate",
-      "Evaluate the client's pain level",
-      "Review the client's allergy history"
-    ],
-    explanation: "Respiratory rate is the priority assessment because morphine can cause respiratory depression, which is life-threatening. While other assessments are important, maintaining adequate respiratory function is critical for patient safety."
-  },
-  {
-    question: "Which lab value should be monitored for a patient on warfarin therapy?",
-    userAnswer: "Hemoglobin level",
-    correctAnswer: "INR (International Normalized Ratio)",
-    options: [
-      "Hemoglobin level",
-      "INR (International Normalized Ratio)",
-      "Serum creatinine",
-      "Blood glucose"
-    ],
-    explanation: "INR (International Normalized Ratio) is monitored to assess the effectiveness of warfarin therapy and prevent bleeding complications. The therapeutic range for most indications is 2.0-3.0."
-  },
-  {
-    question: "A patient with heart failure is taking furosemide (Lasix). Which of the following should the nurse monitor?",
-    userAnswer: "Potassium levels",
-    correctAnswer: "Potassium levels",
-    options: [
-      "Calcium levels",
-      "Potassium levels",
-      "Sodium intake only",
-      "Protein levels"
-    ],
-    explanation: "Furosemide is a loop diuretic that can cause potassium depletion (hypokalemia). Monitoring potassium levels is essential to prevent cardiac arrhythmias and other complications associated with low potassium."
-  }
-];
+interface QuizResult {
+  attemptId: number;
+  score: number;
+  totalQuestions: number;
+  correctAnswers: number;
+  incorrectAnswers: number;
+  questions: {
+    id: number;
+    question: string;
+    options: string[];
+    userAnswer: string | null;
+    correctAnswer: string;
+    explanation: string;
+  }[];
+}
 
 export default function Results() {
   const [, setLocation] = useLocation();
+  
+  // Get attemptId from URL params
+  const attemptId = new URLSearchParams(window.location.search).get("attemptId");
+
+  // Fetch quiz results
+  const { data: results, isLoading, isError } = useQuery<QuizResult>({
+    queryKey: ["/api/quiz", attemptId, "results"],
+    enabled: !!attemptId,
+  });
 
   const handleTryAgain = () => {
-    console.log("Try again clicked");
-    setLocation("/quiz");
+    setLocation("/categories");
   };
 
   const handleBackToCategories = () => {
     setLocation("/categories");
   };
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header isAuthenticated={true} userName="Student" planType="Monthly Plan" />
+        <div className="flex items-center justify-center h-[calc(100vh-200px)]">
+          <div className="text-center">
+            <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4 text-primary" data-testid="loader-results" />
+            <p className="text-muted-foreground">Loading your results...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (isError || !results) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header isAuthenticated={true} userName="Student" planType="Monthly Plan" />
+        <div className="flex items-center justify-center h-[calc(100vh-200px)]">
+          <div className="text-center">
+            <p className="text-destructive mb-4">Failed to load results. Please try again.</p>
+            <Button onClick={handleBackToCategories} data-testid="button-back-categories-error">
+              Back to Categories
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const reviewQuestions = results.questions.map(q => ({
+    question: q.question,
+    userAnswer: q.userAnswer,
+    correctAnswer: q.correctAnswer,
+    options: q.options,
+    explanation: q.explanation,
+  }));
 
   return (
     <div className="min-h-screen bg-background">
@@ -64,18 +90,18 @@ export default function Results() {
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto space-y-6">
           <div className="mb-6">
-            <h1 className="text-3xl font-bold mb-2">Quiz Results</h1>
+            <h1 className="text-3xl font-bold mb-2" data-testid="text-results-title">Quiz Results</h1>
             <p className="text-muted-foreground">
               Review your performance and learn from your mistakes
             </p>
           </div>
 
           <ResultsCard
-            score={2}
-            totalQuestions={3}
-            correctAnswers={2}
-            incorrectAnswers={1}
-            skippedAnswers={0}
+            score={results.score}
+            totalQuestions={results.totalQuestions}
+            correctAnswers={results.correctAnswers}
+            incorrectAnswers={results.incorrectAnswers}
+            skippedAnswers={results.totalQuestions - results.correctAnswers - results.incorrectAnswers}
           />
 
           <div className="flex gap-4">
@@ -98,7 +124,7 @@ export default function Results() {
             </Button>
           </div>
 
-          <QuestionReview questions={mockReviewQuestions} />
+          <QuestionReview questions={reviewQuestions} />
         </div>
       </div>
     </div>
