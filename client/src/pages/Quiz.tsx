@@ -162,7 +162,7 @@ export default function Quiz() {
   if (startQuizMutation.isPending) {
     return (
       <div className="min-h-screen bg-background">
-        <Header isAuthenticated={true} userName="Student" planType="Monthly Plan" />
+        <Header />
         <div className="flex items-center justify-center h-[calc(100vh-200px)]">
           <div className="text-center">
             <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4 text-primary" data-testid="loader-quiz-start" />
@@ -177,7 +177,7 @@ export default function Quiz() {
   if (subscriptionError) {
     return (
       <div className="min-h-screen bg-background">
-        <Header isAuthenticated={true} userName="Student" planType="Free Trial Used" />
+        <Header />
         <div className="flex items-center justify-center h-[calc(100vh-200px)]">
           <div className="max-w-md">
             <Alert data-testid="alert-subscription-required">
@@ -212,7 +212,7 @@ export default function Quiz() {
   if (startQuizMutation.isError) {
     return (
       <div className="min-h-screen bg-background">
-        <Header isAuthenticated={true} userName="Student" planType="Monthly Plan" />
+        <Header />
         <div className="flex items-center justify-center h-[calc(100vh-200px)]">
           <div className="text-center">
             <p className="text-destructive mb-4">Failed to load quiz. Please try again.</p>
@@ -233,7 +233,7 @@ export default function Quiz() {
   if (questions.length === 0) {
     return (
       <div className="min-h-screen bg-background">
-        <Header isAuthenticated={true} userName="Student" planType="Monthly Plan" />
+        <Header />
         <div className="flex items-center justify-center h-[calc(100vh-200px)]">
           <div className="text-center">
             <p className="text-muted-foreground">No questions available for this category.</p>
@@ -245,7 +245,7 @@ export default function Quiz() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header isAuthenticated={true} userName="Student" planType="Monthly Plan" />
+      <Header />
 
       <div className="container mx-auto px-4 py-8">
         <div className="mb-6 flex items-center justify-between">

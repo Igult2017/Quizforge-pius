@@ -1,8 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "./ThemeToggle";
-import { GraduationCap, User, LogOut } from "lucide-react";
+import { GraduationCap, User, LogOut, Crown } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,22 +12,19 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { logout } from "@/lib/firebase";
+import { useUserData } from "@/hooks/useUserData";
 
 interface HeaderProps {
   onSignIn?: () => void;
   onGetStarted?: () => void;
-  isAuthenticated?: boolean;
-  userName?: string;
-  planType?: string;
 }
 
 export function Header({
   onSignIn,
   onGetStarted,
-  isAuthenticated = false,
-  userName,
-  planType,
 }: HeaderProps) {
+  const [, setLocation] = useLocation();
+  const { isAuthenticated, userData, hasActiveSubscription, hasUsedFreeTrial } = useUserData();
   return (
     <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
@@ -50,9 +47,24 @@ export function Header({
         <div className="flex items-center gap-3">
           {isAuthenticated ? (
             <>
-              {planType && (
-                <Badge variant="secondary" data-testid="badge-plan-type">
-                  {planType}
+              {hasActiveSubscription ? (
+                <Badge variant="secondary" className="gap-1" data-testid="badge-plan-type">
+                  <Crown className="h-3 w-3" />
+                  {userData?.subscription?.plan === "weekly" ? "Weekly" : "Monthly"} Plan
+                </Badge>
+              ) : hasUsedFreeTrial ? (
+                <Button 
+                  variant="default" 
+                  size="sm"
+                  onClick={() => setLocation("/pricing")}
+                  data-testid="button-subscribe"
+                >
+                  <Crown className="mr-2 h-4 w-4" />
+                  Subscribe
+                </Button>
+              ) : (
+                <Badge variant="outline" data-testid="badge-free-trial">
+                  Free Trial
                 </Badge>
               )}
               <DropdownMenu>
@@ -63,7 +75,11 @@ export function Header({
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuLabel>{userName || "Student"}</DropdownMenuLabel>
+                  <DropdownMenuLabel>
+                    {userData?.firstName && userData?.lastName 
+                      ? `${userData.firstName} ${userData.lastName}`
+                      : userData?.email || "Student"}
+                  </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => logout()} data-testid="button-logout">
                     <LogOut className="mr-2 h-4 w-4" />

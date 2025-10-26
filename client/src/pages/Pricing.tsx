@@ -2,16 +2,59 @@ import { Header } from "@/components/Header";
 import { PricingCard } from "@/components/PricingCard";
 import { CheckCircle2 } from "lucide-react";
 import { useLocation } from "wouter";
+import { useUserData } from "@/hooks/useUserData";
 
 export default function Pricing() {
   const [, setLocation] = useLocation();
+  const { isAuthenticated, hasActiveSubscription, hasUsedFreeTrial, subscription } = useUserData();
 
   const handleFreeTrial = () => {
-    setLocation("/signup");
+    if (isAuthenticated) {
+      setLocation("/categories");
+    } else {
+      setLocation("/signup");
+    }
   };
 
   const handlePaidPlan = (plan: string) => {
-    setLocation(`/checkout?plan=${plan.toLowerCase()}`);
+    if (isAuthenticated && hasActiveSubscription) {
+      // Already subscribed - go to categories
+      setLocation("/categories");
+    } else {
+      // Not subscribed - go to checkout
+      setLocation(`/checkout?plan=${plan.toLowerCase()}`);
+    }
+  };
+
+  const getButtonText = (planType: "free" | "paid", planName: string) => {
+    if (!isAuthenticated) {
+      return planType === "free" ? "Sign Up Free" : "Subscribe";
+    }
+    
+    if (hasActiveSubscription) {
+      const isCurrentPlan = subscription?.plan === planName.toLowerCase();
+      return isCurrentPlan ? "Current Plan" : "Switch Plan";
+    }
+    
+    if (hasUsedFreeTrial && planType === "free") {
+      return "Trial Used";
+    }
+    
+    return planType === "free" ? "Start Practice" : "Subscribe";
+  };
+
+  const isButtonDisabled = (planType: "free" | "paid", planName: string) => {
+    if (!isAuthenticated) return false;
+    
+    if (hasActiveSubscription) {
+      return subscription?.plan === planName.toLowerCase();
+    }
+    
+    if (hasUsedFreeTrial && planType === "free") {
+      return true;
+    }
+    
+    return false;
   };
 
   return (
@@ -58,8 +101,9 @@ export default function Pricing() {
               "All question categories",
               "Detailed explanations"
             ]}
-            buttonText="Start Free Trial"
+            buttonText={getButtonText("free", "free")}
             onSelect={handleFreeTrial}
+            disabled={isButtonDisabled("free", "free")}
           />
 
           <PricingCard
@@ -72,10 +116,11 @@ export default function Pricing() {
               "50 questions per session",
               "All features included"
             ]}
-            badge="Most Popular"
+            badge={hasActiveSubscription && subscription?.plan === "monthly" ? "Current Plan" : "Most Popular"}
             highlighted={true}
-            buttonText="Subscribe"
+            buttonText={getButtonText("paid", "Monthly")}
             onSelect={() => handlePaidPlan("Monthly")}
+            disabled={isButtonDisabled("paid", "monthly")}
           />
 
           <PricingCard
@@ -88,8 +133,10 @@ export default function Pricing() {
               "50 questions per session",
               "All features included"
             ]}
-            buttonText="Subscribe"
+            badge={hasActiveSubscription && subscription?.plan === "weekly" ? "Current Plan" : undefined}
+            buttonText={getButtonText("paid", "Weekly")}
             onSelect={() => handlePaidPlan("Weekly")}
+            disabled={isButtonDisabled("paid", "weekly")}
           />
         </div>
       </div>

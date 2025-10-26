@@ -50,7 +50,7 @@ export default function Results() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background">
-        <Header isAuthenticated={true} userName="Student" planType="Monthly Plan" />
+        <Header />
         <div className="flex items-center justify-center h-[calc(100vh-200px)]">
           <div className="text-center">
             <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4 text-primary" data-testid="loader-results" />
@@ -65,7 +65,7 @@ export default function Results() {
   if (isError || !results) {
     return (
       <div className="min-h-screen bg-background">
-        <Header isAuthenticated={true} userName="Student" planType="Monthly Plan" />
+        <Header />
         <div className="flex items-center justify-center h-[calc(100vh-200px)]">
           <div className="text-center">
             <p className="text-destructive mb-4">Failed to load results. Please try again.</p>
@@ -88,7 +88,7 @@ export default function Results() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header isAuthenticated={true} userName="Student" planType="Monthly Plan" />
+      <Header />
 
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto space-y-6">

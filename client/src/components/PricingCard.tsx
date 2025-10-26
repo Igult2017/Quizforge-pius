@@ -13,6 +13,7 @@ interface PricingCardProps {
   highlighted?: boolean;
   onSelect: () => void;
   buttonText?: string;
+  disabled?: boolean;
 }
 
 export function PricingCard({
@@ -25,6 +26,7 @@ export function PricingCard({
   highlighted = false,
   onSelect,
   buttonText,
+  disabled = false,
 }: PricingCardProps) {
   return (
     <Card
@@ -61,6 +63,7 @@ export function PricingCard({
           className={`w-full ${highlighted ? "bg-gradient-to-r from-purple-600 to-purple-500 hover:opacity-90" : ""}`}
           variant={highlighted ? "default" : "outline"}
           onClick={onSelect}
+          disabled={disabled}
           data-testid={`button-select-${title.toLowerCase().replace(/\s+/g, '-')}`}
         >
           {buttonText || `Choose ${title}`}
