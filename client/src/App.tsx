@@ -15,6 +15,7 @@ import Results from "@/pages/Results";
 import Pricing from "@/pages/Pricing";
 import Contact from "@/pages/Contact";
 import Checkout from "@/pages/Checkout";
+import PostPaymentSignup from "@/pages/PostPaymentSignup";
 import { Loader2 } from "lucide-react";
 
 function Router() {
@@ -35,6 +36,7 @@ function Router() {
         <Route path="/login" component={Login} />
         <Route path="/signup" component={Signup} />
         <Route path="/checkout" component={Checkout} />
+        <Route path="/post-payment-signup" component={PostPaymentSignup} />
         <Route path="/pricing" component={Pricing} />
         <Route path="/contact" component={Contact} />
         <Route path="/:rest*" component={Landing} />

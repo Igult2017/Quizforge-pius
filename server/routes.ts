@@ -128,8 +128,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           paymentMethod: status.payment_method,
         });
         
-        // Redirect to signup with payment ID
-        return res.redirect(`/signup/complete-payment?paymentId=${payment.id}`);
+        // Redirect to post-payment signup page
+        return res.redirect(`/post-payment-signup?merchantReference=${payment.merchantReference}&OrderTrackingId=${OrderTrackingId}`);
       } else {
         await storage.updatePayment(payment.id, {
           status: "failed",
@@ -161,6 +161,173 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Payment status error:", error);
       res.status(500).json({ error: "Failed to get payment status" });
+    }
+  });
+
+  // Verify payment by merchant reference (for post-payment signup)
+  app.post("/api/payments/verify", async (req, res) => {
+    try {
+      const { merchantReference, orderTrackingId } = req.body;
+      
+      if (!merchantReference) {
+        return res.status(400).json({ error: "Merchant reference is required" });
+      }
+
+      // Find payment by merchant reference
+      const payment = await storage.getPaymentByMerchantReference(merchantReference);
+      
+      if (!payment) {
+        return res.status(404).json({ 
+          success: false, 
+          error: "Payment not found" 
+        });
+      }
+
+      // If payment is pending and we have orderTrackingId, check status with PesaPal
+      if (payment.status === "pending" && orderTrackingId) {
+        try {
+          const status = await getTransactionStatus(orderTrackingId);
+          
+          if (status.payment_status_description === "Completed") {
+            await storage.updatePayment(payment.id, {
+              status: "completed",
+              paymentMethod: status.payment_method,
+            });
+            payment.status = "completed";
+          }
+        } catch (error) {
+          console.error("Error checking transaction status:", error);
+        }
+      }
+
+      // Only return completed payments
+      if (payment.status !== "completed") {
+        return res.status(400).json({ 
+          success: false, 
+          error: "Payment not completed" 
+        });
+      }
+
+      res.json({
+        success: true,
+        payment: {
+          id: payment.id,
+          email: payment.email,
+          firstName: payment.firstName,
+          lastName: payment.lastName,
+          plan: payment.plan,
+          amount: payment.amount / 100,
+          status: payment.status,
+        },
+      });
+    } catch (error) {
+      console.error("Payment verification error:", error);
+      res.status(500).json({ 
+        success: false, 
+        error: "Failed to verify payment" 
+      });
+    }
+  });
+
+  // Link payment to newly created user and create subscription
+  // NOTE: This endpoint validates payment ownership without requiring Replit Auth
+  // because users sign up via Firebase Auth (different auth system)
+  app.post("/api/payments/link-to-user", async (req, res) => {
+    try {
+      const { merchantReference, userId, userEmail } = req.body;
+      
+      if (!merchantReference || !userId || !userEmail) {
+        return res.status(400).json({ 
+          success: false, 
+          error: "Merchant reference, userId, and userEmail are required" 
+        });
+      }
+
+      // Find payment by merchant reference
+      const payment = await storage.getPaymentByMerchantReference(merchantReference);
+      
+      if (!payment) {
+        return res.status(404).json({ 
+          success: false, 
+          error: "Payment not found" 
+        });
+      }
+
+      // Security validations to prevent abuse
+      if (payment.status !== "completed") {
+        return res.status(400).json({ 
+          success: false, 
+          error: "Payment not completed" 
+        });
+      }
+
+      if (payment.userId) {
+        return res.status(400).json({ 
+          success: false, 
+          error: "Payment already linked to a user" 
+        });
+      }
+
+      // CRITICAL: Verify that the email matches the payment email
+      // This prevents anyone from linking another person's payment
+      if (payment.email.toLowerCase() !== userEmail.toLowerCase()) {
+        return res.status(403).json({ 
+          success: false, 
+          error: "Email does not match payment email" 
+        });
+      }
+
+      // Verify user exists and email matches (double-check)
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ 
+          success: false, 
+          error: "User not found" 
+        });
+      }
+
+      if (user.email.toLowerCase() !== userEmail.toLowerCase()) {
+        return res.status(403).json({ 
+          success: false, 
+          error: "User email does not match provided email" 
+        });
+      }
+
+      // Calculate subscription end date based on plan
+      const planDurations: Record<string, number> = {
+        weekly: 7,
+        monthly: 30,
+      };
+
+      const durationDays = planDurations[payment.plan] || 30;
+      const startDate = new Date();
+      const endDate = new Date();
+      endDate.setDate(endDate.getDate() + durationDays);
+
+      // Update payment with userId
+      await storage.updatePayment(payment.id, {
+        userId,
+      });
+
+      // Create subscription
+      await storage.createSubscription({
+        userId,
+        plan: payment.plan,
+        status: "active",
+        startDate,
+        endDate,
+      });
+
+      res.json({
+        success: true,
+        message: "Payment linked and subscription created",
+      });
+    } catch (error) {
+      console.error("Link payment error:", error);
+      res.status(500).json({ 
+        success: false, 
+        error: "Failed to link payment to user" 
+      });
     }
   });
   
