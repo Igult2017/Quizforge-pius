@@ -1,18 +1,24 @@
-import { useQuery } from "@tanstack/react-query";
-import type { User } from "@shared/schema";
+import { useState, useEffect } from "react";
+import { User } from "firebase/auth";
+import { onAuthChange } from "@/lib/firebase";
 
 export function useAuth() {
-  const { data: user, isLoading, isFetching } = useQuery<User | null>({
-    queryKey: ["/api/auth/user"],
-    retry: false,
-  });
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Keep loading state true until we have a definitive answer (user or null)
-  const isStillLoading = isLoading || (isFetching && user === undefined);
+  useEffect(() => {
+    const unsubscribe = onAuthChange((firebaseUser) => {
+      setUser(firebaseUser);
+      setIsLoading(false);
+    });
+
+    // Cleanup subscription on unmount
+    return () => unsubscribe();
+  }, []);
 
   return {
     user,
-    isLoading: isStillLoading,
-    isAuthenticated: user !== null && user !== undefined,
+    isLoading,
+    isAuthenticated: user !== null,
   };
 }

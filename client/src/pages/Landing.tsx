@@ -2,12 +2,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, BookOpen, TrendingUp, Award, ArrowRight, Check } from "lucide-react";
+import { Link } from "wouter";
 
 export default function Landing() {
-  const handleLogin = () => {
-    window.location.href = "/api/login";
-  };
-
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section with Blue Background */}
@@ -27,23 +24,26 @@ export default function Landing() {
             </p>
             
             <div className="flex flex-wrap gap-4 mb-8">
-              <Button 
-                size="lg" 
-                onClick={handleLogin} 
-                className="bg-white text-blue-600 hover:bg-blue-50 text-lg px-8" 
-                data-testid="button-start-trial"
-              >
-                Start Free Trial
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-              <Button 
-                size="lg" 
-                variant="outline" 
-                className="border-2 border-white text-white hover:bg-white/10 text-lg px-8 bg-transparent backdrop-blur-sm"
-                data-testid="button-learn-more"
-              >
-                Learn More
-              </Button>
+              <Link href="/signup">
+                <Button 
+                  size="lg" 
+                  className="bg-white text-blue-600 hover:bg-blue-50 text-lg px-8" 
+                  data-testid="button-start-trial"
+                >
+                  Start Free Trial
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+              </Link>
+              <Link href="/pricing">
+                <Button 
+                  size="lg" 
+                  variant="outline" 
+                  className="border-2 border-white text-white hover:bg-white/10 text-lg px-8 bg-transparent backdrop-blur-sm"
+                  data-testid="button-learn-more"
+                >
+                  Learn More
+                </Button>
+              </Link>
             </div>
 
             <div className="flex flex-wrap gap-6 text-sm md:text-base">
