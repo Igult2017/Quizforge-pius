@@ -96,7 +96,7 @@ export default function Home() {
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Why Choose <span className="text-primary">NursePrep</span>
+              Why Choose <span className="text-primary">NurseBrace</span>
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               Everything you need to pass your nursing exams, all in one place
@@ -217,7 +217,7 @@ export default function Home() {
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-4 gap-8 mb-8">
             <div>
-              <h3 className="font-bold text-lg mb-4">NursePrep</h3>
+              <h3 className="font-bold text-lg mb-4">NurseBrace</h3>
               <p className="text-sm text-muted-foreground">
                 Your complete nursing exam preparation platform
               </p>
@@ -246,7 +246,7 @@ export default function Home() {
             </div>
           </div>
           <div className="border-t pt-8 text-center text-sm text-muted-foreground">
-            <p>&copy; 2025 NursePrep. All rights reserved.</p>
+            <p>&copy; 2025 NurseBrace. All rights reserved.</p>
           </div>
         </div>
       </footer>

@@ -1,8 +1,8 @@
-# NursePrep - Nursing Exam Practice Platform
+# NurseBrace - Nursing Exam Practice Platform
 
 ## Overview
 
-NursePrep is an educational SaaS platform designed to help nursing students prepare for major nursing exams (NCLEX, ATI TEAS, and HESI A2). The platform provides practice questions with instant feedback, detailed explanations, and progress tracking. It features a quiz-taking interface, subscription-based access, and AI-generated question content using DeepSeek's API.
+NurseBrace is an educational SaaS platform designed to help nursing students prepare for major nursing exams (NCLEX, ATI TEAS, and HESI A2). The platform provides practice questions with instant feedback, detailed explanations, and progress tracking. It features a quiz-taking interface, subscription-based access, and AI-generated question content using DeepSeek's API.
 
 The application follows a modern full-stack architecture with a React frontend, Express backend, and PostgreSQL database, all built with TypeScript for type safety.
 
