@@ -566,6 +566,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         skippedAnswers: skippedCount,
         startedAt: attempt.startedAt,
         completedAt: attempt.completedAt,
+        isFreeTrialAttempt: attempt.isFreeTrialAttempt,
         questions: detailedAnswers,
       });
     } catch (error: any) {

@@ -114,13 +114,15 @@ export class PostgresStorage implements IStorage {
   }
 
   async getActiveSubscription(userId: string): Promise<Subscription | undefined> {
+    const now = new Date();
     const [subscription] = await db
       .select()
       .from(subscriptions)
       .where(
         and(
           eq(subscriptions.userId, userId),
-          eq(subscriptions.status, "active")
+          eq(subscriptions.status, "active"),
+          sql`${subscriptions.endDate} > ${now}`
         )
       )
       .orderBy(sql`${subscriptions.endDate} DESC`)

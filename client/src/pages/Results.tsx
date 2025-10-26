@@ -2,10 +2,12 @@ import { Header } from "@/components/Header";
 import { ResultsCard } from "@/components/ResultsCard";
 import { QuestionReview } from "@/components/QuestionReview";
 import { Button } from "@/components/ui/button";
-import { RotateCcw, Home } from "lucide-react";
+import { RotateCcw, Home, Crown } from "lucide-react";
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Card } from "@/components/ui/card";
 
 interface QuizResult {
   attemptId: number;
@@ -13,6 +15,7 @@ interface QuizResult {
   totalQuestions: number;
   correctAnswers: number;
   incorrectAnswers: number;
+  isFreeTrialAttempt: boolean;
   questions: {
     id: number;
     question: string;
@@ -103,6 +106,41 @@ export default function Results() {
             incorrectAnswers={results.incorrectAnswers}
             skippedAnswers={results.totalQuestions - results.correctAnswers - results.incorrectAnswers}
           />
+
+          {results.isFreeTrialAttempt && (
+            <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20 p-6" data-testid="card-subscription-prompt">
+              <div className="flex items-start gap-4">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                  <Crown className="h-6 w-6 text-primary" />
+                </div>
+                <div className="flex-1 space-y-3">
+                  <div>
+                    <h3 className="text-xl font-semibold mb-1" data-testid="text-trial-complete">Free Trial Complete!</h3>
+                    <p className="text-muted-foreground">
+                      You've used your free trial. Subscribe now to continue practicing and ace your nursing exams!
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium">With a subscription, you get:</p>
+                    <ul className="text-sm text-muted-foreground space-y-1 ml-1">
+                      <li>• Unlimited practice quizzes (50 questions each)</li>
+                      <li>• All exam categories (NCLEX, TEAS, HESI)</li>
+                      <li>• Detailed explanations for every question</li>
+                      <li>• Track your progress over time</li>
+                    </ul>
+                  </div>
+                  <Button 
+                    onClick={() => setLocation("/pricing")} 
+                    className="w-full sm:w-auto"
+                    data-testid="button-subscribe-now"
+                  >
+                    <Crown className="mr-2 h-4 w-4" />
+                    View Pricing Plans
+                  </Button>
+                </div>
+              </div>
+            </Card>
+          )}
 
           <div className="flex gap-4">
             <Button
