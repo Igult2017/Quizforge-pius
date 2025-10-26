@@ -428,6 +428,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         isFreeTrialAttempt,
       }, questions.map(q => q.id));
 
+      // Mark free trial as used (only if this is a free trial attempt)
+      if (isFreeTrialAttempt) {
+        await storage.markFreeTrialAsUsed(userId);
+        console.log(`Free trial marked as used for user: ${userId}`);
+      }
+
       res.json({
         attemptId: attempt.id,
         isFreeTrialAttempt,
