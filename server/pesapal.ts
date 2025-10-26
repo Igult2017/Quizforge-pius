@@ -72,7 +72,7 @@ export async function createOrder(orderData: CreateOrderData): Promise<PesaPalOr
 
   const orderPayload = {
     id: orderData.id,
-    currency: "KES", // Kenyan Shillings (PesaPal primary currency)
+    currency: "USD", // US Dollars for international clients
     amount: orderData.amount,
     description: orderData.description,
     callback_url: orderData.callbackUrl,
@@ -81,7 +81,7 @@ export async function createOrder(orderData: CreateOrderData): Promise<PesaPalOr
     billing_address: {
       email_address: orderData.email,
       phone_number: orderData.phone,
-      country_code: "KE",
+      country_code: "",
       first_name: orderData.firstName,
       last_name: orderData.lastName,
       line_1: "",
