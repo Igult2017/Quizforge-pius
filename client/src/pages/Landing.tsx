@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, BookOpen, TrendingUp, Award } from "lucide-react";
+import { CheckCircle2, BookOpen, TrendingUp, Award, ArrowRight, Check } from "lucide-react";
 
 export default function Landing() {
   const handleLogin = () => {
@@ -10,27 +10,77 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Hero Section */}
-      <section className="py-20 px-4">
-        <div className="container mx-auto max-w-6xl">
-          <div className="text-center mb-12">
-            <Badge variant="secondary" className="mb-4" data-testid="badge-free-trial">
-              Free Trial: 30 Questions
-            </Badge>
-            <h1 className="text-5xl font-bold mb-6" data-testid="text-hero-title">
-              Master Your Nursing Exams
+      {/* Hero Section with Blue Background */}
+      <section className="relative bg-gradient-to-br from-blue-600 to-blue-800 text-white py-20 px-4 overflow-hidden">
+        {/* Decorative circles */}
+        <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/30 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-700/20 rounded-full blur-3xl"></div>
+        
+        <div className="container mx-auto max-w-6xl relative z-10">
+          <div className="max-w-3xl">
+            <h1 className="text-5xl md:text-6xl font-bold mb-6 leading-tight" data-testid="text-hero-title">
+              Pass Your Nursing Exams on the First Try
             </h1>
-            <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-              Practice with AI-powered questions for NCLEX, ATI TEAS, and HESI A2. 
-              Get detailed explanations and track your progress.
+            <p className="text-xl md:text-2xl mb-8 text-blue-50">
+              10,000+ NCLEX, ATI TEAS, and HESI A2 practice questions with instant feedback 
+              and smart analytics to boost your scores.
             </p>
-            <Button size="lg" onClick={handleLogin} className="text-lg px-8" data-testid="button-get-started">
-              Get Started - Free Trial
-            </Button>
-          </div>
+            
+            <div className="flex flex-wrap gap-4 mb-8">
+              <Button 
+                size="lg" 
+                onClick={handleLogin} 
+                className="bg-white text-blue-600 hover:bg-blue-50 text-lg px-8" 
+                data-testid="button-start-trial"
+              >
+                Start Free Trial
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+              <Button 
+                size="lg" 
+                variant="outline" 
+                className="border-2 border-white text-white hover:bg-white/10 text-lg px-8 bg-transparent backdrop-blur-sm"
+                data-testid="button-learn-more"
+              >
+                Learn More
+              </Button>
+            </div>
 
-          {/* Features Grid */}
-          <div className="grid md:grid-3xl:grid-cols-3 gap-6 mt-16">
+            <div className="flex flex-wrap gap-6 text-sm md:text-base">
+              <div className="flex items-center gap-2">
+                <Check className="h-5 w-5" />
+                <span>No credit card required</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Check className="h-5 w-5" />
+                <span>Cancel anytime</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Check className="h-5 w-5" />
+                <span>30-question free trial</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Practice, Learn, and Pass Section */}
+      <section className="py-16 px-4 bg-muted/30">
+        <div className="container mx-auto max-w-4xl text-center">
+          <h2 className="text-4xl md:text-5xl font-bold mb-6">
+            Practice, Learn, and <span className="text-primary">Pass</span>
+          </h2>
+          <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto">
+            Master every nursing exam with targeted practice, detailed explanations, and 
+            proven study strategies designed for your success.
+          </p>
+        </div>
+      </section>
+
+      {/* Features Grid */}
+      <section className="py-16 px-4">
+        <div className="container mx-auto max-w-6xl">
+          <div className="grid md:grid-cols-3 gap-6">
             <Card>
               <CardHeader>
                 <BookOpen className="h-10 w-10 text-primary mb-2" />
