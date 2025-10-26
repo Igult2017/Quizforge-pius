@@ -33,7 +33,26 @@ export const subscriptions = pgTable("subscriptions", {
   status: text("status").notNull(), // "active", "cancelled", "expired"
   startDate: timestamp("start_date").notNull(),
   endDate: timestamp("end_date").notNull(),
+  paymentId: integer("payment_id").references(() => payments.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const payments = pgTable("payments", {
+  id: serial("id").primaryKey(),
+  orderTrackingId: varchar("order_tracking_id").unique(),
+  merchantReference: varchar("merchant_reference").unique().notNull(),
+  userId: varchar("user_id").references(() => users.id),
+  plan: text("plan").notNull(), // "weekly", "monthly"
+  amount: integer("amount").notNull(), // in cents
+  currency: text("currency").default("USD").notNull(),
+  status: text("status").notNull(), // "pending", "completed", "failed"
+  paymentMethod: text("payment_method"),
+  email: varchar("email"),
+  firstName: varchar("first_name"),
+  lastName: varchar("last_name"),
+  phone: varchar("phone"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 export const questions = pgTable("questions", {
@@ -105,6 +124,12 @@ export const insertQuizAnswerSchema = createInsertSchema(quizAnswers).omit({
   id: true,
 });
 
+export const insertPaymentSchema = createInsertSchema(payments).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -120,3 +145,6 @@ export type InsertQuizAttempt = z.infer<typeof insertQuizAttemptSchema>;
 
 export type QuizAnswer = typeof quizAnswers.$inferSelect;
 export type InsertQuizAnswer = z.infer<typeof insertQuizAnswerSchema>;
+
+export type Payment = typeof payments.$inferSelect;
+export type InsertPayment = z.infer<typeof insertPaymentSchema>;

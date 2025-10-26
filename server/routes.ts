@@ -4,7 +4,9 @@ import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { generateQuestions } from "./deepseek";
 import { z } from "zod";
-import { insertQuestionSchema, insertQuizAttemptSchema, insertQuizAnswerSchema } from "@shared/schema";
+import { insertQuestionSchema, insertQuizAttemptSchema, insertQuizAnswerSchema, insertPaymentSchema } from "@shared/schema";
+import { createOrder, getTransactionStatus } from "./pesapal";
+import { nanoid } from "nanoid";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication
@@ -28,6 +30,139 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   const server = createServer(app);
+  
+  // ============= PAYMENT ROUTES =============
+  
+  // Create payment order
+  app.post("/api/payments/create-order", async (req, res) => {
+    try {
+      const { plan, email, firstName, lastName, phone } = req.body;
+      
+      if (!plan || !email || !firstName || !lastName) {
+        return res.status(400).json({ error: "Missing required fields" });
+      }
+
+      // Plan pricing
+      const planPricing: Record<string, number> = {
+        weekly: 5,
+        monthly: 15,
+      };
+
+      const amount = planPricing[plan];
+      if (!amount) {
+        return res.status(400).json({ error: "Invalid plan" });
+      }
+
+      // Generate unique merchant reference
+      const merchantReference = `NB-${plan.toUpperCase()}-${nanoid(12)}`;
+      const callbackUrl = `${process.env.REPLIT_DOMAINS?.split(',')[0] || 'http://localhost:5000'}/payment/callback`;
+
+      // Create payment record in database
+      const payment = await storage.createPayment({
+        merchantReference,
+        plan,
+        amount: amount * 100, // store in cents
+        currency: "USD",
+        status: "pending",
+        email,
+        firstName,
+        lastName,
+        phone: phone || null,
+        userId: null,
+        orderTrackingId: null,
+        paymentMethod: null,
+      });
+
+      // Create order with PesaPal
+      const orderResponse = await createOrder({
+        id: merchantReference,
+        amount,
+        email,
+        firstName,
+        lastName,
+        phone: phone || "",
+        description: `NurseBrace ${plan} subscription`,
+        callbackUrl,
+      });
+
+      // Update payment with order tracking ID
+      await storage.updatePayment(payment.id, {
+        orderTrackingId: orderResponse.order_tracking_id,
+      });
+
+      res.json({
+        success: true,
+        paymentId: payment.id,
+        redirectUrl: orderResponse.redirect_url,
+        orderTrackingId: orderResponse.order_tracking_id,
+      });
+    } catch (error: any) {
+      console.error("Payment creation error:", error);
+      res.status(500).json({ error: "Failed to create payment order" });
+    }
+  });
+
+  // Payment callback - handle return from PesaPal
+  app.get("/payment/callback", async (req, res) => {
+    const { OrderTrackingId, OrderMerchantReference } = req.query;
+
+    if (!OrderTrackingId) {
+      return res.redirect("/?payment=error");
+    }
+
+    try {
+      // Get transaction status from PesaPal
+      const status = await getTransactionStatus(OrderTrackingId as string);
+
+      // Find payment in database
+      const payment = await storage.getPaymentByOrderTrackingId(OrderTrackingId as string);
+      
+      if (!payment) {
+        return res.redirect("/?payment=not_found");
+      }
+
+      // Update payment status
+      if (status.payment_status_description === "Completed") {
+        await storage.updatePayment(payment.id, {
+          status: "completed",
+          paymentMethod: status.payment_method,
+        });
+        
+        // Redirect to signup with payment ID
+        return res.redirect(`/signup/complete-payment?paymentId=${payment.id}`);
+      } else {
+        await storage.updatePayment(payment.id, {
+          status: "failed",
+        });
+        return res.redirect("/?payment=failed");
+      }
+    } catch (error) {
+      console.error("Payment callback error:", error);
+      return res.redirect("/?payment=error");
+    }
+  });
+
+  // Verify payment status
+  app.get("/api/payments/:paymentId/status", async (req, res) => {
+    try {
+      const { paymentId } = req.params;
+      const payment = await storage.getPaymentById(Number(paymentId));
+      
+      if (!payment) {
+        return res.status(404).json({ error: "Payment not found" });
+      }
+
+      res.json({
+        status: payment.status,
+        plan: payment.plan,
+        amount: payment.amount / 100,
+        email: payment.email,
+      });
+    } catch (error) {
+      console.error("Payment status error:", error);
+      res.status(500).json({ error: "Failed to get payment status" });
+    }
+  });
   
   // ============= QUIZ ROUTES =============
   

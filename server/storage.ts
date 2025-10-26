@@ -7,6 +7,7 @@ import {
   questions,
   quizAttempts,
   quizAnswers,
+  payments,
   type User,
   type UpsertUser,
   type InsertUser,
@@ -18,6 +19,8 @@ import {
   type InsertQuizAttempt,
   type QuizAnswer,
   type InsertQuizAnswer,
+  type Payment,
+  type InsertPayment,
 } from "@shared/schema";
 
 const dbUrl = process.env.DATABASE_URL;
@@ -60,6 +63,13 @@ export interface IStorage {
   saveQuizAnswer(answer: InsertQuizAnswer): Promise<QuizAnswer>;
   getQuizAnswers(attemptId: number): Promise<QuizAnswer[]>;
   updateQuizAnswer(id: number, data: Partial<QuizAnswer>): Promise<void>;
+
+  // Payments
+  createPayment(payment: InsertPayment): Promise<Payment>;
+  getPaymentById(id: number): Promise<Payment | undefined>;
+  getPaymentByOrderTrackingId(orderTrackingId: string): Promise<Payment | undefined>;
+  getPaymentByMerchantReference(merchantReference: string): Promise<Payment | undefined>;
+  updatePayment(id: number, data: Partial<Payment>): Promise<void>;
 }
 
 export class PostgresStorage implements IStorage {
@@ -229,6 +239,43 @@ export class PostgresStorage implements IStorage {
       .update(quizAnswers)
       .set(data)
       .where(eq(quizAnswers.id, id));
+  }
+
+  // Payments
+  async createPayment(payment: InsertPayment): Promise<Payment> {
+    const [newPayment] = await db.insert(payments).values(payment).returning();
+    return newPayment;
+  }
+
+  async getPaymentById(id: number): Promise<Payment | undefined> {
+    const [payment] = await db
+      .select()
+      .from(payments)
+      .where(eq(payments.id, id));
+    return payment;
+  }
+
+  async getPaymentByOrderTrackingId(orderTrackingId: string): Promise<Payment | undefined> {
+    const [payment] = await db
+      .select()
+      .from(payments)
+      .where(eq(payments.orderTrackingId, orderTrackingId));
+    return payment;
+  }
+
+  async getPaymentByMerchantReference(merchantReference: string): Promise<Payment | undefined> {
+    const [payment] = await db
+      .select()
+      .from(payments)
+      .where(eq(payments.merchantReference, merchantReference));
+    return payment;
+  }
+
+  async updatePayment(id: number, data: Partial<Payment>): Promise<void> {
+    await db
+      .update(payments)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(payments.id, id));
   }
 }
 
