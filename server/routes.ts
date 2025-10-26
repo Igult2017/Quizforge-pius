@@ -1,7 +1,8 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { setupAuth, isAuthenticated } from "./replitAuth";
+import { setupAuth } from "./replitAuth";
+import { isAuthenticated } from "./firebaseAuth";
 import { generateQuestions } from "./deepseek";
 import { z } from "zod";
 import { insertQuestionSchema, insertQuizAttemptSchema, insertQuizAnswerSchema, insertPaymentSchema } from "@shared/schema";
@@ -270,7 +271,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // CRITICAL: Verify that the email matches the payment email
       // This prevents anyone from linking another person's payment
-      if (payment.email.toLowerCase() !== userEmail.toLowerCase()) {
+      if (!payment.email || payment.email.toLowerCase() !== userEmail.toLowerCase()) {
         return res.status(403).json({ 
           success: false, 
           error: "Email does not match payment email" 
@@ -286,7 +287,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      if (user.email.toLowerCase() !== userEmail.toLowerCase()) {
+      if (!user.email || user.email.toLowerCase() !== userEmail.toLowerCase()) {
         return res.status(403).json({ 
           success: false, 
           error: "User email does not match provided email" 

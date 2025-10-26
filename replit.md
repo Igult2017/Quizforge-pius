@@ -98,11 +98,33 @@ Preferred communication style: Simple, everyday language.
 - **esbuild** - Fast bundling for production server code
 - **drizzle-kit** - Database migration and schema management tool
 
-**Session Management**
-- **express-session** with **connect-pg-simple** for PostgreSQL-backed sessions
-- Configured for future authentication implementation
+**Authentication**
+- **Frontend**: Firebase Auth (email/password and Google Sign-In)
+  - Custom branded UI with Firebase SDK
+  - `firebase` package for client-side authentication
+  - ID tokens sent with all API requests via Authorization header
+- **Backend**: Hybrid authentication system
+  - **firebase-admin** for verifying Firebase ID tokens
+  - **Replit Auth (OIDC)** for backward compatibility
+  - Combined middleware accepts both authentication methods
+  - Server-side token verification ensures secure API access
+- **Session Management**: express-session with connect-pg-simple for PostgreSQL-backed sessions
+
+**Payment Processing**
+- **PesaPal** payment gateway integration for subscription payments
+  - Card payments only (no automatic recurring)
+  - Manual subscription renewal flow
+  - Payment verification via callback URL
+  - Secure payment linkage with email validation
+- Payment flow: Checkout → PesaPal payment → Account creation → Subscription activation
 
 **Environment Requirements**
 - `DATABASE_URL` - PostgreSQL connection string (required)
 - `DEEPSEEK_API_KEY` - API key for question generation (required for content creation)
+- `VITE_FIREBASE_API_KEY` - Firebase client API key (required for auth)
+- `VITE_FIREBASE_PROJECT_ID` - Firebase project ID (required for auth)
+- `VITE_FIREBASE_APP_ID` - Firebase app ID (required for auth)
+- `PESAPAL_CONSUMER_KEY` - PesaPal consumer key (required for payments)
+- `PESAPAL_CONSUMER_SECRET` - PesaPal consumer secret (required for payments)
+- `SESSION_SECRET` - Session encryption key (required)
 - `NODE_ENV` - Environment flag (development/production)

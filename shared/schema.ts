@@ -117,7 +117,6 @@ export const insertQuestionSchema = createInsertSchema(questions).omit({
 export const insertQuizAttemptSchema = createInsertSchema(quizAttempts).omit({
   id: true,
   startedAt: true,
-  isFreeTrialAttempt: true,
 });
 
 export const insertQuizAnswerSchema = createInsertSchema(quizAnswers).omit({
