@@ -1,0 +1,308 @@
+Uses Pesapal API 3.0 (JSON) (sandbox base URL).
+
+Accepts card-only payments (the checkout will show card; we indicate payment_method: "CARD").
+
+Creates an order, returns the Pesapal redirect URL for the frontend to redirect the customer.
+
+Exposes a callback endpoint Pesapal will call after payment.
+
+Provides a verify endpoint to check transaction status (useful to confirm payment before fulfilling order).
+
+Uses environment variables for credentials (do not hardcode secrets).
+
+Files included below:
+
+package.json
+
+.env.example
+
+server.js
+
+short README instructions
+
+1) package.json
+{
+  "name": "pesapal-card-integration",
+  "version": "1.0.0",
+  "description": "Pesapal API v3 card-only sample (sandbox)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "axios": "^1.4.0",
+    "dotenv": "^16.0.0",
+    "express": "^4.18.2"
+  }
+}
+
+2) .env.example
+# Copy this to .env and fill in your values
+PESAPAL_CONSUMER_KEY=your_consumer_key_here
+PESAPAL_CONSUMER_SECRET=your_consumer_secret_here
+
+# Public callback URL that Pesapal will call. Use ngrok for local testing if needed.
+PESAPAL_CALLBACK_URL=https://yourdomain.com/pesapal/callback
+
+# Optional: port
+PORT=3000
+
+3) server.js (copy this file exactly)
+// server.js
+require('dotenv').config();
+const express = require('express');
+const axios = require('axios');
+
+const app = express();
+app.use(express.json()); // parse JSON bodies
+
+// Config (from .env)
+const CONSUMER_KEY = process.env.PESAPAL_CONSUMER_KEY;
+const CONSUMER_SECRET = process.env.PESAPAL_CONSUMER_SECRET;
+const CALLBACK_URL = process.env.PESAPAL_CALLBACK_URL || "https://yourdomain.com/pesapal/callback";
+const PORT = process.env.PORT || 3000;
+
+// Pesapal sandbox base URL (change to production when going live)
+const BASE_URL = "https://pay.pesapal.com/v3/api";
+
+if (!CONSUMER_KEY || !CONSUMER_SECRET) {
+  console.error("Missing PESAPAL_CONSUMER_KEY or PESAPAL_CONSUMER_SECRET in .env");
+  process.exit(1);
+}
+
+// Simple in-memory token cache (for demo). In production persist or refresh as needed.
+let tokenCache = {
+  token: null,
+  fetchedAt: 0
+};
+
+/**
+ * Get OAuth token from Pesapal (cached)
+ */
+async function getAccessToken() {
+  // naive cache for 10 minutes
+  const now = Date.now();
+  if (tokenCache.token && (now - tokenCache.fetchedAt < 10 * 60 * 1000)) {
+    return tokenCache.token;
+  }
+
+  const url = `${BASE_URL}/Auth/RequestToken`;
+  try {
+    const resp = await axios.post(url, {
+      consumer_key: CONSUMER_KEY,
+      consumer_secret: CONSUMER_SECRET
+    }, {
+      headers: { 'Content-Type': 'application/json' }
+    });
+
+    const token = resp.data && resp.data.token;
+    if (!token) throw new Error("No token returned from Pesapal");
+    tokenCache = { token, fetchedAt: Date.now() };
+    return token;
+  } catch (err) {
+    console.error("Error getting access token:", err.response?.data || err.message || err);
+    throw err;
+  }
+}
+
+/**
+ * Create an order on Pesapal (card-only)
+ * Request body:
+ *  {
+ *    amount: number,
+ *    currency: "KES",
+ *    description: "string",
+ *    customer: { first_name, last_name, email, phone_number }
+ *  }
+ */
+app.post('/create-order', async (req, res) => {
+  try {
+    const { amount, currency = "KES", description = "Payment", customer } = req.body;
+
+    if (!amount || !customer || !customer.email) {
+      return res.status(400).json({ error: "Missing required fields: amount and customer.email" });
+    }
+
+    const token = await getAccessToken();
+
+    const orderPayload = {
+      id: "ORDER-" + Date.now(),         // your unique order id
+      currency,
+      amount,
+      description,
+      callback_url: CALLBACK_URL,
+      notification_id: "",              // optionally set your Pesapal notification id from dashboard
+      payment_method: "CARD",           // request card-only (frontend will still show card UI)
+      billing_address: {
+        email_address: customer.email,
+        phone_number: customer.phone_number || "",
+        first_name: customer.first_name || "",
+        last_name: customer.last_name || "",
+        line_1: customer.line1 || "",
+        city: customer.city || "",
+        state: customer.state || "",
+        postal_code: customer.postal_code || "",
+        country_code: customer.country_code || "KE"
+      }
+    };
+
+    const resp = await axios.post(
+      `${BASE_URL}/Transactions/SubmitOrderRequest`,
+      orderPayload,
+      { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
+    );
+
+    // Pesapal returns redirect_url for checkout iframe/redirect
+    const redirect_url = resp.data?.redirect_url || resp.data?.RedirectURL || null;
+    if (!redirect_url) {
+      console.warn("Pesapal response without redirect_url:", resp.data);
+      return res.status(500).json({ error: "No redirect URL returned from Pesapal", raw: resp.data });
+    }
+
+    // Return redirect URL to caller so frontend can redirect customer
+    return res.json({ order_id: orderPayload.id, redirect_url });
+  } catch (err) {
+    console.error("Error /create-order:", err.response?.data || err.message || err);
+    return res.status(500).json({ error: "Failed creating Pesapal order", details: err.response?.data || err.message });
+  }
+});
+
+/**
+ * Pesapal will call this callback URL after payment.
+ * Pesapal may POST JSON or form data; log what you get.
+ * IMPORTANT: Use the callback to trigger a call to GetTransactionStatus to confirm payment.
+ */
+app.post('/pesapal/callback', async (req, res) => {
+  console.log("Pesapal callback received. Headers:", req.headers);
+  console.log("Pesapal callback body:", req.body);
+
+  // Pesapal usually sends an order tracking id or transaction id in the callback.
+  // The exact key may vary. Try to read common keys:
+  const body = req.body || {};
+  const orderTrackingId = body.OrderTrackingId || body.orderTrackingId || body.order_id || body.orderId || body.OrderId || null;
+
+  if (orderTrackingId) {
+    console.log("Detected orderTrackingId:", orderTrackingId);
+    // Optionally verify status immediately:
+    try {
+      const status = await verifyTransaction(orderTrackingId);
+      console.log("Verification result for", orderTrackingId, "=>", status);
+    } catch (err) {
+      console.error("Error verifying transaction from callback:", err.response?.data || err.message || err);
+    }
+  } else {
+    console.log("No recognizable orderTrackingId found in callback. Inspect payload for correct key.");
+  }
+
+  // respond 200 quickly to Pesapal
+  res.status(200).send("OK");
+});
+
+/**
+ * Public endpoint to verify transaction status manually.
+ * GET /verify/:orderTrackingId
+ */
+app.get('/verify/:orderTrackingId', async (req, res) => {
+  const orderTrackingId = req.params.orderTrackingId;
+  if (!orderTrackingId) return res.status(400).json({ error: "Missing orderTrackingId" });
+
+  try {
+    const status = await verifyTransaction(orderTrackingId);
+    return res.json({ orderTrackingId, status });
+  } catch (err) {
+    console.error("Error /verify:", err.response?.data || err.message || err);
+    return res.status(500).json({ error: "Failed to verify transaction", details: err.response?.data || err.message });
+  }
+});
+
+/**
+ * Helper: call Pesapal GetTransactionStatus
+ * Pesapal docs: /Transactions/GetTransactionStatus
+ * Some deployments require query param ?orderTrackingId=...
+ */
+async function verifyTransaction(orderTrackingId) {
+  const token = await getAccessToken();
+  const url = `${BASE_URL}/Transactions/GetTransactionStatus`;
+  // Pesapal may accept GET with query param or POST; we'll attempt GET with query param
+  try {
+    const resp = await axios.get(url, {
+      headers: { Authorization: `Bearer ${token}` },
+      params: { orderTrackingId } // query string
+    });
+
+    // resp.data should contain transaction details/status
+    return resp.data;
+  } catch (err) {
+    // If GET fails, attempt POST fallback (some doc variations)
+    try {
+      const fallback = await axios.post(url, { orderTrackingId }, {
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
+      });
+      return fallback.data;
+    } catch (err2) {
+      throw err2;
+    }
+  }
+}
+
+app.listen(PORT, () => {
+  console.log(`Pesapal card-only server listening on http://localhost:${PORT}`);
+});
+
+4) Quick README — how to run & test
+
+Copy the files above into a folder.
+
+Create .env from .env.example and fill in your Pesapal sandbox credentials:
+
+PESAPAL_CONSUMER_KEY=k9EjadZje6IwRXWeINaUsbgcSTSYKBkC
+PESAPAL_CONSUMER_SECRET=SYszBnJxaPht0NCWcROxpn4D7CU=
+PESAPAL_CALLBACK_URL=https://your-ngrok-or-domain/pesapal/callback
+PORT=3000
+
+
+Use ngrok (or similar) if testing locally so Pesapal can reach your callback URL:
+ngrok http 3000 → set PESAPAL_CALLBACK_URL to https://<ngrok-id>.ngrok.io/pesapal/callback
+
+Install and run:
+
+npm install
+npm start
+
+
+Create an order (example curl):
+
+curl -X POST http://localhost:3000/create-order \
+  -H "Content-Type: application/json" \
+  -d '{
+    "amount": 1500,
+    "currency": "KES",
+    "description": "Test card payment",
+    "customer": { "first_name": "Jane", "last_name": "Doe", "email": "jane@example.com", "phone_number":"2547XXXXXXXX" }
+  }'
+
+
+Response contains redirect_url. Open that URL in a browser and choose Card on Pesapal checkout; use Pesapal sandbox test cards per their docs.
+
+After payment, Pesapal should call your callback (/pesapal/callback). Also you can manually check:
+
+GET /verify/{OrderTrackingId}
+
+
+(use the tracking id you got from Pesapal or from the callback payload.)
+
+Notes & production checklist
+
+Switch to production base URL and production keys when going live. Production docs are on Pesapal developer portal.
+
+Store secrets in environment variables / secret manager. Do not commit .env.
+
+Confirm the exact callback payload keys from Pesapal sandbox (they may include OrderTrackingId, OrderId, etc.) and adapt extraction.
+
+Verify webhooks are signed (if Pesapal provides signatures) and validate them.
+
+Use HTTPS in production.
+
+Implement proper logging and persistent order/transaction storage (DB) for reconciliation.
+
+Confirm with Pesapal if payment_method: "CARD" is honored for your merchant — if not, present choice in frontend and instruct customers to pick card.

@@ -34,9 +34,14 @@ export async function getAccessToken(): Promise<string> {
       }
     );
 
-    cachedToken = response.data.token;
-    tokenExpiry = Date.now() + 4 * 60 * 1000; // 4 minutes
-    return cachedToken;
+    const token = response.data.token;
+    if (!token) {
+      throw new Error("No token returned from PesaPal");
+    }
+    
+    cachedToken = token;
+    tokenExpiry = Date.now() + 10 * 60 * 1000; // 10 minutes
+    return token;
   } catch (error: any) {
     console.error("PesaPal authentication error:", error.response?.data || error.message);
     throw new Error("Failed to authenticate with PesaPal");
@@ -65,24 +70,31 @@ export interface PesaPalOrderResponse {
 export async function createOrder(orderData: CreateOrderData): Promise<PesaPalOrderResponse> {
   const token = await getAccessToken();
 
+  const orderPayload = {
+    id: orderData.id,
+    currency: "KES", // Kenyan Shillings (PesaPal primary currency)
+    amount: orderData.amount,
+    description: orderData.description,
+    callback_url: orderData.callbackUrl,
+    notification_id: process.env.PESAPAL_IPN_ID || "",
+    payment_method: "CARD", // Card-only payments
+    billing_address: {
+      email_address: orderData.email,
+      phone_number: orderData.phone,
+      country_code: "KE",
+      first_name: orderData.firstName,
+      last_name: orderData.lastName,
+      line_1: "",
+      city: "",
+      state: "",
+      postal_code: "",
+    },
+  };
+
   try {
     const response = await axios.post(
       `${PESAPAL_BASE_URL}/Transactions/SubmitOrderRequest`,
-      {
-        id: orderData.id,
-        currency: "USD",
-        amount: orderData.amount,
-        description: orderData.description,
-        callback_url: orderData.callbackUrl,
-        notification_id: process.env.PESAPAL_IPN_ID || "",
-        billing_address: {
-          email_address: orderData.email,
-          phone_number: orderData.phone,
-          country_code: "",
-          first_name: orderData.firstName,
-          last_name: orderData.lastName,
-        },
-      },
+      orderPayload,
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -91,6 +103,13 @@ export async function createOrder(orderData: CreateOrderData): Promise<PesaPalOr
         },
       }
     );
+
+    // Check for redirect_url (can be redirect_url or RedirectURL)
+    const redirect_url = response.data?.redirect_url || response.data?.RedirectURL || null;
+    if (!redirect_url) {
+      console.warn("PesaPal response without redirect_url:", response.data);
+      throw new Error("No redirect URL returned from PesaPal");
+    }
 
     return response.data;
   } catch (error: any) {
