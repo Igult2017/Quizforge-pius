@@ -25,26 +25,26 @@ function Router() {
     );
   }
 
+  if (!isAuthenticated) {
+    return (
+      <Switch>
+        <Route path="/" component={Landing} />
+        <Route path="/pricing" component={Pricing} />
+        <Route path="/contact" component={Contact} />
+        <Route path="/:rest*" component={Landing} />
+      </Switch>
+    );
+  }
+
   return (
     <Switch>
-      {!isAuthenticated ? (
-        <>
-          <Route path="/" component={Landing} />
-          <Route path="/pricing" component={Pricing} />
-          <Route path="/contact" component={Contact} />
-          <Route path="/:rest*" component={Landing} />
-        </>
-      ) : (
-        <>
-          <Route path="/" component={Categories} />
-          <Route path="/categories" component={Categories} />
-          <Route path="/quiz" component={Quiz} />
-          <Route path="/results" component={Results} />
-          <Route path="/pricing" component={Pricing} />
-          <Route path="/contact" component={Contact} />
-          <Route path="/:rest*" component={NotFound} />
-        </>
-      )}
+      <Route path="/" component={Categories} />
+      <Route path="/categories" component={Categories} />
+      <Route path="/quiz" component={Quiz} />
+      <Route path="/results" component={Results} />
+      <Route path="/pricing" component={Pricing} />
+      <Route path="/contact" component={Contact} />
+      <Route path="/:rest*" component={NotFound} />
     </Switch>
   );
 }
