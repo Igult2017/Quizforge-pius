@@ -1,12 +1,68 @@
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, BookOpen, TrendingUp, Award, ArrowRight, Check } from "lucide-react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
+import { Header } from "@/components/Header";
+import { useUserData } from "@/hooks/useUserData";
 
 export default function Landing() {
+  const [, setLocation] = useLocation();
+  const { isAuthenticated, hasActiveSubscription, hasUsedFreeTrial, subscription } = useUserData();
+
+  const handleFreeTrial = () => {
+    if (isAuthenticated) {
+      setLocation("/categories");
+    } else {
+      setLocation("/signup");
+    }
+  };
+
+  const handlePaidPlan = (plan: string) => {
+    if (isAuthenticated && hasActiveSubscription) {
+      setLocation("/categories");
+    } else {
+      setLocation(`/checkout?plan=${plan.toLowerCase()}`);
+    }
+  };
+
+  const getButtonText = (planType: "free" | "paid", planName: string) => {
+    if (!isAuthenticated) {
+      return planType === "free" ? "Start Free Trial" : "Subscribe";
+    }
+    
+    if (hasActiveSubscription) {
+      const isCurrentPlan = subscription?.plan === planName.toLowerCase();
+      return isCurrentPlan ? "Current Plan" : "Go to Practice";
+    }
+    
+    if (hasUsedFreeTrial && planType === "free") {
+      return "Trial Used";
+    }
+    
+    return planType === "free" ? "Start Practice" : "Subscribe";
+  };
+
+  const isButtonDisabled = (planType: "free" | "paid", planName: string) => {
+    if (!isAuthenticated) return false;
+    
+    if (hasActiveSubscription) {
+      return subscription?.plan === planName.toLowerCase();
+    }
+    
+    if (hasUsedFreeTrial && planType === "free") {
+      return true;
+    }
+    
+    return false;
+  };
+
   return (
     <div className="min-h-screen bg-background">
+      <Header 
+        onSignIn={() => setLocation("/login")}
+        onGetStarted={() => setLocation("/signup")}
+      />
       {/* Hero Section with Blue Background */}
       <section className="relative bg-gradient-to-br from-blue-600 to-blue-800 text-white py-20 px-4 overflow-hidden">
         {/* Decorative circles */}
@@ -137,11 +193,24 @@ export default function Landing() {
                     </li>
                   </ul>
                 </CardContent>
+                <CardFooter>
+                  <Button 
+                    variant="outline" 
+                    className="w-full"
+                    onClick={handleFreeTrial}
+                    disabled={isButtonDisabled("free", "free")}
+                    data-testid="button-landing-free-trial"
+                  >
+                    {getButtonText("free", "free")}
+                  </Button>
+                </CardFooter>
               </Card>
 
-              <Card className="border-primary">
+              <Card className="border-primary border-2">
                 <CardHeader>
-                  <Badge className="mb-2 w-fit">Most Popular</Badge>
+                  <Badge className="mb-2 w-fit">
+                    {hasActiveSubscription && subscription?.plan === "monthly" ? "Current Plan" : "Most Popular"}
+                  </Badge>
                   <CardTitle>Monthly Plan</CardTitle>
                   <CardDescription className="text-2xl font-bold mt-2">$15/month</CardDescription>
                 </CardHeader>
@@ -161,10 +230,23 @@ export default function Landing() {
                     </li>
                   </ul>
                 </CardContent>
+                <CardFooter>
+                  <Button 
+                    className="w-full"
+                    onClick={() => handlePaidPlan("Monthly")}
+                    disabled={isButtonDisabled("paid", "monthly")}
+                    data-testid="button-landing-monthly"
+                  >
+                    {getButtonText("paid", "Monthly")}
+                  </Button>
+                </CardFooter>
               </Card>
 
               <Card>
                 <CardHeader>
+                  {hasActiveSubscription && subscription?.plan === "weekly" && (
+                    <Badge className="mb-2 w-fit">Current Plan</Badge>
+                  )}
                   <CardTitle>Weekly Plan</CardTitle>
                   <CardDescription className="text-2xl font-bold mt-2">$5/week</CardDescription>
                 </CardHeader>
@@ -184,6 +266,17 @@ export default function Landing() {
                     </li>
                   </ul>
                 </CardContent>
+                <CardFooter>
+                  <Button 
+                    variant="outline" 
+                    className="w-full"
+                    onClick={() => handlePaidPlan("Weekly")}
+                    disabled={isButtonDisabled("paid", "weekly")}
+                    data-testid="button-landing-weekly"
+                  >
+                    {getButtonText("paid", "Weekly")}
+                  </Button>
+                </CardFooter>
               </Card>
             </div>
           </div>
