@@ -16,6 +16,7 @@ import Pricing from "@/pages/Pricing";
 import Contact from "@/pages/Contact";
 import Checkout from "@/pages/Checkout";
 import PostPaymentSignup from "@/pages/PostPaymentSignup";
+import Admin from "@/pages/Admin";
 import { Loader2 } from "lucide-react";
 
 function Router() {
@@ -52,6 +53,7 @@ function Router() {
       <Route path="/results" component={Results} />
       <Route path="/pricing" component={Pricing} />
       <Route path="/contact" component={Contact} />
+      <Route path="/admin" component={Admin} />
       <Route path="/:rest*" component={NotFound} />
     </Switch>
   );

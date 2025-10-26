@@ -8,6 +8,7 @@ import { z } from "zod";
 import { insertQuestionSchema, insertQuizAttemptSchema, insertQuizAnswerSchema, insertPaymentSchema } from "@shared/schema";
 import { createOrder, getTransactionStatus } from "./pesapal";
 import { nanoid } from "nanoid";
+import { isAdmin } from "./adminMiddleware";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication
@@ -377,18 +378,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
+      // Check admin-granted access (overrides subscription/trial)
+      const hasAdminAccess = user.adminGrantedAccess && 
+        (!user.adminAccessExpiresAt || new Date(user.adminAccessExpiresAt) > new Date());
+      
       // Check subscription status and free trial
       const subscription = await storage.getActiveSubscription(userId);
       const hasUsedFreeTrial = user.hasUsedFreeTrial;
       
-      // Determine question count: 30 for free trial, 50 for subscribed
+      // Determine question count: 30 for free trial, 50 for subscribed or admin access
       let questionCount = 50;
       let isFreeTrialAttempt = false;
       
-      if (!subscription) {
-        // No active subscription
+      if (!subscription && !hasAdminAccess) {
+        // No active subscription or admin access
         if (hasUsedFreeTrial) {
-          // User has used free trial and has no subscription
+          // User has used free trial and has no subscription or admin access
           return res.status(403).json({ 
             error: "Subscription required",
             message: "Your free trial has been used. Please subscribe to continue practicing."
@@ -654,7 +659,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Generate questions with DeepSeek AI (admin only)
-  app.post("/api/admin/questions/generate", async (req, res) => {
+  app.post("/api/admin/questions/generate", isAuthenticated, isAdmin, async (req, res) => {
     try {
       const { category, count, subject, difficulty } = req.body;
 
@@ -691,6 +696,165 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("Error generating questions:", error);
       res.status(500).json({ error: error.message || "Failed to generate questions" });
+    }
+  });
+
+  // ============= ADMIN ROUTES =============
+  
+  // Get all users (admin only)
+  app.get("/api/admin/users", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const users = await storage.getAllUsers();
+      
+      // Enrich with subscription info
+      const enrichedUsers = await Promise.all(
+        users.map(async (user) => {
+          const subscription = await storage.getActiveSubscription(user.id);
+          return {
+            ...user,
+            subscription: subscription || null,
+            hasActiveSubscription: !!subscription,
+          };
+        })
+      );
+      
+      res.json(enrichedUsers);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      res.status(500).json({ error: "Failed to fetch users" });
+    }
+  });
+
+  // Grant/revoke admin access to user
+  app.post("/api/admin/users/:userId/grant-access", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { userId } = req.params;
+      const { durationDays } = req.body; // Optional: number of days or null for permanent
+
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      let expiresAt = null;
+      if (durationDays) {
+        expiresAt = new Date();
+        expiresAt.setDate(expiresAt.getDate() + durationDays);
+      }
+
+      await storage.grantAdminAccess(userId, expiresAt);
+      
+      res.json({
+        success: true,
+        message: `Access granted to ${user.email}${durationDays ? ` for ${durationDays} days` : ' (permanent)'}`,
+      });
+    } catch (error) {
+      console.error("Error granting access:", error);
+      res.status(500).json({ error: "Failed to grant access" });
+    }
+  });
+
+  // Revoke admin access
+  app.post("/api/admin/users/:userId/revoke-access", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { userId } = req.params;
+
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      await storage.revokeAdminAccess(userId);
+      
+      res.json({
+        success: true,
+        message: `Access revoked for ${user.email}`,
+      });
+    } catch (error) {
+      console.error("Error revoking access:", error);
+      res.status(500).json({ error: "Failed to revoke access" });
+    }
+  });
+
+  // End user subscription
+  app.post("/api/admin/users/:userId/end-subscription", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { userId } = req.params;
+
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      const subscription = await storage.getActiveSubscription(userId);
+      if (!subscription) {
+        return res.status(400).json({ error: "User has no active subscription" });
+      }
+
+      await storage.updateSubscriptionStatus(subscription.id, "cancelled");
+      
+      res.json({
+        success: true,
+        message: `Subscription ended for ${user.email}`,
+      });
+    } catch (error) {
+      console.error("Error ending subscription:", error);
+      res.status(500).json({ error: "Failed to end subscription" });
+    }
+  });
+
+  // Send email to all users (marketing)
+  app.post("/api/admin/email/broadcast", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { subject, message } = req.body;
+
+      if (!subject || !message) {
+        return res.status(400).json({ error: "Subject and message are required" });
+      }
+
+      const users = await storage.getAllUsers();
+      const emails = users.filter(u => u.email).map(u => u.email!);
+
+      // TODO: Integrate with email service (SendGrid, AWS SES, etc.)
+      // For now, return success with email count
+      console.log(`Broadcasting email to ${emails.length} users:`, { subject, message });
+      
+      res.json({
+        success: true,
+        message: `Email will be sent to ${emails.length} users`,
+        recipientCount: emails.length,
+        // In production, implement actual email sending here
+      });
+    } catch (error) {
+      console.error("Error broadcasting email:", error);
+      res.status(500).json({ error: "Failed to send broadcast email" });
+    }
+  });
+
+  // Send email to specific user
+  app.post("/api/admin/email/send", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { userId, subject, message } = req.body;
+
+      if (!userId || !subject || !message) {
+        return res.status(400).json({ error: "userId, subject, and message are required" });
+      }
+
+      const user = await storage.getUser(userId);
+      if (!user || !user.email) {
+        return res.status(404).json({ error: "User not found or has no email" });
+      }
+
+      // TODO: Integrate with email service (SendGrid, AWS SES, etc.)
+      console.log(`Sending email to ${user.email}:`, { subject, message });
+      
+      res.json({
+        success: true,
+        message: `Email sent to ${user.email}`,
+      });
+    } catch (error) {
+      console.error("Error sending email:", error);
+      res.status(500).json({ error: "Failed to send email" });
     }
   });
 

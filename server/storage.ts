@@ -39,6 +39,11 @@ export interface IStorage {
   // Users (legacy methods)
   getUserByEmail(email: string): Promise<User | undefined>;
   markFreeTrialAsUsed(userId: string): Promise<void>;
+  
+  // Admin user management
+  getAllUsers(): Promise<User[]>;
+  grantAdminAccess(userId: string, expiresAt: Date | null): Promise<void>;
+  revokeAdminAccess(userId: string): Promise<void>;
 
   // Subscriptions
   createSubscription(subscription: InsertSubscription): Promise<Subscription>;
@@ -104,6 +109,33 @@ export class PostgresStorage implements IStorage {
     await db
       .update(users)
       .set({ hasUsedFreeTrial: true, updatedAt: new Date() })
+      .where(eq(users.id, userId));
+  }
+
+  // Admin user management
+  async getAllUsers(): Promise<User[]> {
+    return await db.select().from(users).orderBy(users.createdAt);
+  }
+
+  async grantAdminAccess(userId: string, expiresAt: Date | null): Promise<void> {
+    await db
+      .update(users)
+      .set({ 
+        adminGrantedAccess: true, 
+        adminAccessExpiresAt: expiresAt,
+        updatedAt: new Date() 
+      })
+      .where(eq(users.id, userId));
+  }
+
+  async revokeAdminAccess(userId: string): Promise<void> {
+    await db
+      .update(users)
+      .set({ 
+        adminGrantedAccess: false, 
+        adminAccessExpiresAt: null,
+        updatedAt: new Date() 
+      })
       .where(eq(users.id, userId));
   }
 
