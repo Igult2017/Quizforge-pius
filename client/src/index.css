@@ -77,7 +77,7 @@
   --chart-5: 180 65% 45%;
 
   --font-sans: Inter, sans-serif;
-  --font-serif: Lora, Georgia, serif;
+  --font-heading: Oswald, sans-serif;
   --font-mono: JetBrains Mono, monospace;
   --radius: .5rem; /* 8px */
   --shadow-2xs: 0px 1px 2px 0px hsl(215 25% 15% / 0.04);
@@ -238,7 +238,17 @@
   }
 
   body {
-    @apply font-serif antialiased bg-background text-foreground;
+    @apply font-sans antialiased bg-background text-foreground;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
+    font-weight: 600;
+    letter-spacing: 0.01em;
+  }
+
+  h1 {
+    font-weight: 700;
   }
 }
 
