@@ -32,7 +32,7 @@ function Router() {
           <Route path="/" component={Landing} />
           <Route path="/pricing" component={Pricing} />
           <Route path="/contact" component={Contact} />
-          <Route component={Landing} />
+          <Route path="/:rest*" component={Landing} />
         </>
       ) : (
         <>
@@ -42,7 +42,7 @@ function Router() {
           <Route path="/results" component={Results} />
           <Route path="/pricing" component={Pricing} />
           <Route path="/contact" component={Contact} />
-          <Route component={NotFound} />
+          <Route path="/:rest*" component={NotFound} />
         </>
       )}
     </Switch>
