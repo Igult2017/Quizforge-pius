@@ -8,6 +8,7 @@ import {
   quizAttempts,
   quizAnswers,
   type User,
+  type UpsertUser,
   type InsertUser,
   type Subscription,
   type InsertSubscription,
@@ -28,14 +29,17 @@ const client = neon(dbUrl);
 const db = drizzle(client);
 
 export interface IStorage {
-  // Users
-  createUser(user: Omit<InsertUser, 'createdAt'>): Promise<User>;
+  // Users (Replit Auth required methods)
+  getUser(id: string): Promise<User | undefined>;
+  upsertUser(user: UpsertUser): Promise<User>;
+  
+  // Users (legacy methods)
   getUserByEmail(email: string): Promise<User | undefined>;
-  getUserById(id: number): Promise<User | undefined>;
+  markFreeTrialAsUsed(userId: string): Promise<void>;
 
   // Subscriptions
   createSubscription(subscription: InsertSubscription): Promise<Subscription>;
-  getActiveSubscription(userId: number): Promise<Subscription | undefined>;
+  getActiveSubscription(userId: string): Promise<Subscription | undefined>;
   updateSubscriptionStatus(id: number, status: string): Promise<void>;
 
   // Questions
@@ -50,7 +54,7 @@ export interface IStorage {
   createQuizAttemptWithAnswers(attempt: InsertQuizAttempt, questionIds: number[]): Promise<QuizAttempt>;
   getQuizAttempt(id: number): Promise<QuizAttempt | undefined>;
   updateQuizAttempt(id: number, data: Partial<QuizAttempt>): Promise<void>;
-  getUserQuizAttempts(userId: number): Promise<QuizAttempt[]>;
+  getUserQuizAttempts(userId: string): Promise<QuizAttempt[]>;
 
   // Quiz Answers
   saveQuizAnswer(answer: InsertQuizAnswer): Promise<QuizAnswer>;
@@ -59,20 +63,38 @@ export interface IStorage {
 }
 
 export class PostgresStorage implements IStorage {
-  // Users
-  async createUser(user: Omit<InsertUser, 'createdAt'>): Promise<User> {
-    const [newUser] = await db.insert(users).values(user).returning();
-    return newUser;
+  // Users (Replit Auth required methods)
+  async getUser(id: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
+  }
+
+  async upsertUser(userData: UpsertUser): Promise<User> {
+    const [user] = await db
+      .insert(users)
+      .values(userData)
+      .onConflictDoUpdate({
+        target: users.id,
+        set: {
+          ...userData,
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+    return user;
   }
 
   async getUserByEmail(email: string): Promise<User | undefined> {
+    if (!email) return undefined;
     const [user] = await db.select().from(users).where(eq(users.email, email));
     return user;
   }
 
-  async getUserById(id: number): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.id, id));
-    return user;
+  async markFreeTrialAsUsed(userId: string): Promise<void> {
+    await db
+      .update(users)
+      .set({ hasUsedFreeTrial: true, updatedAt: new Date() })
+      .where(eq(users.id, userId));
   }
 
   // Subscriptions
@@ -81,7 +103,7 @@ export class PostgresStorage implements IStorage {
     return newSub;
   }
 
-  async getActiveSubscription(userId: number): Promise<Subscription | undefined> {
+  async getActiveSubscription(userId: string): Promise<Subscription | undefined> {
     const [subscription] = await db
       .select()
       .from(subscriptions)
@@ -181,7 +203,7 @@ export class PostgresStorage implements IStorage {
       .where(eq(quizAttempts.id, id));
   }
 
-  async getUserQuizAttempts(userId: number): Promise<QuizAttempt[]> {
+  async getUserQuizAttempts(userId: string): Promise<QuizAttempt[]> {
     return await db
       .select()
       .from(quizAttempts)

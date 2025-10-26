@@ -4,24 +4,47 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { useAuth } from "@/hooks/useAuth";
 import NotFound from "@/pages/not-found";
-import Home from "@/pages/Home";
+import Landing from "@/pages/Landing";
 import Categories from "@/pages/Categories";
 import Quiz from "@/pages/Quiz";
 import Results from "@/pages/Results";
 import Pricing from "@/pages/Pricing";
 import Contact from "@/pages/Contact";
+import { Loader2 } from "lucide-react";
 
 function Router() {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" data-testid="loader-auth" />
+      </div>
+    );
+  }
+
   return (
     <Switch>
-      <Route path="/" component={Home} />
-      <Route path="/categories" component={Categories} />
-      <Route path="/quiz" component={Quiz} />
-      <Route path="/results" component={Results} />
-      <Route path="/pricing" component={Pricing} />
-      <Route path="/contact" component={Contact} />
-      <Route component={NotFound} />
+      {!isAuthenticated ? (
+        <>
+          <Route path="/" component={Landing} />
+          <Route path="/pricing" component={Pricing} />
+          <Route path="/contact" component={Contact} />
+          <Route component={Landing} />
+        </>
+      ) : (
+        <>
+          <Route path="/" component={Categories} />
+          <Route path="/categories" component={Categories} />
+          <Route path="/quiz" component={Quiz} />
+          <Route path="/results" component={Results} />
+          <Route path="/pricing" component={Pricing} />
+          <Route path="/contact" component={Contact} />
+          <Route component={NotFound} />
+        </>
+      )}
     </Switch>
   );
 }

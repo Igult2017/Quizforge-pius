@@ -6,8 +6,12 @@ import { Badge } from "@/components/ui/badge";
 import { useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Loader2 } from "lucide-react";
+import { Loader2, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import { isUnauthorizedError } from "@/lib/authUtils";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button as UIButton } from "@/components/ui/button";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -33,11 +37,13 @@ interface QuizAttempt {
 export default function Quiz() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<(string | null)[]>([]);
   const [showSubmitDialog, setShowSubmitDialog] = useState(false);
   const [attemptId, setAttemptId] = useState<number | null>(null);
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
+  const [subscriptionError, setSubscriptionError] = useState<string | null>(null);
 
   // Get category from URL params or default to NCLEX
   const category = new URLSearchParams(window.location.search).get("category") || "NCLEX";
@@ -47,7 +53,6 @@ export default function Quiz() {
     mutationFn: async () => {
       const res = await apiRequest("POST", "/api/quiz/start", {
         category,
-        userId: 1, // TODO: Get from auth context
       });
       return await res.json() as QuizAttempt;
     },
@@ -55,6 +60,21 @@ export default function Quiz() {
       setAttemptId(data.attemptId);
       setQuestions(data.questions);
       setAnswers(Array(data.questions.length).fill(null));
+      setSubscriptionError(null);
+    },
+    onError: (error: Error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+      } else if (error.message.includes("Subscription required")) {
+        setSubscriptionError("Your free trial has been used. Please subscribe to continue practicing.");
+      }
     },
   });
 

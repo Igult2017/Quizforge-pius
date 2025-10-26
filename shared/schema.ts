@@ -1,17 +1,34 @@
-import { pgTable, text, serial, integer, boolean, timestamp, jsonb } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
+import { pgTable, text, serial, integer, boolean, timestamp, jsonb, varchar, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+// Session storage table (required by Replit Auth)
+export const sessions = pgTable(
+  "sessions",
+  {
+    sid: varchar("sid").primaryKey(),
+    sess: jsonb("sess").notNull(),
+    expire: timestamp("expire").notNull(),
+  },
+  (table) => [index("IDX_session_expire").on(table.expire)],
+);
+
+// User storage table (updated for Replit Auth)
 export const users = pgTable("users", {
-  id: serial("id").primaryKey(),
-  email: text("email").notNull(),
-  name: text("name").notNull(),
+  id: varchar("id").primaryKey(),
+  email: varchar("email").unique(),
+  firstName: varchar("first_name"),
+  lastName: varchar("last_name"),
+  profileImageUrl: varchar("profile_image_url"),
+  hasUsedFreeTrial: boolean("has_used_free_trial").default(false).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 export const subscriptions = pgTable("subscriptions", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => users.id),
+  userId: varchar("user_id").notNull().references(() => users.id),
   plan: text("plan").notNull(), // "weekly", "monthly", "3-month"
   status: text("status").notNull(), // "active", "cancelled", "expired"
   startDate: timestamp("start_date").notNull(),
@@ -33,11 +50,12 @@ export const questions = pgTable("questions", {
 
 export const quizAttempts = pgTable("quiz_attempts", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => users.id),
+  userId: varchar("user_id").notNull().references(() => users.id),
   category: text("category").notNull(),
   status: text("status").notNull(), // "in_progress", "completed"
   score: integer("score"),
   totalQuestions: integer("total_questions").notNull(),
+  isFreeTrialAttempt: boolean("is_free_trial_attempt").default(false).notNull(),
   startedAt: timestamp("started_at").defaultNow().notNull(),
   completedAt: timestamp("completed_at"),
 });
@@ -51,10 +69,20 @@ export const quizAnswers = pgTable("quiz_answers", {
   answeredAt: timestamp("answered_at"),
 });
 
+// Upsert user type (for Replit Auth)
+export type UpsertUser = {
+  id: string;
+  email: string | null;
+  firstName: string | null;
+  lastName: string | null;
+  profileImageUrl: string | null;
+};
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({
-  id: true,
   createdAt: true,
+  updatedAt: true,
+  hasUsedFreeTrial: true,
 });
 
 export const insertSubscriptionSchema = createInsertSchema(subscriptions).omit({
@@ -70,6 +98,7 @@ export const insertQuestionSchema = createInsertSchema(questions).omit({
 export const insertQuizAttemptSchema = createInsertSchema(quizAttempts).omit({
   id: true,
   startedAt: true,
+  isFreeTrialAttempt: true,
 });
 
 export const insertQuizAnswerSchema = createInsertSchema(quizAnswers).omit({

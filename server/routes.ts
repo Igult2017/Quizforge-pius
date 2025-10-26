@@ -1,54 +1,93 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { setupAuth, isAuthenticated } from "./replitAuth";
 import { generateQuestions } from "./deepseek";
 import { z } from "zod";
 import { insertQuestionSchema, insertQuizAttemptSchema, insertQuizAnswerSchema } from "@shared/schema";
 
-export function registerRoutes(app: Express): Server {
+export async function registerRoutes(app: Express): Promise<Server> {
+  // Setup authentication
+  await setupAuth(app);
+
+  // Auth routes
+  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      res.json(user);
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      res.status(500).json({ message: "Failed to fetch user" });
+    }
+  });
+
   const server = createServer(app);
+  
   // ============= QUIZ ROUTES =============
   
-  // Start a new quiz - returns 50 random questions
-  app.post("/api/quiz/start", async (req, res) => {
+  // Start a new quiz - protected route with free trial logic
+  app.post("/api/quiz/start", isAuthenticated, async (req: any, res) => {
     try {
-      const { category, userId } = req.body;
+      const { category } = req.body;
+      const userId = req.user.claims.sub;
       
-      if (!category || !userId) {
-        return res.status(400).json({ error: "Category and userId are required" });
+      if (!category) {
+        return res.status(400).json({ error: "Category is required" });
       }
 
-      // Check if user exists, create if not (temporary for MVP - will integrate auth later)
-      let user = await storage.getUserById(Number(userId));
+      // Get user
+      const user = await storage.getUser(userId);
       if (!user) {
-        user = await storage.createUser({
-          email: `user${userId}@nurseprep.com`,
-          name: `User ${userId}`,
-        });
+        return res.status(404).json({ error: "User not found" });
       }
 
-      // Get 50 random questions
-      const questions = await storage.getRandomQuestions(category, 50);
+      // Check subscription status and free trial
+      const subscription = await storage.getActiveSubscription(userId);
+      const hasUsedFreeTrial = user.hasUsedFreeTrial;
+      
+      // Determine question count: 30 for free trial, 50 for subscribed
+      let questionCount = 50;
+      let isFreeTrialAttempt = false;
+      
+      if (!subscription) {
+        // No active subscription
+        if (hasUsedFreeTrial) {
+          // User has used free trial and has no subscription
+          return res.status(403).json({ 
+            error: "Subscription required",
+            message: "Your free trial has been used. Please subscribe to continue practicing."
+          });
+        } else {
+          // First time user - give free trial with 30 questions
+          questionCount = 30;
+          isFreeTrialAttempt = true;
+        }
+      }
+
+      // Get random questions
+      const questions = await storage.getRandomQuestions(category, questionCount);
       
       if (questions.length === 0) {
         return res.status(404).json({ error: "No questions available for this category" });
       }
 
-      // Create quiz attempt with transaction-like behavior
+      // Create quiz attempt
       const attempt = await storage.createQuizAttemptWithAnswers({
         userId: user.id,
         category,
         status: "in_progress",
         totalQuestions: questions.length,
+        isFreeTrialAttempt,
       }, questions.map(q => q.id));
 
       res.json({
         attemptId: attempt.id,
+        isFreeTrialAttempt,
         questions: questions.map(q => ({
           id: q.id,
           question: q.question,
           options: q.options,
-          // Don't send correct answer or explanation yet
         })),
       });
     } catch (error: any) {
@@ -57,8 +96,8 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // Save an answer
-  app.post("/api/quiz/:attemptId/answer", async (req, res) => {
+  // Save an answer - protected
+  app.post("/api/quiz/:attemptId/answer", isAuthenticated, async (req: any, res) => {
     try {
       const { attemptId } = req.params;
       const { questionId, userAnswer } = req.body;
@@ -98,10 +137,17 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // Submit quiz and get results
-  app.post("/api/quiz/:attemptId/submit", async (req, res) => {
+  // Submit quiz and get results - protected
+  app.post("/api/quiz/:attemptId/submit", isAuthenticated, async (req: any, res) => {
     try {
       const { attemptId } = req.params;
+      const userId = req.user.claims.sub;
+
+      // Get quiz attempt
+      const attempt = await storage.getQuizAttempt(Number(attemptId));
+      if (!attempt) {
+        return res.status(404).json({ error: "Quiz attempt not found" });
+      }
 
       // Get all answers
       const answers = await storage.getQuizAnswers(Number(attemptId));
@@ -116,6 +162,11 @@ export function registerRoutes(app: Express): Server {
         completedAt: new Date(),
       });
 
+      // If this was a free trial attempt, mark the free trial as used
+      if (attempt.isFreeTrialAttempt) {
+        await storage.markFreeTrialAsUsed(userId);
+      }
+
       res.json({
         success: true,
         score: correctCount,
@@ -127,8 +178,8 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // Get detailed quiz results
-  app.get("/api/quiz/:attemptId/results", async (req, res) => {
+  // Get detailed quiz results - protected
+  app.get("/api/quiz/:attemptId/results", isAuthenticated, async (req: any, res) => {
     try {
       const { attemptId } = req.params;
 
