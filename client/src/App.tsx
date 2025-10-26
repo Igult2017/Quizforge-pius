@@ -14,6 +14,7 @@ import Quiz from "@/pages/Quiz";
 import Results from "@/pages/Results";
 import Pricing from "@/pages/Pricing";
 import Contact from "@/pages/Contact";
+import Checkout from "@/pages/Checkout";
 import { Loader2 } from "lucide-react";
 
 function Router() {
@@ -33,6 +34,7 @@ function Router() {
         <Route path="/" component={Landing} />
         <Route path="/login" component={Login} />
         <Route path="/signup" component={Signup} />
+        <Route path="/checkout" component={Checkout} />
         <Route path="/pricing" component={Pricing} />
         <Route path="/contact" component={Contact} />
         <Route path="/:rest*" component={Landing} />

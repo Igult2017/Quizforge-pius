@@ -11,7 +11,7 @@ export default function Pricing() {
   };
 
   const handlePaidPlan = (plan: string) => {
-    console.log(`${plan} plan selected - will redirect to payment`);
+    setLocation(`/checkout?plan=${plan.toLowerCase()}`);
   };
 
   return (
