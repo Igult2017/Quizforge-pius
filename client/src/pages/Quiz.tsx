@@ -63,7 +63,10 @@ export default function Quiz() {
       setSubscriptionError(null);
     },
     onError: (error: Error) => {
-      if (isUnauthorizedError(error)) {
+      // Check for subscription error first (403 status)
+      if (error.message.includes("403:") || error.message.includes("Subscription required")) {
+        setSubscriptionError("Your free trial has been used. Please subscribe to continue practicing.");
+      } else if (isUnauthorizedError(error)) {
         toast({
           title: "Unauthorized",
           description: "You are logged out. Logging in again...",
@@ -72,8 +75,6 @@ export default function Quiz() {
         setTimeout(() => {
           window.location.href = "/api/login";
         }, 500);
-      } else if (error.message.includes("Subscription required")) {
-        setSubscriptionError("Your free trial has been used. Please subscribe to continue practicing.");
       }
     },
   });
@@ -166,6 +167,41 @@ export default function Quiz() {
           <div className="text-center">
             <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4 text-primary" data-testid="loader-quiz-start" />
             <p className="text-muted-foreground">Loading your quiz...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Subscription error state
+  if (subscriptionError) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header isAuthenticated={true} userName="Student" planType="Free Trial Used" />
+        <div className="flex items-center justify-center h-[calc(100vh-200px)]">
+          <div className="max-w-md">
+            <Alert data-testid="alert-subscription-required">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Subscription Required</AlertTitle>
+              <AlertDescription className="mt-2">
+                {subscriptionError}
+              </AlertDescription>
+            </Alert>
+            <div className="mt-6 flex gap-3 justify-center">
+              <UIButton
+                onClick={() => setLocation("/pricing")}
+                data-testid="button-view-pricing"
+              >
+                View Pricing
+              </UIButton>
+              <UIButton
+                variant="outline"
+                onClick={() => setLocation("/categories")}
+                data-testid="button-back-categories"
+              >
+                Back to Categories
+              </UIButton>
+            </div>
           </div>
         </div>
       </div>
