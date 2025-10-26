@@ -22,7 +22,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
+      let user = await storage.getUser(userId);
+      
+      // Auto-create user if authenticated but not in database
+      if (!user) {
+        user = await storage.upsertUser({
+          id: userId,
+          email: req.user.claims.email || null,
+          firstName: req.user.claims.first_name || null,
+          lastName: req.user.claims.last_name || null,
+          profileImageUrl: null,
+        });
+      }
+      
       res.json(user);
     } catch (error) {
       console.error("Error fetching user:", error);
@@ -344,10 +356,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Category is required" });
       }
 
-      // Get user
-      const user = await storage.getUser(userId);
+      // Get or create user (auto-create if first time via Firebase Auth)
+      let user = await storage.getUser(userId);
       if (!user) {
-        return res.status(404).json({ error: "User not found" });
+        // User authenticated via Firebase but doesn't exist in DB yet
+        // Create them automatically with info from token
+        user = await storage.upsertUser({
+          id: userId,
+          email: req.user.claims.email || null,
+          firstName: req.user.claims.first_name || null,
+          lastName: req.user.claims.last_name || null,
+          profileImageUrl: null,
+        });
       }
 
       // Check subscription status and free trial
@@ -374,9 +394,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Get random questions (up to the requested count)
+      console.log(`Quiz request - Category: "${category}", Count: ${questionCount}, User: ${userId}`);
       const questions = await storage.getRandomQuestions(category, questionCount);
+      console.log(`Questions found: ${questions.length} for category "${category}"`);
       
       if (questions.length === 0) {
+        console.error(`No questions available for category "${category}"`);
         return res.status(404).json({ 
           error: "No questions available for this category",
           message: "This category doesn't have any questions yet. Please try another category or contact support."
