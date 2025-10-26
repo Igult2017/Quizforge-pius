@@ -5,6 +5,9 @@ import { CheckCircle2, BookOpen, TrendingUp, Award, ArrowRight, Check, Users, St
 import { Link, useLocation } from "wouter";
 import { Header } from "@/components/Header";
 import { useUserData } from "@/hooks/useUserData";
+import nurseImage1 from "@assets/stock_images/professional_nurse_h_3a5fecdd.jpg";
+import nurseImage2 from "@assets/stock_images/professional_nurse_h_9b50f451.jpg";
+import nurseImage3 from "@assets/stock_images/professional_nurse_h_6647a984.jpg";
 
 export default function Landing() {
   const [, setLocation] = useLocation();
@@ -63,57 +66,83 @@ export default function Landing() {
         onSignIn={() => setLocation("/login")}
         onGetStarted={() => setLocation("/signup")}
       />
-      {/* Hero Section with Blue Background */}
+      {/* Hero Section with Blue Background and Images */}
       <section className="relative bg-gradient-to-br from-blue-600 to-blue-800 text-white py-20 px-4 overflow-hidden">
         {/* Decorative circles */}
         <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/30 rounded-full blur-3xl"></div>
         <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-700/20 rounded-full blur-3xl"></div>
         
         <div className="container mx-auto max-w-6xl relative z-10">
-          <div className="max-w-3xl">
-            <h1 className="text-5xl md:text-6xl font-bold mb-6 leading-tight" data-testid="text-hero-title">
-              Pass Your Nursing Exams on the First Try
-            </h1>
-            <p className="text-xl md:text-2xl mb-8 text-blue-50">
-              10,000+ NCLEX, ATI TEAS, and HESI A2 practice questions with instant feedback 
-              and smart analytics to boost your scores.
-            </p>
-            
-            <div className="flex flex-wrap gap-4 mb-8">
-              <Link href="/signup">
-                <Button 
-                  size="lg" 
-                  className="bg-white text-blue-600 hover:bg-blue-50 text-lg px-8" 
-                  data-testid="button-start-trial"
-                >
-                  Start Free Trial
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-              </Link>
-              <Link href="/pricing">
-                <Button 
-                  size="lg" 
-                  variant="outline" 
-                  className="border-2 border-white text-white hover:bg-white/10 text-lg px-8 bg-transparent backdrop-blur-sm"
-                  data-testid="button-learn-more"
-                >
-                  Learn More
-                </Button>
-              </Link>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            {/* Left Column - Text Content */}
+            <div>
+              <h1 className="text-5xl md:text-6xl font-bold mb-6 leading-tight" data-testid="text-hero-title">
+                Pass Your Nursing Exams on the First Try
+              </h1>
+              <p className="text-xl md:text-2xl mb-8 text-blue-50">
+                10,000+ NCLEX, ATI TEAS, and HESI A2 practice questions with instant feedback 
+                and smart analytics to boost your scores.
+              </p>
+              
+              <div className="flex flex-wrap gap-4 mb-8">
+                <Link href="/signup">
+                  <Button 
+                    size="lg" 
+                    className="bg-white text-blue-600 hover:bg-blue-50 text-lg px-8" 
+                    data-testid="button-start-trial"
+                  >
+                    Start Free Trial
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </Button>
+                </Link>
+                <Link href="/pricing">
+                  <Button 
+                    size="lg" 
+                    variant="outline" 
+                    className="border-2 border-white text-white hover:bg-white/10 text-lg px-8 bg-transparent backdrop-blur-sm"
+                    data-testid="button-learn-more"
+                  >
+                    Learn More
+                  </Button>
+                </Link>
+              </div>
+
+              <div className="flex flex-wrap gap-6 text-sm md:text-base">
+                <div className="flex items-center gap-2">
+                  <Check className="h-5 w-5" />
+                  <span>No credit card required</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Check className="h-5 w-5" />
+                  <span>Cancel anytime</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Check className="h-5 w-5" />
+                  <span>30-question free trial</span>
+                </div>
+              </div>
             </div>
 
-            <div className="flex flex-wrap gap-6 text-sm md:text-base">
-              <div className="flex items-center gap-2">
-                <Check className="h-5 w-5" />
-                <span>No credit card required</span>
+            {/* Right Column - Nursing Images */}
+            <div className="hidden lg:grid grid-cols-2 gap-4">
+              <div className="space-y-4">
+                <img 
+                  src={nurseImage1} 
+                  alt="Professional nurse in healthcare setting" 
+                  className="rounded-md shadow-2xl w-full h-64 object-cover"
+                />
+                <img 
+                  src={nurseImage2} 
+                  alt="Nursing professional" 
+                  className="rounded-md shadow-2xl w-full h-48 object-cover"
+                />
               </div>
-              <div className="flex items-center gap-2">
-                <Check className="h-5 w-5" />
-                <span>Cancel anytime</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Check className="h-5 w-5" />
-                <span>30-question free trial</span>
+              <div className="pt-8">
+                <img 
+                  src={nurseImage3} 
+                  alt="Healthcare professional studying" 
+                  className="rounded-md shadow-2xl w-full h-80 object-cover"
+                />
               </div>
             </div>
           </div>
