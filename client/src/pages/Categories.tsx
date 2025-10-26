@@ -10,7 +10,7 @@ export default function Categories() {
 
   const handleStartPractice = (category: string) => {
     console.log(`Starting ${category} practice`);
-    setLocation("/quiz");
+    setLocation(`/quiz?category=${encodeURIComponent(category)}`);
   };
 
   return (
