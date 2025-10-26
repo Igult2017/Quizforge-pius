@@ -1,10 +1,17 @@
 import { Header } from "@/components/Header";
 import { PricingCard } from "@/components/PricingCard";
 import { CheckCircle2 } from "lucide-react";
+import { useLocation } from "wouter";
 
 export default function Pricing() {
-  const handleSelectPlan = (plan: string) => {
-    console.log(`${plan} plan selected`);
+  const [, setLocation] = useLocation();
+
+  const handleFreeTrial = () => {
+    setLocation("/signup");
+  };
+
+  const handlePaidPlan = (plan: string) => {
+    console.log(`${plan} plan selected - will redirect to payment`);
   };
 
   return (
@@ -42,18 +49,17 @@ export default function Pricing() {
 
         <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
           <PricingCard
-            title="Weekly Plan"
-            price="$5"
-            period="week"
-            description="Perfect for intensive exam prep"
+            title="Free Trial"
+            price="$0"
+            period="one-time"
+            description="Try before you subscribe"
             features={[
-              "Full access to all Nursing Test Banks",
-              "ATI TEAS, NCLEX, HESI A2 practice",
-              "Unlimited practice sessions",
-              "Progress tracking & analytics",
-              "24/7 expert support"
+              "30 practice questions",
+              "All question categories",
+              "Detailed explanations"
             ]}
-            onSelect={() => handleSelectPlan("Weekly")}
+            buttonText="Start Free Trial"
+            onSelect={handleFreeTrial}
           />
 
           <PricingCard
@@ -62,30 +68,28 @@ export default function Pricing() {
             period="month"
             description="Consistent study, most popular"
             features={[
-              "Everything in Weekly Plan",
-              "Priority customer support",
-              "Advanced study tools",
-              "Monthly performance insights",
-              "Access to exclusive webinars"
+              "Unlimited practice sessions",
+              "50 questions per session",
+              "All features included"
             ]}
             badge="Most Popular"
             highlighted={true}
-            onSelect={() => handleSelectPlan("Monthly")}
+            buttonText="Subscribe"
+            onSelect={() => handlePaidPlan("Monthly")}
           />
 
           <PricingCard
-            title="3-Month Plan"
-            price="$30"
-            period="3 months"
-            description="Biggest savings, complete mastery"
+            title="Weekly Plan"
+            price="$5"
+            period="week"
+            description="Perfect for intensive exam prep"
             features={[
-              "Everything in Monthly Plan",
-              "Premium customer support",
-              "Extended study materials",
-              "Quarterly performance insights",
-              "Access to all future updates"
+              "Unlimited practice sessions",
+              "50 questions per session",
+              "All features included"
             ]}
-            onSelect={() => handleSelectPlan("3-Month")}
+            buttonText="Subscribe"
+            onSelect={() => handlePaidPlan("Weekly")}
           />
         </div>
       </div>

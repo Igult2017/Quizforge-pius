@@ -12,6 +12,7 @@ interface PricingCardProps {
   badge?: string;
   highlighted?: boolean;
   onSelect: () => void;
+  buttonText?: string;
 }
 
 export function PricingCard({
@@ -23,6 +24,7 @@ export function PricingCard({
   badge,
   highlighted = false,
   onSelect,
+  buttonText,
 }: PricingCardProps) {
   return (
     <Card
@@ -61,7 +63,7 @@ export function PricingCard({
           onClick={onSelect}
           data-testid={`button-select-${title.toLowerCase().replace(/\s+/g, '-')}`}
         >
-          Choose {title}
+          {buttonText || `Choose ${title}`}
         </Button>
       </CardFooter>
     </Card>
