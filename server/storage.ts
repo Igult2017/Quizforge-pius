@@ -29,7 +29,7 @@ const db = drizzle(client);
 
 export interface IStorage {
   // Users
-  createUser(user: InsertUser): Promise<User>;
+  createUser(user: Omit<InsertUser, 'createdAt'>): Promise<User>;
   getUserByEmail(email: string): Promise<User | undefined>;
   getUserById(id: number): Promise<User | undefined>;
 
@@ -47,6 +47,7 @@ export interface IStorage {
 
   // Quiz Attempts
   createQuizAttempt(attempt: InsertQuizAttempt): Promise<QuizAttempt>;
+  createQuizAttemptWithAnswers(attempt: InsertQuizAttempt, questionIds: number[]): Promise<QuizAttempt>;
   getQuizAttempt(id: number): Promise<QuizAttempt | undefined>;
   updateQuizAttempt(id: number, data: Partial<QuizAttempt>): Promise<void>;
   getUserQuizAttempts(userId: number): Promise<QuizAttempt[]>;
@@ -59,7 +60,7 @@ export interface IStorage {
 
 export class PostgresStorage implements IStorage {
   // Users
-  async createUser(user: InsertUser): Promise<User> {
+  async createUser(user: Omit<InsertUser, 'createdAt'>): Promise<User> {
     const [newUser] = await db.insert(users).values(user).returning();
     return newUser;
   }
@@ -142,6 +143,26 @@ export class PostgresStorage implements IStorage {
   // Quiz Attempts
   async createQuizAttempt(attempt: InsertQuizAttempt): Promise<QuizAttempt> {
     const [newAttempt] = await db.insert(quizAttempts).values(attempt).returning();
+    return newAttempt;
+  }
+
+  async createQuizAttemptWithAnswers(attempt: InsertQuizAttempt, questionIds: number[]): Promise<QuizAttempt> {
+    // Create attempt
+    const [newAttempt] = await db.insert(quizAttempts).values(attempt).returning();
+
+    // Bulk create placeholder answers for all questions
+    if (questionIds.length > 0) {
+      const answers = questionIds.map(qId => ({
+        attemptId: newAttempt.id,
+        questionId: qId,
+        userAnswer: null,
+        isCorrect: null,
+        answeredAt: null,
+      }));
+      
+      await db.insert(quizAnswers).values(answers);
+    }
+
     return newAttempt;
   }
 

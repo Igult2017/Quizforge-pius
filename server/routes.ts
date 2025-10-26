@@ -1,9 +1,12 @@
 import type { Express } from "express";
+import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { generateQuestions } from "./deepseek";
 import { z } from "zod";
 import { insertQuestionSchema, insertQuizAttemptSchema, insertQuizAnswerSchema } from "@shared/schema";
 
-export function registerRoutes(app: Express) {
+export function registerRoutes(app: Express): Server {
+  const server = createServer(app);
   // ============= QUIZ ROUTES =============
   
   // Start a new quiz - returns 50 random questions
@@ -15,6 +18,15 @@ export function registerRoutes(app: Express) {
         return res.status(400).json({ error: "Category and userId are required" });
       }
 
+      // Check if user exists, create if not (temporary for MVP - will integrate auth later)
+      let user = await storage.getUserById(Number(userId));
+      if (!user) {
+        user = await storage.createUser({
+          email: `user${userId}@nurseprep.com`,
+          name: `User ${userId}`,
+        });
+      }
+
       // Get 50 random questions
       const questions = await storage.getRandomQuestions(category, 50);
       
@@ -22,24 +34,13 @@ export function registerRoutes(app: Express) {
         return res.status(404).json({ error: "No questions available for this category" });
       }
 
-      // Create quiz attempt
-      const attempt = await storage.createQuizAttempt({
-        userId: Number(userId),
+      // Create quiz attempt with transaction-like behavior
+      const attempt = await storage.createQuizAttemptWithAnswers({
+        userId: user.id,
         category,
         status: "in_progress",
         totalQuestions: questions.length,
-      });
-
-      // Create placeholder answers for all questions
-      for (const question of questions) {
-        await storage.saveQuizAnswer({
-          attemptId: attempt.id,
-          questionId: question.id,
-          userAnswer: null,
-          isCorrect: null,
-          answeredAt: null,
-        });
-      }
+      }, questions.map(q => q.id));
 
       res.json({
         attemptId: attempt.id,
@@ -246,4 +247,47 @@ export function registerRoutes(app: Express) {
       res.status(500).json({ error: "Failed to fetch stats" });
     }
   });
+
+  // Generate questions with DeepSeek AI (admin only)
+  app.post("/api/admin/questions/generate", async (req, res) => {
+    try {
+      const { category, count, subject, difficulty } = req.body;
+
+      if (!category || !count) {
+        return res.status(400).json({ error: "category and count are required" });
+      }
+
+      if (!["NCLEX", "TEAS", "HESI"].includes(category)) {
+        return res.status(400).json({ error: "category must be NCLEX, TEAS, or HESI" });
+      }
+
+      if (count < 1 || count > 100) {
+        return res.status(400).json({ error: "count must be between 1 and 100" });
+      }
+
+      console.log(`Generating ${count} ${category} questions...`);
+      
+      // Generate questions using DeepSeek
+      const generatedQuestions = await generateQuestions({
+        category,
+        count: Number(count),
+        subject,
+        difficulty,
+      });
+
+      // Save to database
+      const saved = await storage.createQuestions(generatedQuestions);
+
+      res.json({
+        success: true,
+        generated: saved.length,
+        questions: saved,
+      });
+    } catch (error: any) {
+      console.error("Error generating questions:", error);
+      res.status(500).json({ error: error.message || "Failed to generate questions" });
+    }
+  });
+
+  return server;
 }
