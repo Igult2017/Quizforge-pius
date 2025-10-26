@@ -1,0 +1,47 @@
+[
+  {
+    "category": "NCLEX",
+    "question": "A nurse is caring for a client who has been prescribed morphine sulfate for pain management. Which of the following assessments is the priority before administering the medication?",
+    "options": ["Check the client's blood pressure", "Assess the client's respiratory rate", "Evaluate the client's pain level", "Review the client's allergy history"],
+    "correctAnswer": "Assess the client's respiratory rate",
+    "explanation": "Respiratory rate is the priority assessment because morphine can cause respiratory depression, which is life-threatening.",
+    "difficulty": "medium",
+    "subject": "Pharmacology"
+  },
+  {
+    "category": "NCLEX",
+    "question": "Which lab value should be monitored for a patient on warfarin therapy?",
+    "options": ["Hemoglobin level", "INR (International Normalized Ratio)", "Serum creatinine", "Blood glucose"],
+    "correctAnswer": "INR (International Normalized Ratio)",
+    "explanation": "INR is monitored to assess warfarin effectiveness and prevent bleeding complications.",
+    "difficulty": "easy",
+    "subject": "Pharmacology"
+  },
+  {
+    "category": "NCLEX",
+    "question": "A patient with heart failure is taking furosemide (Lasix). Which of the following should the nurse monitor?",
+    "options": ["Calcium levels", "Potassium levels", "Sodium intake only", "Protein levels"],
+    "correctAnswer": "Potassium levels",
+    "explanation": "Furosemide is a loop diuretic that can cause potassium depletion.",
+    "difficulty": "medium",
+    "subject": "Pharmacology"
+  },
+  {
+    "category": "NCLEX",
+    "question": "A nurse is preparing to administer an intramuscular injection to an adult client. Which needle size is most appropriate?",
+    "options": ["18-gauge, 1 inch", "22-gauge, 1.5 inches", "25-gauge, 5/8 inch", "27-gauge, 1/2 inch"],
+    "correctAnswer": "22-gauge, 1.5 inches",
+    "explanation": "A 22-gauge, 1.5-inch needle is appropriate for IM injections in adults.",
+    "difficulty": "easy",
+    "subject": "Fundamentals"
+  },
+  {
+    "category": "NCLEX",
+    "question": "Which action should the nurse take first when a client experiences a seizure?",
+    "options": ["Insert an oral airway", "Protect the client from injury", "Administer oxygen", "Document the seizure activity"],
+    "correctAnswer": "Protect the client from injury",
+    "explanation": "The priority is to protect the client from injury during a seizure.",
+    "difficulty": "medium",
+    "subject": "Medical-Surgical"
+  }
+]
