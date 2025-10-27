@@ -867,12 +867,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const allQuizAttempts = await storage.getAllQuizAttempts();
 
       // Total revenue (completed payments)
-      const completedPayments = allPayments.filter(p => p.status === 'completed');
-      const totalRevenue = completedPayments.reduce((sum, p) => sum + p.amount, 0) / 100; // Convert from cents
+      const completedPayments = allPayments.filter((p: any) => p.status === 'completed');
+      const totalRevenue = completedPayments.reduce((sum: number, p: any) => sum + p.amount, 0) / 100; // Convert from cents
 
       // Active users (users with active subscriptions or admin access)
-      const activeUsers = users.filter(u => {
-        const hasActiveSubscription = allSubscriptions.some(s => 
+      const activeUsers = users.filter((u: any) => {
+        const hasActiveSubscription = allSubscriptions.some((s: any) => 
           s.userId === u.id && s.status === 'active'
         );
         return hasActiveSubscription || u.adminGrantedAccess;
@@ -880,10 +880,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Total quiz attempts
       const totalQuizAttempts = allQuizAttempts.length;
-      const completedQuizzes = allQuizAttempts.filter(q => q.status === 'completed').length;
+      const completedQuizzes = allQuizAttempts.filter((q: any) => q.status === 'completed').length;
 
       // Conversion rate (paid users / total users)
-      const paidUsers = new Set(completedPayments.map(p => p.userId).filter(Boolean)).size;
+      const paidUsers = new Set(completedPayments.map((p: any) => p.userId).filter(Boolean)).size;
       const conversionRate = users.length > 0 ? (paidUsers / users.length) * 100 : 0;
 
       // Revenue trend (last 7 days)
@@ -895,14 +895,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const revenueTrend = last7Days.map(date => {
         const dayRevenue = completedPayments
-          .filter(p => p.createdAt && p.createdAt.toISOString().split('T')[0] === date)
-          .reduce((sum, p) => sum + p.amount, 0) / 100;
+          .filter((p: any) => p.createdAt && p.createdAt.toISOString().split('T')[0] === date)
+          .reduce((sum: number, p: any) => sum + p.amount, 0) / 100;
         return { date, revenue: dayRevenue };
       });
 
       // User growth trend (last 7 days)
       const userTrend = last7Days.map(date => {
-        const dayUsers = users.filter(u => 
+        const dayUsers = users.filter((u: any) => 
           u.createdAt && u.createdAt.toISOString().split('T')[0] === date
         ).length;
         return { date, users: dayUsers };

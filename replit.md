@@ -34,6 +34,8 @@ Preferred communication style: Simple, everyday language.
 - Component co-location: UI components live in `client/src/components` with nested `ui/` folder for reusable primitives
 - Path aliases configured (`@/`, `@shared/`, `@assets/`) for clean imports
 - Form handling with `react-hook-form` and `@hookform/resolvers` for validation
+- Professional admin dashboard with sidebar navigation (shadcn sidebar components)
+- **Merriweather** serif font for all headings and titles (professional, academic aesthetic)
 
 ### Backend Architecture
 
@@ -47,6 +49,13 @@ Preferred communication style: Simple, everyday language.
 - `/api/quiz/:attemptId/answer` - Submits answers during quiz attempts
 - `/api/quiz/:attemptId/results` - Retrieves completed quiz results
 - `/api/questions/generate` - Triggers AI question generation (admin/seed functionality)
+- `/api/admin/analytics` - Returns dashboard analytics (revenue, users, quiz stats, trends)
+- `/api/admin/users` - Lists all users with subscription/access status
+- `/api/admin/users/:userId/grant-access` - Grants manual access to users (can override subscriptions)
+- `/api/admin/users/:userId/revoke-access` - Revokes manual access
+- `/api/admin/users/:userId/end-subscription` - Cancels active subscriptions
+- `/api/admin/email/send` - Sends email to individual users
+- `/api/admin/email/broadcast` - Sends broadcast email to all users
 
 **Database Layer**
 - **Drizzle ORM** for type-safe database operations without heavy abstractions
@@ -66,6 +75,18 @@ Preferred communication style: Simple, everyday language.
 - Used Neon's serverless driver with WebSocket support for connection efficiency
 - Implemented storage interface pattern for potential future database swapping
 - Quiz sessions use transactional-like patterns (creating attempt + answer records together)
+- Admin dashboard aggregates analytics in real-time from multiple tables
+
+**Admin Panel**
+- **Route**: `/admin` - Protected admin-only section with authentication middleware
+- **Dashboard** (`/admin`): Analytics overview with revenue metrics, user stats, quiz performance, and trend charts
+- **Users** (`/admin/users`): User management table with grant/revoke access, end subscriptions, send emails
+- **Marketing** (`/admin/marketing`): Broadcast email functionality to all users
+- **Features**: 
+  - Analytics cards showing total revenue, active users, quiz attempts, conversion rate
+  - Chart visualizations using recharts for revenue and user growth trends  
+  - Manual access control that overrides subscription requirements
+  - Individual and broadcast email functionality (stubs - requires email service integration)
 
 ### External Dependencies
 

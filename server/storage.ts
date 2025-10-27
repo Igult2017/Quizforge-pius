@@ -49,6 +49,7 @@ export interface IStorage {
   createSubscription(subscription: InsertSubscription): Promise<Subscription>;
   getActiveSubscription(userId: string): Promise<Subscription | undefined>;
   updateSubscriptionStatus(id: number, status: string): Promise<void>;
+  getAllSubscriptions(): Promise<Subscription[]>;
 
   // Questions
   createQuestion(question: InsertQuestion): Promise<Question>;
@@ -63,6 +64,7 @@ export interface IStorage {
   getQuizAttempt(id: number): Promise<QuizAttempt | undefined>;
   updateQuizAttempt(id: number, data: Partial<QuizAttempt>): Promise<void>;
   getUserQuizAttempts(userId: string): Promise<QuizAttempt[]>;
+  getAllQuizAttempts(): Promise<QuizAttempt[]>;
 
   // Quiz Answers
   saveQuizAnswer(answer: InsertQuizAnswer): Promise<QuizAnswer>;
@@ -75,6 +77,7 @@ export interface IStorage {
   getPaymentByOrderTrackingId(orderTrackingId: string): Promise<Payment | undefined>;
   getPaymentByMerchantReference(merchantReference: string): Promise<Payment | undefined>;
   updatePayment(id: number, data: Partial<Payment>): Promise<void>;
+  getAllPayments(): Promise<Payment[]>;
 }
 
 export class PostgresStorage implements IStorage {
@@ -169,6 +172,10 @@ export class PostgresStorage implements IStorage {
       .where(eq(subscriptions.id, id));
   }
 
+  async getAllSubscriptions(): Promise<Subscription[]> {
+    return await db.select().from(subscriptions).orderBy(subscriptions.createdAt);
+  }
+
   // Questions
   async createQuestion(question: InsertQuestion): Promise<Question> {
     const [newQuestion] = await db.insert(questions).values(question).returning();
@@ -255,6 +262,10 @@ export class PostgresStorage implements IStorage {
       .orderBy(sql`${quizAttempts.startedAt} DESC`);
   }
 
+  async getAllQuizAttempts(): Promise<QuizAttempt[]> {
+    return await db.select().from(quizAttempts).orderBy(sql`${quizAttempts.startedAt} DESC`);
+  }
+
   // Quiz Answers
   async saveQuizAnswer(answer: InsertQuizAnswer): Promise<QuizAnswer> {
     const [newAnswer] = await db.insert(quizAnswers).values(answer).returning();
@@ -310,6 +321,10 @@ export class PostgresStorage implements IStorage {
       .update(payments)
       .set({ ...data, updatedAt: new Date() })
       .where(eq(payments.id, id));
+  }
+
+  async getAllPayments(): Promise<Payment[]> {
+    return await db.select().from(payments).orderBy(payments.createdAt);
   }
 }
 
