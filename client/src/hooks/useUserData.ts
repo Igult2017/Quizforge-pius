@@ -8,6 +8,7 @@ export interface UserData {
   lastName: string | null;
   profileImageUrl: string | null;
   hasUsedFreeTrial: boolean;
+  isAdmin?: boolean;
   subscription: {
     id: number;
     userId: string;
