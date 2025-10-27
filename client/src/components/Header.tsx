@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "./ThemeToggle";
-import { GraduationCap, User, LogOut, Crown } from "lucide-react";
+import { GraduationCap, User, LogOut, Crown, Settings } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Link, useLocation } from "wouter";
 import {
@@ -25,6 +25,7 @@ export function Header({
 }: HeaderProps) {
   const [, setLocation] = useLocation();
   const { isAuthenticated, userData, hasActiveSubscription, hasUsedFreeTrial } = useUserData();
+  const isAdmin = userData?.isAdmin || false;
   return (
     <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
@@ -66,6 +67,17 @@ export function Header({
                 <Badge variant="outline" data-testid="badge-free-trial">
                   Free Trial
                 </Badge>
+              )}
+              {isAdmin && (
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => setLocation("/admin")}
+                  data-testid="button-admin-panel"
+                >
+                  <Settings className="mr-2 h-4 w-4" />
+                  Admin Panel
+                </Button>
               )}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

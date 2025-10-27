@@ -50,6 +50,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get current user with admin status (used by admin panel)
+  app.get('/api/auth/me', async (req: any, res) => {
+    try {
+      if (!req.user || !req.user.claims || !req.user.claims.sub) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      res.json({
+        id: user.id,
+        email: user.email,
+        isAdmin: user.isAdmin || false,
+      });
+    } catch (error) {
+      console.error("Error fetching current user:", error);
+      res.status(500).json({ message: "Failed to fetch user" });
+    }
+  });
+
   const server = createServer(app);
   
   // ============= PAYMENT ROUTES =============
