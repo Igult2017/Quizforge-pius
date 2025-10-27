@@ -57,11 +57,11 @@ export default function AdminUsers() {
     
     switch (activeTab) {
       case "subscribers":
-        return users.filter(u => u.hasAnySubscription);
+        return users.filter(u => u.hasAnySubscription && !u.isAdmin);
       case "trial":
         return users.filter(u => !u.hasAnySubscription && !u.hasUsedFreeTrial && !u.isAdmin);
       case "banned":
-        return users.filter(u => u.isBanned);
+        return users.filter(u => u.isBanned && !u.isAdmin);
       default:
         return users;
     }
