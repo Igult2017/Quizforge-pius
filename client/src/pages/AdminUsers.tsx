@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Mail, UserCheck, UserX, XCircle } from "lucide-react";
+import { Mail, UserCheck, UserX, XCircle, Ban, Clock } from "lucide-react";
 
 interface User {
   id: string;
@@ -19,10 +19,12 @@ interface User {
   lastName: string | null;
   hasUsedFreeTrial: boolean;
   isAdmin: boolean;
+  isBanned: boolean;
   adminGrantedAccess: boolean;
   adminAccessExpiresAt: string | null;
   hasActiveSubscription: boolean;
   subscription: {
+    id: number;
     plan: string;
     endDate: string;
   } | null;
@@ -32,6 +34,7 @@ export default function AdminUsers() {
   const { toast } = useToast();
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [accessDays, setAccessDays] = useState("");
+  const [extendDays, setExtendDays] = useState("");
   const [emailSubject, setEmailSubject] = useState("");
   const [emailMessage, setEmailMessage] = useState("");
 
@@ -123,6 +126,68 @@ export default function AdminUsers() {
     },
   });
 
+  const banUserMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      return await apiRequest("POST", `/api/admin/users/${userId}/ban`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      toast({
+        title: "Success",
+        description: "User banned successfully",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to ban user",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const unbanUserMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      return await apiRequest("POST", `/api/admin/users/${userId}/unban`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      toast({
+        title: "Success",
+        description: "User unbanned successfully",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to unban user",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const extendSubscriptionMutation = useMutation({
+    mutationFn: async ({ userId, days }: { userId: string; days: number }) => {
+      return await apiRequest("POST", `/api/admin/users/${userId}/extend-subscription`, { days });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      toast({
+        title: "Success",
+        description: "Subscription modified successfully",
+      });
+      setSelectedUser(null);
+      setExtendDays("");
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to modify subscription",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleGrantAccess = () => {
     if (selectedUser) {
       const days = accessDays ? parseInt(accessDays) : null;
@@ -133,6 +198,13 @@ export default function AdminUsers() {
   const handleSendEmail = () => {
     if (selectedUser && emailSubject && emailMessage) {
       sendEmailMutation.mutate({ userId: selectedUser.id, subject: emailSubject, message: emailMessage });
+    }
+  };
+
+  const handleExtendSubscription = () => {
+    if (selectedUser && extendDays) {
+      const days = parseInt(extendDays);
+      extendSubscriptionMutation.mutate({ userId: selectedUser.id, days });
     }
   };
 
@@ -177,17 +249,22 @@ export default function AdminUsers() {
                       : "—"}
                   </TableCell>
                   <TableCell>
-                    {user.isAdmin ? (
-                      <Badge variant="default">Admin</Badge>
-                    ) : user.hasActiveSubscription ? (
-                      <Badge variant="default">
-                        {user.subscription?.plan} Plan
-                      </Badge>
-                    ) : user.hasUsedFreeTrial ? (
-                      <Badge variant="secondary">Trial Used</Badge>
-                    ) : (
-                      <Badge variant="outline">Free Trial Available</Badge>
-                    )}
+                    <div className="flex gap-2 flex-wrap">
+                      {user.isBanned && (
+                        <Badge variant="destructive">Banned</Badge>
+                      )}
+                      {user.isAdmin ? (
+                        <Badge variant="default">Admin</Badge>
+                      ) : user.hasActiveSubscription ? (
+                        <Badge variant="default">
+                          {user.subscription?.plan} Plan
+                        </Badge>
+                      ) : user.hasUsedFreeTrial ? (
+                        <Badge variant="secondary">Trial Used</Badge>
+                      ) : (
+                        <Badge variant="outline">Free Trial Available</Badge>
+                      )}
+                    </div>
                   </TableCell>
                   <TableCell>
                     {user.adminGrantedAccess ? (
@@ -259,14 +336,84 @@ export default function AdminUsers() {
                       )}
 
                       {user.hasActiveSubscription && (
+                        <>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => endSubscriptionMutation.mutate(user.id)}
+                            disabled={endSubscriptionMutation.isPending}
+                            data-testid={`button-end-subscription-${user.id}`}
+                          >
+                            <XCircle className="h-4 w-4" />
+                          </Button>
+
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => setSelectedUser(user)}
+                                data-testid={`button-extend-subscription-${user.id}`}
+                              >
+                                <Clock className="h-4 w-4" />
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                              <DialogHeader>
+                                <DialogTitle>Extend/Reduce Subscription</DialogTitle>
+                                <DialogDescription>
+                                  Modify subscription duration for {user.email}
+                                </DialogDescription>
+                              </DialogHeader>
+                              <div className="space-y-4">
+                                <div>
+                                  <Label htmlFor="extend-days">Days to Add/Remove</Label>
+                                  <Input
+                                    id="extend-days"
+                                    type="number"
+                                    value={extendDays}
+                                    onChange={(e) => setExtendDays(e.target.value)}
+                                    placeholder="Positive to extend, negative to reduce"
+                                    data-testid="input-extend-days"
+                                  />
+                                  <p className="text-sm text-muted-foreground mt-1">
+                                    Current end date: {user.subscription?.endDate ? new Date(user.subscription.endDate).toLocaleDateString() : "N/A"}
+                                  </p>
+                                </div>
+                              </div>
+                              <DialogFooter>
+                                <Button
+                                  onClick={handleExtendSubscription}
+                                  disabled={extendSubscriptionMutation.isPending || !extendDays}
+                                  data-testid="button-confirm-extend-subscription"
+                                >
+                                  {extendSubscriptionMutation.isPending ? "Updating..." : "Update Duration"}
+                                </Button>
+                              </DialogFooter>
+                            </DialogContent>
+                          </Dialog>
+                        </>
+                      )}
+
+                      {user.isBanned ? (
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => endSubscriptionMutation.mutate(user.id)}
-                          disabled={endSubscriptionMutation.isPending}
-                          data-testid={`button-end-subscription-${user.id}`}
+                          onClick={() => unbanUserMutation.mutate(user.id)}
+                          disabled={unbanUserMutation.isPending}
+                          data-testid={`button-unban-${user.id}`}
                         >
-                          <XCircle className="h-4 w-4" />
+                          <Ban className="h-4 w-4 text-green-600" />
+                        </Button>
+                      ) : !user.isAdmin && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => banUserMutation.mutate(user.id)}
+                          disabled={banUserMutation.isPending}
+                          data-testid={`button-ban-${user.id}`}
+                        >
+                          <Ban className="h-4 w-4 text-red-600" />
                         </Button>
                       )}
 

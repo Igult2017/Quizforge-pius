@@ -23,6 +23,7 @@ export const users = pgTable("users", {
   profileImageUrl: varchar("profile_image_url"),
   hasUsedFreeTrial: boolean("has_used_free_trial").default(false).notNull(),
   isAdmin: boolean("is_admin").default(false).notNull(),
+  isBanned: boolean("is_banned").default(false).notNull(),
   adminGrantedAccess: boolean("admin_granted_access").default(false).notNull(),
   adminAccessExpiresAt: timestamp("admin_access_expires_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),

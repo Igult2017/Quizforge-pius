@@ -828,6 +828,83 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Ban user
+  app.post("/api/admin/users/:userId/ban", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { userId } = req.params;
+
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      await storage.banUser(userId);
+      
+      res.json({
+        success: true,
+        message: `User ${user.email} has been banned`,
+      });
+    } catch (error) {
+      console.error("Error banning user:", error);
+      res.status(500).json({ error: "Failed to ban user" });
+    }
+  });
+
+  // Unban user
+  app.post("/api/admin/users/:userId/unban", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { userId } = req.params;
+
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      await storage.unbanUser(userId);
+      
+      res.json({
+        success: true,
+        message: `User ${user.email} has been unbanned`,
+      });
+    } catch (error) {
+      console.error("Error unbanning user:", error);
+      res.status(500).json({ error: "Failed to unban user" });
+    }
+  });
+
+  // Extend/reduce subscription duration
+  app.post("/api/admin/users/:userId/extend-subscription", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { userId } = req.params;
+      const { days } = req.body; // Can be positive (extend) or negative (reduce)
+
+      if (!days || isNaN(days)) {
+        return res.status(400).json({ error: "days parameter is required and must be a number" });
+      }
+
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      const subscription = await storage.getActiveSubscription(userId);
+      if (!subscription) {
+        return res.status(400).json({ error: "User has no active subscription" });
+      }
+
+      await storage.extendSubscription(subscription.id, days);
+      
+      const action = days > 0 ? "extended" : "reduced";
+      res.json({
+        success: true,
+        message: `Subscription ${action} by ${Math.abs(days)} days for ${user.email}`,
+      });
+    } catch (error) {
+      console.error("Error modifying subscription:", error);
+      res.status(500).json({ error: "Failed to modify subscription" });
+    }
+  });
+
   // Send email to all users (marketing)
   app.post("/api/admin/email/broadcast", isAuthenticated, isAdmin, async (req: any, res) => {
     try {

@@ -44,11 +44,14 @@ export interface IStorage {
   getAllUsers(): Promise<User[]>;
   grantAdminAccess(userId: string, expiresAt: Date | null): Promise<void>;
   revokeAdminAccess(userId: string): Promise<void>;
+  banUser(userId: string): Promise<void>;
+  unbanUser(userId: string): Promise<void>;
 
   // Subscriptions
   createSubscription(subscription: InsertSubscription): Promise<Subscription>;
   getActiveSubscription(userId: string): Promise<Subscription | undefined>;
   updateSubscriptionStatus(id: number, status: string): Promise<void>;
+  extendSubscription(subscriptionId: number, days: number): Promise<void>;
   getAllSubscriptions(): Promise<Subscription[]>;
 
   // Questions
@@ -142,6 +145,26 @@ export class PostgresStorage implements IStorage {
       .where(eq(users.id, userId));
   }
 
+  async banUser(userId: string): Promise<void> {
+    await db
+      .update(users)
+      .set({ 
+        isBanned: true,
+        updatedAt: new Date() 
+      })
+      .where(eq(users.id, userId));
+  }
+
+  async unbanUser(userId: string): Promise<void> {
+    await db
+      .update(users)
+      .set({ 
+        isBanned: false,
+        updatedAt: new Date() 
+      })
+      .where(eq(users.id, userId));
+  }
+
   // Subscriptions
   async createSubscription(subscription: InsertSubscription): Promise<Subscription> {
     const [newSub] = await db.insert(subscriptions).values(subscription).returning();
@@ -170,6 +193,23 @@ export class PostgresStorage implements IStorage {
       .update(subscriptions)
       .set({ status })
       .where(eq(subscriptions.id, id));
+  }
+
+  async extendSubscription(subscriptionId: number, days: number): Promise<void> {
+    const [subscription] = await db
+      .select()
+      .from(subscriptions)
+      .where(eq(subscriptions.id, subscriptionId));
+    
+    if (subscription) {
+      const currentEndDate = new Date(subscription.endDate);
+      currentEndDate.setDate(currentEndDate.getDate() + days);
+      
+      await db
+        .update(subscriptions)
+        .set({ endDate: currentEndDate })
+        .where(eq(subscriptions.id, subscriptionId));
+    }
   }
 
   async getAllSubscriptions(): Promise<Subscription[]> {
