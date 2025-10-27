@@ -1,16 +1,39 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AdminSidebar } from "@/components/AdminSidebar";
 import AdminDashboard from "./AdminDashboard";
 import AdminUsers from "./AdminUsers";
 import AdminMarketing from "./AdminMarketing";
-import { Menu } from "lucide-react";
+import { Menu, Loader2 } from "lucide-react";
+import { useEffect } from "react";
+import { UserData } from "@/hooks/useUserData";
 
 export default function Admin() {
-  const { data: userData } = useQuery({
+  const [, setLocation] = useLocation();
+  
+  const { data: userData, isLoading } = useQuery<UserData | null>({
     queryKey: ["/api/auth/user"],
   });
+
+  // Redirect non-admins
+  useEffect(() => {
+    if (!isLoading && userData && !userData.isAdmin) {
+      setLocation("/categories");
+    }
+  }, [userData, isLoading, setLocation]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" data-testid="loader-admin" />
+      </div>
+    );
+  }
+
+  if (!userData?.isAdmin) {
+    return null;
+  }
 
   const style = {
     "--sidebar-width": "16rem",
