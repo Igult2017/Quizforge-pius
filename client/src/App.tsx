@@ -61,7 +61,9 @@ function Router() {
       <Route path="/pricing" component={Pricing} />
       <Route path="/contact" component={Contact} />
       <Route path="/checkout" component={Checkout} />
-      <Route path="/admin/:rest*" component={Admin} />
+      <Route path="/admin" component={Admin} />
+      <Route path="/admin/users" component={Admin} />
+      <Route path="/admin/marketing" component={Admin} />
       <Route path="/:rest*" component={NotFound} />
     </Switch>
   );
