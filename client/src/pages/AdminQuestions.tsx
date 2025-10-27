@@ -14,7 +14,6 @@ import {
 } from "@/components/ui/select";
 import { Loader2, Brain, Database, Plus, CheckCircle2, XCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { Badge } from "@/components/ui/badge";
 
 interface QuestionCount {
   category: string;
@@ -90,7 +89,7 @@ export default function AdminQuestions() {
 
   if (countsLoading) {
     return (
-      <div className="flex items-center justify-center h-full">
+      <div className="flex items-center justify-center h-full p-12">
         <Loader2 className="h-12 w-12 animate-spin text-primary" data-testid="loader-questions" />
       </div>
     );
@@ -99,7 +98,7 @@ export default function AdminQuestions() {
   const totalQuestions = questionCounts?.reduce((sum, c) => sum + c.count, 0) || 0;
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6 max-w-7xl mx-auto">
       <div>
         <h1 className="text-3xl font-bold mb-2">AI Question Generator</h1>
         <p className="text-muted-foreground">
@@ -211,7 +210,7 @@ export default function AdminQuestions() {
               </div>
             </div>
 
-            <div className="flex items-center justify-between pt-4">
+            <div className="flex items-center justify-between pt-4 border-t">
               <div className="text-sm text-muted-foreground">
                 {generateMutation.isSuccess && (
                   <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
