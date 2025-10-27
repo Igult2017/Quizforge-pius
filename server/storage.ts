@@ -62,6 +62,7 @@ export interface IStorage {
   getQuestionsByCategory(category: string): Promise<Question[]>;
   getRandomQuestions(category: string, limit: number): Promise<Question[]>;
   getQuestionById(id: number): Promise<Question | undefined>;
+  getQuestionCountsByCategory(): Promise<{ category: string; count: number }[]>;
 
   // Quiz Attempts
   createQuizAttempt(attempt: InsertQuizAttempt): Promise<QuizAttempt>;
@@ -268,6 +269,18 @@ export class PostgresStorage implements IStorage {
       .from(questions)
       .where(eq(questions.id, id));
     return question;
+  }
+
+  async getQuestionCountsByCategory(): Promise<{ category: string; count: number }[]> {
+    const results = await db
+      .select({
+        category: questions.category,
+        count: sql<number>`count(*)::int`,
+      })
+      .from(questions)
+      .groupBy(questions.category);
+    
+    return results;
   }
 
   // Quiz Attempts

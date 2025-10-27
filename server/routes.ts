@@ -719,6 +719,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Generate questions with DeepSeek AI (admin only)
+  // Get question counts by category
+  app.get("/api/admin/questions/counts", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const counts = await storage.getQuestionCountsByCategory();
+      
+      // Ensure all categories are represented (even if 0)
+      const allCategories = ["NCLEX", "TEAS", "HESI"];
+      const countsMap = new Map(counts.map(c => [c.category, c.count]));
+      
+      const result = allCategories.map(category => ({
+        category,
+        count: countsMap.get(category) || 0,
+      }));
+      
+      res.json(result);
+    } catch (error) {
+      console.error("Get question counts error:", error);
+      res.status(500).json({ error: "Failed to get question counts" });
+    }
+  });
+
   app.post("/api/admin/questions/generate", isAuthenticated, isAdmin, async (req, res) => {
     try {
       const { category, count, subject, difficulty } = req.body;

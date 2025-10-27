@@ -4,6 +4,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AdminSidebar } from "@/components/AdminSidebar";
 import AdminDashboard from "./AdminDashboard";
 import AdminUsers from "./AdminUsers";
+import AdminQuestions from "./AdminQuestions";
 import AdminMarketing from "./AdminMarketing";
 import { Menu, Loader2 } from "lucide-react";
 import { useEffect } from "react";
@@ -56,6 +57,7 @@ export default function Admin() {
             <Switch>
               <Route path="/admin" component={AdminDashboard} />
               <Route path="/admin/users" component={AdminUsers} />
+              <Route path="/admin/questions" component={AdminQuestions} />
               <Route path="/admin/marketing" component={AdminMarketing} />
             </Switch>
           </main>
