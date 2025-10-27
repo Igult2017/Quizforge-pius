@@ -21,17 +21,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const userId = req.user.claims.sub;
+      const email = req.user.claims.email;
       let user = await storage.getUser(userId);
       
       // Auto-create user if authenticated but not in database
       if (!user) {
-        user = await storage.upsertUser({
-          id: userId,
-          email: req.user.claims.email || null,
-          firstName: req.user.claims.first_name || null,
-          lastName: req.user.claims.last_name || null,
-          profileImageUrl: null,
-        });
+        // Check if a user with this email already exists (migrated user)
+        const existingUserByEmail = email ? await storage.getUserByEmail(email) : null;
+        
+        if (existingUserByEmail) {
+          // Update the existing user's ID to match Firebase ID
+          await storage.updateUserId(existingUserByEmail.id, userId);
+          user = await storage.getUser(userId);
+        } else {
+          // Create new user
+          user = await storage.upsertUser({
+            id: userId,
+            email: email || null,
+            firstName: req.user.claims.first_name || null,
+            lastName: req.user.claims.last_name || null,
+            profileImageUrl: null,
+          });
+        }
       }
       
       // Get active subscription
