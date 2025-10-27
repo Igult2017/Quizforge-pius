@@ -1,51 +1,16 @@
-import { useEffect } from "react";
-import { Switch, Route, useLocation } from "wouter";
+import { Switch, Route } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AdminSidebar } from "@/components/AdminSidebar";
-import { useToast } from "@/hooks/use-toast";
 import AdminDashboard from "./AdminDashboard";
 import AdminUsers from "./AdminUsers";
 import AdminMarketing from "./AdminMarketing";
-import { Loader2, Menu } from "lucide-react";
-import { Button } from "@/components/ui/button";
-
-interface CurrentUser {
-  id: string;
-  email: string;
-  isAdmin: boolean;
-}
+import { Menu } from "lucide-react";
 
 export default function Admin() {
-  const [, setLocation] = useLocation();
-  const { toast } = useToast();
-
-  const { data: currentUser, isLoading: isCheckingAdmin } = useQuery<CurrentUser>({
+  const { data: userData } = useQuery({
     queryKey: ["/api/auth/user"],
   });
-
-  useEffect(() => {
-    if (!isCheckingAdmin && currentUser && !currentUser.isAdmin) {
-      toast({
-        title: "Access Denied",
-        description: "You don't have permission to access the admin panel",
-        variant: "destructive",
-      });
-      setLocation("/");
-    }
-  }, [currentUser, isCheckingAdmin, setLocation, toast]);
-
-  if (isCheckingAdmin) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" data-testid="loader-admin" />
-      </div>
-    );
-  }
-
-  if (!currentUser?.isAdmin) {
-    return null;
-  }
 
   const style = {
     "--sidebar-width": "16rem",
