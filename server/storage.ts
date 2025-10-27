@@ -50,6 +50,7 @@ export interface IStorage {
   // Subscriptions
   createSubscription(subscription: InsertSubscription): Promise<Subscription>;
   getActiveSubscription(userId: string): Promise<Subscription | undefined>;
+  getUserSubscriptions(userId: string): Promise<Subscription[]>;
   updateSubscriptionStatus(id: number, status: string): Promise<void>;
   extendSubscription(subscriptionId: number, days: number): Promise<void>;
   getAllSubscriptions(): Promise<Subscription[]>;
@@ -186,6 +187,14 @@ export class PostgresStorage implements IStorage {
       .orderBy(sql`${subscriptions.endDate} DESC`)
       .limit(1);
     return subscription;
+  }
+
+  async getUserSubscriptions(userId: string): Promise<Subscription[]> {
+    return await db
+      .select()
+      .from(subscriptions)
+      .where(eq(subscriptions.userId, userId))
+      .orderBy(sql`${subscriptions.createdAt} DESC`);
   }
 
   async updateSubscriptionStatus(id: number, status: string): Promise<void> {

@@ -24,11 +24,19 @@ interface User {
   adminGrantedAccess: boolean;
   adminAccessExpiresAt: string | null;
   hasActiveSubscription: boolean;
+  hasAnySubscription: boolean;
   subscription: {
     id: number;
     plan: string;
     endDate: string;
   } | null;
+  allSubscriptions: Array<{
+    id: number;
+    plan: string;
+    status: string;
+    startDate: string;
+    endDate: string;
+  }>;
 }
 
 export default function AdminUsers() {
@@ -49,9 +57,9 @@ export default function AdminUsers() {
     
     switch (activeTab) {
       case "subscribers":
-        return users.filter(u => u.hasActiveSubscription);
+        return users.filter(u => u.hasAnySubscription);
       case "trial":
-        return users.filter(u => !u.hasActiveSubscription && !u.hasUsedFreeTrial && !u.isAdmin);
+        return users.filter(u => !u.hasAnySubscription && !u.hasUsedFreeTrial && !u.isAdmin);
       case "banned":
         return users.filter(u => u.isBanned);
       default:

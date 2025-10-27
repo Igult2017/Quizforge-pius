@@ -734,11 +734,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Enrich with subscription info
       const enrichedUsers = await Promise.all(
         users.map(async (user) => {
-          const subscription = await storage.getActiveSubscription(user.id);
+          const activeSubscription = await storage.getActiveSubscription(user.id);
+          const allSubscriptions = await storage.getUserSubscriptions(user.id);
           return {
             ...user,
-            subscription: subscription || null,
-            hasActiveSubscription: !!subscription,
+            subscription: activeSubscription || null,
+            hasActiveSubscription: !!activeSubscription,
+            hasAnySubscription: allSubscriptions.length > 0,
+            allSubscriptions,
           };
         })
       );
