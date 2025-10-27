@@ -40,6 +40,11 @@ const menuItems = [
 export function AdminSidebar() {
   const [location, setLocation] = useLocation();
 
+  const handleNavigation = (url: string) => {
+    console.log('Navigating to:', url);
+    setLocation(url);
+  };
+
   return (
     <Sidebar>
       <SidebarHeader className="border-b px-6 py-4">
@@ -61,8 +66,13 @@ export function AdminSidebar() {
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton 
+                    type="button"
                     isActive={location === item.url}
-                    onClick={() => setLocation(item.url)}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleNavigation(item.url);
+                    }}
                     data-testid={`link-admin-${item.title.toLowerCase()}`}
                   >
                     <item.icon className="h-4 w-4" />
@@ -76,8 +86,13 @@ export function AdminSidebar() {
       </SidebarContent>
       <SidebarFooter className="border-t p-4">
         <SidebarMenuButton 
+          type="button"
           className="w-full"
-          onClick={() => setLocation("/")}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            handleNavigation("/");
+          }}
           data-testid="link-exit-admin"
         >
           <LogOut className="h-4 w-4" />
