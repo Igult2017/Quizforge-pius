@@ -91,7 +91,7 @@ export function AdminSidebar() {
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            handleNavigation("/");
+            handleNavigation("/categories");
           }}
           data-testid="link-exit-admin"
         >
