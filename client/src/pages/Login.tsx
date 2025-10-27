@@ -24,13 +24,17 @@ export default function Login() {
     try {
       await loginWithEmail(email, password);
       
+      // Wait for Firebase token to be ready and fetch user data
+      await new Promise(resolve => setTimeout(resolve, 500));
+      await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      
       toast({
         title: "Welcome back!",
         description: "You've successfully logged in.",
       });
       
-      // Let App.tsx handle admin redirect
-      setLocation("/");
+      // Redirect - App.tsx will handle admin redirect
+      window.location.href = "/";
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -47,13 +51,17 @@ export default function Login() {
     try {
       await loginWithGoogle();
       
+      // Wait for Firebase token to be ready and fetch user data
+      await new Promise(resolve => setTimeout(resolve, 500));
+      await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      
       toast({
         title: "Welcome back!",
         description: "You've successfully logged in with Google.",
       });
       
-      // Let App.tsx handle admin redirect
-      setLocation("/");
+      // Redirect - App.tsx will handle admin redirect
+      window.location.href = "/";
     } catch (error: any) {
       toast({
         variant: "destructive",
