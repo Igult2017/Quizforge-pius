@@ -124,11 +124,14 @@ Preferred communication style: Simple, everyday language.
   - Custom branded UI with Firebase SDK
   - `firebase` package for client-side authentication
   - ID tokens sent with all API requests via Authorization header
+  - Configuration uses environment variables (VITE_FIREBASE_API_KEY, VITE_FIREBASE_PROJECT_ID, VITE_FIREBASE_APP_ID)
 - **Backend**: Firebase Authentication
   - **firebase-admin** for verifying Firebase ID tokens
   - Token-based authentication (no session management required)
   - Server-side token verification ensures secure API access
   - `isAuthenticated` middleware protects all authenticated routes
+  - Uses same VITE_FIREBASE_PROJECT_ID as frontend for consistency
+- **Admin Auto-Redirect**: Admins are automatically redirected to /admin panel on login and when accessing root path
 
 **Payment Processing**
 - **PesaPal** payment gateway integration for subscription payments

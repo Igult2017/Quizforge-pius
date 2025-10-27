@@ -12,12 +12,8 @@ import {
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: "quizeforge-44a83.firebaseapp.com",
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: "quizeforge-44a83.firebasestorage.app",
-  messagingSenderId: "997024322375",
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
-  measurementId: "G-T8D4D204C6"
 };
 
 // Initialize Firebase (only if not already initialized)
