@@ -35,6 +35,7 @@ export interface IStorage {
   // Users (Replit Auth required methods)
   getUser(id: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
+  updateUserId(oldId: string, newId: string): Promise<void>;
   
   // Users (legacy methods)
   getUserByEmail(email: string): Promise<User | undefined>;
@@ -110,6 +111,13 @@ export class PostgresStorage implements IStorage {
     if (!email) return undefined;
     const [user] = await db.select().from(users).where(eq(users.email, email));
     return user;
+  }
+
+  async updateUserId(oldId: string, newId: string): Promise<void> {
+    await db
+      .update(users)
+      .set({ id: newId, updatedAt: new Date() })
+      .where(eq(users.id, oldId));
   }
 
   async markFreeTrialAsUsed(userId: string): Promise<void> {
