@@ -858,5 +858,72 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin analytics dashboard
+  app.get("/api/admin/analytics", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const users = await storage.getAllUsers();
+      const allSubscriptions = await storage.getAllSubscriptions();
+      const allPayments = await storage.getAllPayments();
+      const allQuizAttempts = await storage.getAllQuizAttempts();
+
+      // Total revenue (completed payments)
+      const completedPayments = allPayments.filter(p => p.status === 'completed');
+      const totalRevenue = completedPayments.reduce((sum, p) => sum + p.amount, 0) / 100; // Convert from cents
+
+      // Active users (users with active subscriptions or admin access)
+      const activeUsers = users.filter(u => {
+        const hasActiveSubscription = allSubscriptions.some(s => 
+          s.userId === u.id && s.status === 'active'
+        );
+        return hasActiveSubscription || u.adminGrantedAccess;
+      }).length;
+
+      // Total quiz attempts
+      const totalQuizAttempts = allQuizAttempts.length;
+      const completedQuizzes = allQuizAttempts.filter(q => q.status === 'completed').length;
+
+      // Conversion rate (paid users / total users)
+      const paidUsers = new Set(completedPayments.map(p => p.userId).filter(Boolean)).size;
+      const conversionRate = users.length > 0 ? (paidUsers / users.length) * 100 : 0;
+
+      // Revenue trend (last 7 days)
+      const last7Days = Array.from({ length: 7 }, (_, i) => {
+        const date = new Date();
+        date.setDate(date.getDate() - (6 - i));
+        return date.toISOString().split('T')[0];
+      });
+
+      const revenueTrend = last7Days.map(date => {
+        const dayRevenue = completedPayments
+          .filter(p => p.createdAt && p.createdAt.toISOString().split('T')[0] === date)
+          .reduce((sum, p) => sum + p.amount, 0) / 100;
+        return { date, revenue: dayRevenue };
+      });
+
+      // User growth trend (last 7 days)
+      const userTrend = last7Days.map(date => {
+        const dayUsers = users.filter(u => 
+          u.createdAt && u.createdAt.toISOString().split('T')[0] === date
+        ).length;
+        return { date, users: dayUsers };
+      });
+
+      res.json({
+        totalRevenue,
+        activeUsers,
+        totalUsers: users.length,
+        totalQuizAttempts,
+        completedQuizzes,
+        conversionRate,
+        revenueTrend,
+        userTrend,
+        recentPayments: completedPayments.slice(-10).reverse(),
+      });
+    } catch (error) {
+      console.error("Error fetching analytics:", error);
+      res.status(500).json({ error: "Failed to fetch analytics" });
+    }
+  });
+
   return server;
 }
