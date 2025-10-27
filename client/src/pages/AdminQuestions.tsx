@@ -12,8 +12,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2, Brain, Database, Plus, CheckCircle2, XCircle } from "lucide-react";
+import { Loader2, Brain, Database, Plus, CheckCircle2, XCircle, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface QuestionCount {
   category: string;
@@ -27,10 +28,14 @@ export default function AdminQuestions() {
   const [subject, setSubject] = useState<string>("");
   const [difficulty, setDifficulty] = useState<string>("medium");
 
+  console.log("AdminQuestions component rendered");
+
   // Fetch question counts
-  const { data: questionCounts, isLoading: countsLoading } = useQuery<QuestionCount[]>({
+  const { data: questionCounts, isLoading: countsLoading, error: countsError } = useQuery<QuestionCount[]>({
     queryKey: ["/api/admin/questions/counts"],
   });
+
+  console.log("Question counts:", { questionCounts, countsLoading, countsError });
 
   // Generate questions mutation
   const generateMutation = useMutation({
@@ -49,7 +54,6 @@ export default function AdminQuestions() {
         description: `Added ${data.generated} ${category} questions to the database.`,
       });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/questions/counts"] });
-      // Reset form
       setCount("10");
       setSubject("");
     },
@@ -89,8 +93,23 @@ export default function AdminQuestions() {
 
   if (countsLoading) {
     return (
-      <div className="flex items-center justify-center h-full p-12">
+      <div className="flex flex-col items-center justify-center h-full p-12 gap-4">
         <Loader2 className="h-12 w-12 animate-spin text-primary" data-testid="loader-questions" />
+        <p className="text-muted-foreground">Loading question data...</p>
+      </div>
+    );
+  }
+
+  if (countsError) {
+    return (
+      <div className="p-6">
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Error loading question counts</AlertTitle>
+          <AlertDescription>
+            {countsError instanceof Error ? countsError.message : "Failed to load question counts"}
+          </AlertDescription>
+        </Alert>
       </div>
     );
   }
@@ -98,9 +117,9 @@ export default function AdminQuestions() {
   const totalQuestions = questionCounts?.reduce((sum, c) => sum + c.count, 0) || 0;
 
   return (
-    <div className="p-6 space-y-6 max-w-7xl mx-auto">
+    <div className="p-6 space-y-6 max-w-7xl mx-auto bg-background">
       <div>
-        <h1 className="text-3xl font-bold mb-2">AI Question Generator</h1>
+        <h1 className="text-3xl font-bold mb-2 text-foreground">AI Question Generator</h1>
         <p className="text-muted-foreground">
           Generate practice questions using AI and manage your question database
         </p>
