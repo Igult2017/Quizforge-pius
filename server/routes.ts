@@ -54,13 +54,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         hasActiveSubscription: !!subscription,
       };
       
-      console.log('🔍 /api/auth/user response:', {
-        userId,
-        email: user.email,
-        isAdmin: user.isAdmin,
-        hasIsAdminInResponse: 'isAdmin' in response,
-        responseIsAdmin: response.isAdmin
-      });
+      console.log('🔍 /api/auth/user - user from DB:', user);
+      console.log('🔍 /api/auth/user - response:', response);
+      
+      // Disable caching for this endpoint to ensure fresh data
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
       
       res.json(response);
     } catch (error) {
