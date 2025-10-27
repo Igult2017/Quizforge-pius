@@ -699,27 +699,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get question count by category
-  app.get("/api/admin/questions/stats", async (req, res) => {
-    try {
-      const nclex = await storage.getQuestionsByCategory("NCLEX");
-      const teas = await storage.getQuestionsByCategory("TEAS");
-      const hesi = await storage.getQuestionsByCategory("HESI");
-
-      res.json({
-        NCLEX: nclex.length,
-        TEAS: teas.length,
-        HESI: hesi.length,
-        total: nclex.length + teas.length + hesi.length,
-      });
-    } catch (error: any) {
-      console.error("Error fetching stats:", error);
-      res.status(500).json({ error: "Failed to fetch stats" });
-    }
-  });
-
-  // Generate questions with DeepSeek AI (admin only)
-  // Get question counts by category
+  // Get question counts by category (admin only)
   app.get("/api/admin/questions/counts", isAuthenticated, isAdmin, async (req, res) => {
     try {
       const counts = await storage.getQuestionCountsByCategory();
