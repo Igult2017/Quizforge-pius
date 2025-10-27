@@ -48,7 +48,12 @@ export function Header({
         <div className="flex items-center gap-3">
           {isAuthenticated ? (
             <>
-              {hasActiveSubscription ? (
+              {isAdmin ? (
+                <Badge variant="secondary" className="gap-1" data-testid="badge-admin-access">
+                  <Crown className="h-3 w-3" />
+                  Admin Access
+                </Badge>
+              ) : hasActiveSubscription ? (
                 <Badge variant="secondary" className="gap-1" data-testid="badge-plan-type">
                   <Crown className="h-3 w-3" />
                   {userData?.subscription?.plan === "weekly" ? "Weekly" : "Monthly"} Plan
