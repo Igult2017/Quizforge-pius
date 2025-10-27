@@ -12,7 +12,14 @@ export async function isAdmin(req: any, res: Response, next: NextFunction) {
     }
 
     const userId = req.user.claims.sub;
-    const user = await storage.getUser(userId);
+    const userEmail = req.user.claims.email;
+    
+    let user = await storage.getUser(userId);
+    
+    // Fallback to email lookup for legacy users
+    if (!user && userEmail) {
+      user = await storage.getUserByEmail(userEmail);
+    }
 
     if (!user || !user.isAdmin) {
       return res.status(403).json({ error: "Forbidden - Admin access required" });
