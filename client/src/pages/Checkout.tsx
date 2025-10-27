@@ -8,11 +8,14 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { Loader2, CreditCard, Shield } from "lucide-react";
+import { useUserData } from "@/hooks/useUserData";
+import { useQuery } from "@tanstack/react-query";
 
 export default function Checkout() {
   const [, setLocationState] = useLocation();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const { isAuthenticated, userData } = useUserData();
   
   // Get plan from URL params
   const params = new URLSearchParams(window.location.search);
@@ -23,6 +26,18 @@ export default function Checkout() {
     lastName: "",
     phone: "",
   });
+
+  // Auto-fill form with user data if authenticated
+  useEffect(() => {
+    if (isAuthenticated && userData) {
+      setFormData({
+        email: userData.email || "",
+        firstName: userData.firstName || "",
+        lastName: userData.lastName || "",
+        phone: "",
+      });
+    }
+  }, [isAuthenticated, userData]);
 
   const planDetails: Record<string, { price: string; name: string }> = {
     weekly: { price: "$5", name: "Weekly Plan" },
@@ -117,7 +132,9 @@ export default function Checkout() {
                     Payment Information
                   </CardTitle>
                   <CardDescription>
-                    You'll be redirected to PesaPal for secure payment processing
+                    {isAuthenticated 
+                      ? "Review your information and proceed to secure payment" 
+                      : "You'll be redirected to PesaPal for secure payment processing"}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
