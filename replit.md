@@ -124,12 +124,11 @@ Preferred communication style: Simple, everyday language.
   - Custom branded UI with Firebase SDK
   - `firebase` package for client-side authentication
   - ID tokens sent with all API requests via Authorization header
-- **Backend**: Hybrid authentication system
+- **Backend**: Firebase Authentication
   - **firebase-admin** for verifying Firebase ID tokens
-  - **Replit Auth (OIDC)** for backward compatibility
-  - Combined middleware accepts both authentication methods
+  - Token-based authentication (no session management required)
   - Server-side token verification ensures secure API access
-- **Session Management**: express-session with connect-pg-simple for PostgreSQL-backed sessions
+  - `isAuthenticated` middleware protects all authenticated routes
 
 **Payment Processing**
 - **PesaPal** payment gateway integration for subscription payments

@@ -1,7 +1,6 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { setupAuth } from "./replitAuth";
 import { isAuthenticated } from "./firebaseAuth";
 import { generateQuestions } from "./deepseek";
 import { z } from "zod";
@@ -11,8 +10,7 @@ import { nanoid } from "nanoid";
 import { isAdmin } from "./adminMiddleware";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Setup authentication
-  await setupAuth(app);
+  // Firebase Auth is used for authentication (token-based, no session setup needed)
 
   // Auth routes - no authentication required, returns null if not logged in
   app.get('/api/auth/user', async (req: any, res) => {
