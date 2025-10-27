@@ -12,9 +12,29 @@ import { isAdmin } from "./adminMiddleware";
 export async function registerRoutes(app: Express): Promise<Server> {
   // Firebase Auth is used for authentication (token-based, no session setup needed)
 
-  // Auth routes - no authentication required, returns null if not logged in
+  // Auth routes - tries to authenticate, returns null if not logged in
   app.get('/api/auth/user', async (req: any, res) => {
     try {
+      // Try to verify Firebase token
+      const authHeader = req.headers.authorization;
+      if (authHeader && authHeader.startsWith("Bearer ")) {
+        const token = authHeader.split("Bearer ")[1];
+        try {
+          const admin = await import("firebase-admin");
+          const decodedToken = await admin.auth().verifyIdToken(token);
+          req.user = {
+            claims: {
+              sub: decodedToken.uid,
+              email: decodedToken.email,
+              first_name: decodedToken.name?.split(" ")[0] || "",
+              last_name: decodedToken.name?.split(" ").slice(1).join(" ") || "",
+            },
+          };
+        } catch (error) {
+          // Token invalid, continue as unauthenticated
+        }
+      }
+      
       // Check if user is authenticated
       if (!req.user || !req.user.claims || !req.user.claims.sub) {
         return res.json(null);
