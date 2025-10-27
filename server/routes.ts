@@ -78,12 +78,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ============= PAYMENT ROUTES =============
   
   // Create payment order
-  app.post("/api/payments/create-order", async (req, res) => {
+  app.post("/api/payments/create-order", async (req: any, res) => {
     try {
-      const { plan, email, firstName, lastName, phone } = req.body;
+      const { plan, email: bodyEmail, firstName: bodyFirstName, lastName: bodyLastName, phone: bodyPhone } = req.body;
       
-      if (!plan || !email || !firstName || !lastName) {
-        return res.status(400).json({ error: "Missing required fields" });
+      if (!plan) {
+        return res.status(400).json({ error: "Missing plan" });
+      }
+
+      // For authenticated users, use their data from token
+      // For non-authenticated users, use data from request body
+      let email, firstName, lastName, phone, userId;
+      
+      if (req.user && req.user.claims) {
+        // Authenticated user - use data from token
+        userId = req.user.claims.sub;
+        email = req.user.claims.email;
+        firstName = req.user.claims.first_name || "";
+        lastName = req.user.claims.last_name || "";
+        phone = bodyPhone || "";
+      } else {
+        // Non-authenticated user - use data from body
+        email = bodyEmail;
+        firstName = bodyFirstName;
+        lastName = bodyLastName;
+        phone = bodyPhone;
+        userId = null;
+        
+        if (!email || !firstName || !lastName) {
+          return res.status(400).json({ error: "Missing required fields" });
+        }
       }
 
       // Plan pricing
@@ -112,7 +136,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         firstName,
         lastName,
         phone: phone || null,
-        userId: null,
+        userId: userId || null,
         orderTrackingId: null,
         paymentMethod: null,
       });
@@ -172,7 +196,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
           paymentMethod: status.payment_method,
         });
         
-        // Redirect to post-payment signup page
+        // If user was authenticated when making payment, create subscription automatically
+        if (payment.userId) {
+          // Calculate subscription dates
+          const startDate = new Date();
+          let endDate = new Date();
+          
+          if (payment.plan === "weekly") {
+            endDate.setDate(endDate.getDate() + 7);
+          } else if (payment.plan === "monthly") {
+            endDate.setMonth(endDate.getMonth() + 1);
+          }
+          
+          // Create subscription
+          await storage.createSubscription({
+            userId: payment.userId,
+            plan: payment.plan,
+            status: "active",
+            startDate,
+            endDate,
+          });
+          
+          // Redirect authenticated user to categories
+          return res.redirect("/categories?payment=success");
+        }
+        
+        // Non-authenticated user - redirect to post-payment signup page
         return res.redirect(`/post-payment-signup?merchantReference=${payment.merchantReference}&OrderTrackingId=${OrderTrackingId}`);
       } else {
         await storage.updatePayment(payment.id, {
