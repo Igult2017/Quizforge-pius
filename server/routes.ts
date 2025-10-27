@@ -41,10 +41,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const userId = req.user.claims.sub;
+      const userEmail = req.user.claims.email;
+      
+      console.log(`[AUTH] User logged in - UID: ${userId}, Email: ${userEmail}`);
+      
       let user = await storage.getUser(userId);
       
       // Auto-create user if authenticated but not in database
       if (!user) {
+        console.log(`[AUTH] User not found in DB, creating new user for UID: ${userId}`);
         user = await storage.upsertUser({
           id: userId,
           email: req.user.claims.email || null,
@@ -52,6 +57,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           lastName: req.user.claims.last_name || null,
           profileImageUrl: null,
         });
+      } else {
+        console.log(`[AUTH] User found in DB - isAdmin: ${user.isAdmin}`);
       }
       
       // Get active subscription
