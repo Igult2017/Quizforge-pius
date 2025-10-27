@@ -35,7 +35,6 @@ export interface IStorage {
   // Users (Replit Auth required methods)
   getUser(id: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
-  updateUserId(oldId: string, newId: string): Promise<void>;
   
   // Users (legacy methods)
   getUserByEmail(email: string): Promise<User | undefined>;
@@ -99,10 +98,7 @@ export class PostgresStorage implements IStorage {
       .onConflictDoUpdate({
         target: users.id,
         set: {
-          email: userData.email,
-          firstName: userData.firstName,
-          lastName: userData.lastName,
-          profileImageUrl: userData.profileImageUrl,
+          ...userData,
           updatedAt: new Date(),
         },
       })
@@ -116,48 +112,10 @@ export class PostgresStorage implements IStorage {
     return user;
   }
 
-  async updateUserId(oldId: string, newId: string): Promise<void> {
-    // Update foreign key references first
-    await db
-      .update(subscriptions)
-      .set({ userId: newId })
-      .where(eq(subscriptions.userId, oldId));
-    
-    await db
-      .update(quizAttempts)
-      .set({ userId: newId })
-      .where(eq(quizAttempts.userId, oldId));
-    
-    await db
-      .update(payments)
-      .set({ userId: newId })
-      .where(eq(payments.userId, oldId));
-    
-    // Update the user's ID
-    await db
-      .update(users)
-      .set({ id: newId, updatedAt: new Date() })
-      .where(eq(users.id, oldId));
-  }
-
-  async startFreeTrial(userId: string): Promise<void> {
-    await db
-      .update(users)
-      .set({ 
-        freeTrialStartDate: new Date(), 
-        hasUsedFreeTrial: true,
-        updatedAt: new Date() 
-      })
-      .where(eq(users.id, userId));
-  }
-
   async markFreeTrialAsUsed(userId: string): Promise<void> {
     await db
       .update(users)
-      .set({ 
-        hasUsedFreeTrial: true,
-        updatedAt: new Date() 
-      })
+      .set({ hasUsedFreeTrial: true, updatedAt: new Date() })
       .where(eq(users.id, userId));
   }
 

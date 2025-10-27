@@ -24,17 +24,22 @@ export default function Login() {
     try {
       await loginWithEmail(email, password);
       
-      // Wait for Firebase token to be ready and fetch user data
-      await new Promise(resolve => setTimeout(resolve, 500));
-      await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      // Fetch user data to check if admin
+      const userData = await queryClient.fetchQuery({
+        queryKey: ["/api/auth/user"],
+      });
       
       toast({
         title: "Welcome back!",
         description: "You've successfully logged in.",
       });
       
-      // Redirect - App.tsx will handle admin redirect
-      window.location.href = "/";
+      // Redirect based on admin status
+      if (userData && (userData as any).isAdmin) {
+        setLocation("/admin");
+      } else {
+        setLocation("/");
+      }
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -51,17 +56,22 @@ export default function Login() {
     try {
       await loginWithGoogle();
       
-      // Wait for Firebase token to be ready and fetch user data
-      await new Promise(resolve => setTimeout(resolve, 500));
-      await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      // Fetch user data to check if admin
+      const userData = await queryClient.fetchQuery({
+        queryKey: ["/api/auth/user"],
+      });
       
       toast({
         title: "Welcome back!",
         description: "You've successfully logged in with Google.",
       });
       
-      // Redirect - App.tsx will handle admin redirect
-      window.location.href = "/";
+      // Redirect based on admin status
+      if (userData && (userData as any).isAdmin) {
+        setLocation("/admin");
+      } else {
+        setLocation("/");
+      }
     } catch (error: any) {
       toast({
         variant: "destructive",

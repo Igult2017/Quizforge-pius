@@ -64,16 +64,13 @@ export default function Checkout() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // For authenticated users, use their data automatically
-    if (!isAuthenticated) {
-      if (!formData.email || !formData.firstName || !formData.lastName) {
-        toast({
-          variant: "destructive",
-          title: "Missing Information",
-          description: "Please fill in all required fields.",
-        });
-        return;
-      }
+    if (!formData.email || !formData.firstName || !formData.lastName) {
+      toast({
+        variant: "destructive",
+        title: "Missing Information",
+        description: "Please fill in all required fields.",
+      });
+      return;
     }
 
     setIsLoading(true);
@@ -81,7 +78,7 @@ export default function Checkout() {
     try {
       const response = await apiRequest("POST", "/api/payments/create-order", {
         plan,
-        ...(isAuthenticated ? {} : formData),
+        ...formData,
       });
 
       const data = await response.json();
@@ -132,138 +129,100 @@ export default function Checkout() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <CreditCard className="h-5 w-5" />
-                    {isAuthenticated ? "Complete Payment" : "Payment Information"}
+                    Payment Information
                   </CardTitle>
                   <CardDescription>
                     {isAuthenticated 
-                      ? "Click below to proceed to secure payment with PesaPal" 
+                      ? "Review your information and proceed to secure payment" 
                       : "You'll be redirected to PesaPal for secure payment processing"}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {isAuthenticated ? (
-                    // Simplified view for authenticated users
-                    <form onSubmit={handleSubmit} className="space-y-6">
-                      <div className="bg-muted/50 rounded-lg p-4 space-y-2">
-                        <div className="text-sm text-muted-foreground">Account</div>
-                        <div className="font-medium">{userData?.email}</div>
-                        {userData?.firstName && userData?.lastName && (
-                          <div className="text-sm">{userData.firstName} {userData.lastName}</div>
-                        )}
-                      </div>
-
-                      <Button
-                        type="submit"
-                        className="w-full"
-                        disabled={isLoading}
-                        size="lg"
-                        data-testid="button-proceed-payment"
-                      >
-                        {isLoading ? (
-                          <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Processing...
-                          </>
-                        ) : (
-                          <>
-                            Proceed to Payment
-                          </>
-                        )}
-                      </Button>
-
-                      <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-                        <Shield className="h-4 w-4" />
-                        <span>Secured by PesaPal</span>
-                      </div>
-                    </form>
-                  ) : (
-                    // Full form for non-authenticated users
-                    <form onSubmit={handleSubmit} className="space-y-4">
-                      <div className="grid md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="firstName">First Name *</Label>
-                          <Input
-                            id="firstName"
-                            name="firstName"
-                            type="text"
-                            placeholder="John"
-                            value={formData.firstName}
-                            onChange={handleChange}
-                            required
-                            disabled={isLoading}
-                            data-testid="input-firstname"
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="lastName">Last Name *</Label>
-                          <Input
-                            id="lastName"
-                            name="lastName"
-                            type="text"
-                            placeholder="Doe"
-                            value={formData.lastName}
-                            onChange={handleChange}
-                            required
-                            disabled={isLoading}
-                            data-testid="input-lastname"
-                          />
-                        </div>
-                      </div>
-
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    <div className="grid md:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="email">Email Address *</Label>
+                        <Label htmlFor="firstName">First Name *</Label>
                         <Input
-                          id="email"
-                          name="email"
-                          type="email"
-                          placeholder="john.doe@example.com"
-                          value={formData.email}
+                          id="firstName"
+                          name="firstName"
+                          type="text"
+                          placeholder="John"
+                          value={formData.firstName}
                           onChange={handleChange}
                           required
                           disabled={isLoading}
-                          data-testid="input-email"
+                          data-testid="input-firstname"
                         />
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="phone">Phone Number (Optional)</Label>
+                        <Label htmlFor="lastName">Last Name *</Label>
                         <Input
-                          id="phone"
-                          name="phone"
-                          type="tel"
-                          placeholder="+1234567890"
-                          value={formData.phone}
+                          id="lastName"
+                          name="lastName"
+                          type="text"
+                          placeholder="Doe"
+                          value={formData.lastName}
                           onChange={handleChange}
+                          required
                           disabled={isLoading}
-                          data-testid="input-phone"
+                          data-testid="input-lastname"
                         />
                       </div>
+                    </div>
 
-                      <Button
-                        type="submit"
-                        className="w-full"
+                    <div className="space-y-2">
+                      <Label htmlFor="email">Email Address *</Label>
+                      <Input
+                        id="email"
+                        name="email"
+                        type="email"
+                        placeholder="john.doe@example.com"
+                        value={formData.email}
+                        onChange={handleChange}
+                        required
                         disabled={isLoading}
-                        data-testid="button-proceed-payment"
-                      >
-                        {isLoading ? (
-                          <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Processing...
-                          </>
-                        ) : (
-                          <>
-                            Proceed to Payment
-                          </>
-                        )}
-                      </Button>
+                        data-testid="input-email"
+                      />
+                    </div>
 
-                      <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-                        <Shield className="h-4 w-4" />
-                        <span>Secured by PesaPal</span>
-                      </div>
-                    </form>
-                  )}
+                    <div className="space-y-2">
+                      <Label htmlFor="phone">Phone Number (Optional)</Label>
+                      <Input
+                        id="phone"
+                        name="phone"
+                        type="tel"
+                        placeholder="+1234567890"
+                        value={formData.phone}
+                        onChange={handleChange}
+                        disabled={isLoading}
+                        data-testid="input-phone"
+                      />
+                    </div>
+
+                    <Button
+                      type="submit"
+                      className="w-full"
+                      disabled={isLoading}
+                      data-testid="button-proceed-payment"
+                    >
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Processing...
+                        </>
+                      ) : (
+                        <>
+                          Proceed to Payment
+                        </>
+                      )}
+                    </Button>
+
+                    <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                      <Shield className="h-4 w-4" />
+                      <span>Secured by PesaPal</span>
+                    </div>
+                  </form>
                 </CardContent>
               </Card>
             </div>

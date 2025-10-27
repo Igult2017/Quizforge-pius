@@ -21,48 +21,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const userId = req.user.claims.sub;
-      const email = req.user.claims.email;
       let user = await storage.getUser(userId);
       
       // Auto-create user if authenticated but not in database
       if (!user) {
-        // Check if a user with this email already exists (migrated user)
-        const existingUserByEmail = email ? await storage.getUserByEmail(email) : null;
-        
-        if (existingUserByEmail) {
-          // Update the existing user's ID to match Firebase ID
-          await storage.updateUserId(existingUserByEmail.id, userId);
-          user = await storage.getUser(userId);
-        } else {
-          // Create new user
-          user = await storage.upsertUser({
-            id: userId,
-            email: email || null,
-            firstName: req.user.claims.first_name || null,
-            lastName: req.user.claims.last_name || null,
-            profileImageUrl: null,
-          });
-        }
+        user = await storage.upsertUser({
+          id: userId,
+          email: req.user.claims.email || null,
+          firstName: req.user.claims.first_name || null,
+          lastName: req.user.claims.last_name || null,
+          profileImageUrl: null,
+        });
       }
       
       // Get active subscription
       const subscription = await storage.getActiveSubscription(userId);
       
-      const response = {
+      res.json({
         ...user,
         subscription: subscription || null,
         hasActiveSubscription: !!subscription,
-      };
-      
-      console.log('🔍 /api/auth/user - user from DB:', user);
-      console.log('🔍 /api/auth/user - response:', response);
-      
-      // Disable caching for this endpoint to ensure fresh data
-      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
-      res.setHeader('Pragma', 'no-cache');
-      res.setHeader('Expires', '0');
-      
-      res.json(response);
+      });
     } catch (error) {
       console.error("Error fetching user:", error);
       res.status(500).json({ message: "Failed to fetch user" });
@@ -99,36 +78,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ============= PAYMENT ROUTES =============
   
   // Create payment order
-  app.post("/api/payments/create-order", async (req: any, res) => {
+  app.post("/api/payments/create-order", async (req, res) => {
     try {
-      const { plan, email: bodyEmail, firstName: bodyFirstName, lastName: bodyLastName, phone: bodyPhone } = req.body;
+      const { plan, email, firstName, lastName, phone } = req.body;
       
-      if (!plan) {
-        return res.status(400).json({ error: "Missing plan" });
-      }
-
-      // For authenticated users, use their data from token
-      // For non-authenticated users, use data from request body
-      let email, firstName, lastName, phone, userId;
-      
-      if (req.user && req.user.claims) {
-        // Authenticated user - use data from token
-        userId = req.user.claims.sub;
-        email = req.user.claims.email;
-        firstName = req.user.claims.first_name || "";
-        lastName = req.user.claims.last_name || "";
-        phone = bodyPhone || "";
-      } else {
-        // Non-authenticated user - use data from body
-        email = bodyEmail;
-        firstName = bodyFirstName;
-        lastName = bodyLastName;
-        phone = bodyPhone;
-        userId = null;
-        
-        if (!email || !firstName || !lastName) {
-          return res.status(400).json({ error: "Missing required fields" });
-        }
+      if (!plan || !email || !firstName || !lastName) {
+        return res.status(400).json({ error: "Missing required fields" });
       }
 
       // Plan pricing
@@ -157,7 +112,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         firstName,
         lastName,
         phone: phone || null,
-        userId: userId || null,
+        userId: null,
         orderTrackingId: null,
         paymentMethod: null,
       });
@@ -217,32 +172,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           paymentMethod: status.payment_method,
         });
         
-        // If user was authenticated when making payment, create subscription automatically
-        if (payment.userId) {
-          // Calculate subscription dates
-          const startDate = new Date();
-          let endDate = new Date();
-          
-          if (payment.plan === "weekly") {
-            endDate.setDate(endDate.getDate() + 7);
-          } else if (payment.plan === "monthly") {
-            endDate.setMonth(endDate.getMonth() + 1);
-          }
-          
-          // Create subscription
-          await storage.createSubscription({
-            userId: payment.userId,
-            plan: payment.plan,
-            status: "active",
-            startDate,
-            endDate,
-          });
-          
-          // Redirect authenticated user to categories
-          return res.redirect("/categories?payment=success");
-        }
-        
-        // Non-authenticated user - redirect to post-payment signup page
+        // Redirect to post-payment signup page
         return res.redirect(`/post-payment-signup?merchantReference=${payment.merchantReference}&OrderTrackingId=${OrderTrackingId}`);
       } else {
         await storage.updatePayment(payment.id, {
@@ -475,41 +405,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const hasAdminAccess = user.adminGrantedAccess && 
         (!user.adminAccessExpiresAt || new Date(user.adminAccessExpiresAt) > new Date());
       
-      // Check subscription status
+      // Check subscription status and free trial
       const subscription = await storage.getActiveSubscription(userId);
+      const hasUsedFreeTrial = user.hasUsedFreeTrial;
       
-      // Check if user is within 3-day free trial period
-      let isInFreeTrial = false;
-      const now = new Date();
+      // Determine question count: 30 for free trial, 50 for subscribed or admin access
+      let questionCount = 50;
+      let isFreeTrialAttempt = false;
       
       if (!subscription && !hasAdminAccess) {
         // No active subscription or admin access
-        if (!user.freeTrialStartDate) {
-          // User hasn't started their free trial yet - start it now
-          await storage.startFreeTrial(userId);
-          isInFreeTrial = true;
+        if (hasUsedFreeTrial) {
+          // User has used free trial and has no subscription or admin access
+          return res.status(403).json({ 
+            error: "Subscription required",
+            message: "Your free trial has been used. Please subscribe to continue practicing."
+          });
         } else {
-          // Check if still within 3-day trial period
-          const trialStartDate = new Date(user.freeTrialStartDate);
-          const trialEndDate = new Date(trialStartDate);
-          trialEndDate.setDate(trialEndDate.getDate() + 3); // 3 days from start
-          
-          if (now < trialEndDate) {
-            // Still within 3-day trial
-            isInFreeTrial = true;
-          } else {
-            // Trial expired - require subscription
-            return res.status(403).json({ 
-              error: "Subscription required",
-              message: "Your 3-day free trial has expired. Please subscribe to continue practicing."
-            });
-          }
+          // First time user - give free trial with 30 questions
+          questionCount = 30;
+          isFreeTrialAttempt = true;
         }
       }
-      
-      // Everyone gets 50 questions (subscribed, admin access, or in trial)
-      const questionCount = 50;
-      const isFreeTrialAttempt = isInFreeTrial;
 
       // Get random questions (up to the requested count)
       console.log(`Quiz request - Category: "${category}", Count: ${questionCount}, User: ${userId}`);
@@ -538,6 +455,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         totalQuestions: actualQuestionCount,
         isFreeTrialAttempt,
       }, questions.map(q => q.id));
+
+      // Mark free trial as used (only if this is a free trial attempt)
+      if (isFreeTrialAttempt) {
+        await storage.markFreeTrialAsUsed(userId);
+        console.log(`Free trial marked as used for user: ${userId}`);
+      }
 
       res.json({
         attemptId: attempt.id,

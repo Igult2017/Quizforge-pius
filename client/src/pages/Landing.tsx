@@ -118,7 +118,7 @@ export default function Landing() {
                 </div>
                 <div className="flex items-center gap-2">
                   <Check className="h-5 w-5" />
-                  <span>3-day free trial</span>
+                  <span>30-question free trial</span>
                 </div>
               </div>
             </div>

@@ -22,7 +22,6 @@ export const users = pgTable("users", {
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
   hasUsedFreeTrial: boolean("has_used_free_trial").default(false).notNull(),
-  freeTrialStartDate: timestamp("free_trial_start_date"),
   isAdmin: boolean("is_admin").default(false).notNull(),
   isBanned: boolean("is_banned").default(false).notNull(),
   adminGrantedAccess: boolean("admin_granted_access").default(false).notNull(),

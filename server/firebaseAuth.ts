@@ -6,7 +6,7 @@ let firebaseAdmin: admin.app.App;
 
 try {
   firebaseAdmin = admin.initializeApp({
-    projectId: "quizeforge-44a83",
+    projectId: process.env.VITE_FIREBASE_PROJECT_ID,
   });
   console.log("Firebase Admin initialized");
 } catch (error: any) {
