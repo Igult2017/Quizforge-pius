@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { loginWithEmail, loginWithGoogle } from "@/lib/firebase";
 import { Chrome, Loader2, GraduationCap } from "lucide-react";
 import { Link } from "wouter";
+import { queryClient } from "@/lib/queryClient";
 
 export default function Login() {
   const [, setLocation] = useLocation();
@@ -22,11 +23,23 @@ export default function Login() {
 
     try {
       await loginWithEmail(email, password);
+      
+      // Fetch user data to check if admin
+      const userData = await queryClient.fetchQuery({
+        queryKey: ["/api/auth/user"],
+      });
+      
       toast({
         title: "Welcome back!",
         description: "You've successfully logged in.",
       });
-      setLocation("/");
+      
+      // Redirect based on admin status
+      if (userData && (userData as any).isAdmin) {
+        setLocation("/admin");
+      } else {
+        setLocation("/");
+      }
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -42,11 +55,23 @@ export default function Login() {
     setIsLoading(true);
     try {
       await loginWithGoogle();
+      
+      // Fetch user data to check if admin
+      const userData = await queryClient.fetchQuery({
+        queryKey: ["/api/auth/user"],
+      });
+      
       toast({
         title: "Welcome back!",
         description: "You've successfully logged in with Google.",
       });
-      setLocation("/");
+      
+      // Redirect based on admin status
+      if (userData && (userData as any).isAdmin) {
+        setLocation("/admin");
+      } else {
+        setLocation("/");
+      }
     } catch (error: any) {
       toast({
         variant: "destructive",
