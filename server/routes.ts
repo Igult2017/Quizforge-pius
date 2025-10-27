@@ -454,28 +454,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const hasAdminAccess = user.adminGrantedAccess && 
         (!user.adminAccessExpiresAt || new Date(user.adminAccessExpiresAt) > new Date());
       
-      // Check subscription status and free trial
+      // Check subscription status
       const subscription = await storage.getActiveSubscription(userId);
-      const hasUsedFreeTrial = user.hasUsedFreeTrial;
       
-      // Determine question count: 30 for free trial, 50 for subscribed or admin access
-      let questionCount = 50;
-      let isFreeTrialAttempt = false;
+      // Check if user is within 3-day free trial period
+      let isInFreeTrial = false;
+      const now = new Date();
       
       if (!subscription && !hasAdminAccess) {
         // No active subscription or admin access
-        if (hasUsedFreeTrial) {
-          // User has used free trial and has no subscription or admin access
-          return res.status(403).json({ 
-            error: "Subscription required",
-            message: "Your free trial has been used. Please subscribe to continue practicing."
-          });
+        if (!user.freeTrialStartDate) {
+          // User hasn't started their free trial yet - start it now
+          await storage.startFreeTrial(userId);
+          isInFreeTrial = true;
         } else {
-          // First time user - give free trial with 30 questions
-          questionCount = 30;
-          isFreeTrialAttempt = true;
+          // Check if still within 3-day trial period
+          const trialStartDate = new Date(user.freeTrialStartDate);
+          const trialEndDate = new Date(trialStartDate);
+          trialEndDate.setDate(trialEndDate.getDate() + 3); // 3 days from start
+          
+          if (now < trialEndDate) {
+            // Still within 3-day trial
+            isInFreeTrial = true;
+          } else {
+            // Trial expired - require subscription
+            return res.status(403).json({ 
+              error: "Subscription required",
+              message: "Your 3-day free trial has expired. Please subscribe to continue practicing."
+            });
+          }
         }
       }
+      
+      // Everyone gets 50 questions (subscribed, admin access, or in trial)
+      const questionCount = 50;
+      const isFreeTrialAttempt = isInFreeTrial;
 
       // Get random questions (up to the requested count)
       console.log(`Quiz request - Category: "${category}", Count: ${questionCount}, User: ${userId}`);
@@ -504,12 +517,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         totalQuestions: actualQuestionCount,
         isFreeTrialAttempt,
       }, questions.map(q => q.id));
-
-      // Mark free trial as used (only if this is a free trial attempt)
-      if (isFreeTrialAttempt) {
-        await storage.markFreeTrialAsUsed(userId);
-        console.log(`Free trial marked as used for user: ${userId}`);
-      }
 
       res.json({
         attemptId: attempt.id,

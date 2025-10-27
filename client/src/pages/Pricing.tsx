@@ -94,10 +94,11 @@ export default function Pricing() {
           <PricingCard
             title="Free Trial"
             price="$0"
-            period="one-time"
+            period="3 days"
             description="Try before you subscribe"
             features={[
-              "30 practice questions",
+              "Unlimited practice sessions",
+              "50 questions per session",
               "All question categories",
               "Detailed explanations"
             ]}

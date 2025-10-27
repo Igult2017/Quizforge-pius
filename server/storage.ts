@@ -92,18 +92,28 @@ export class PostgresStorage implements IStorage {
   }
 
   async upsertUser(userData: UpsertUser): Promise<User> {
-    const [user] = await db
-      .insert(users)
-      .values(userData)
-      .onConflictDoUpdate({
-        target: users.id,
-        set: {
+    // Check if user already exists
+    const existingUser = await this.getUser(userData.id);
+    
+    if (existingUser) {
+      // Update existing user
+      const [updatedUser] = await db
+        .update(users)
+        .set({
           ...userData,
           updatedAt: new Date(),
-        },
-      })
+        })
+        .where(eq(users.id, userData.id))
+        .returning();
+      return updatedUser;
+    }
+    
+    // Insert new user
+    const [newUser] = await db
+      .insert(users)
+      .values(userData)
       .returning();
-    return user;
+    return newUser;
   }
 
   async getUserByEmail(email: string): Promise<User | undefined> {
@@ -112,10 +122,14 @@ export class PostgresStorage implements IStorage {
     return user;
   }
 
-  async markFreeTrialAsUsed(userId: string): Promise<void> {
+  async startFreeTrial(userId: string): Promise<void> {
     await db
       .update(users)
-      .set({ hasUsedFreeTrial: true, updatedAt: new Date() })
+      .set({ 
+        freeTrialStartDate: new Date(), 
+        hasUsedFreeTrial: true,
+        updatedAt: new Date() 
+      })
       .where(eq(users.id, userId));
   }
 
