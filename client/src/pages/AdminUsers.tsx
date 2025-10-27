@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,9 +8,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Mail, UserCheck, UserX, XCircle, Ban, Clock } from "lucide-react";
+import { Mail, UserCheck, UserX, XCircle, Ban, Clock, Users, CreditCard, TestTube, ShieldAlert } from "lucide-react";
 
 interface User {
   id: string;
@@ -37,10 +38,26 @@ export default function AdminUsers() {
   const [extendDays, setExtendDays] = useState("");
   const [emailSubject, setEmailSubject] = useState("");
   const [emailMessage, setEmailMessage] = useState("");
+  const [activeTab, setActiveTab] = useState("all");
 
   const { data: users, isLoading } = useQuery<User[]>({
     queryKey: ["/api/admin/users"],
   });
+
+  const filteredUsers = useMemo(() => {
+    if (!users) return [];
+    
+    switch (activeTab) {
+      case "subscribers":
+        return users.filter(u => u.hasActiveSubscription);
+      case "trial":
+        return users.filter(u => !u.hasActiveSubscription && !u.hasUsedFreeTrial && !u.isAdmin);
+      case "banned":
+        return users.filter(u => u.isBanned);
+      default:
+        return users;
+    }
+  }, [users, activeTab]);
 
   const grantAccessMutation = useMutation({
     mutationFn: async ({ userId, durationDays }: { userId: string; durationDays: number | null }) => {
@@ -216,6 +233,10 @@ export default function AdminUsers() {
     );
   }
 
+  const subscribersCount = users?.filter(u => u.hasActiveSubscription).length || 0;
+  const trialCount = users?.filter(u => !u.hasActiveSubscription && !u.hasUsedFreeTrial && !u.isAdmin).length || 0;
+  const bannedCount = users?.filter(u => u.isBanned).length || 0;
+
   return (
     <div className="p-8 space-y-6">
       <div>
@@ -223,24 +244,55 @@ export default function AdminUsers() {
         <p className="text-muted-foreground">Manage user access and subscriptions</p>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Users ({users?.length || 0})</CardTitle>
-          <CardDescription>Grant access, revoke access, and manage subscriptions</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Email</TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Admin Access</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {users?.map((user) => (
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+        <TabsList data-testid="tabs-user-filter">
+          <TabsTrigger value="all" className="gap-2" data-testid="tab-all-users">
+            <Users className="h-4 w-4" />
+            All Users ({users?.length || 0})
+          </TabsTrigger>
+          <TabsTrigger value="subscribers" className="gap-2" data-testid="tab-subscribers">
+            <CreditCard className="h-4 w-4" />
+            Subscribers ({subscribersCount})
+          </TabsTrigger>
+          <TabsTrigger value="trial" className="gap-2" data-testid="tab-trial">
+            <TestTube className="h-4 w-4" />
+            Trial Available ({trialCount})
+          </TabsTrigger>
+          <TabsTrigger value="banned" className="gap-2" data-testid="tab-banned">
+            <ShieldAlert className="h-4 w-4" />
+            Banned ({bannedCount})
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value={activeTab}>
+          <Card>
+            <CardHeader>
+              <CardTitle>
+                {activeTab === "all" && `All Users (${filteredUsers.length})`}
+                {activeTab === "subscribers" && `Active Subscribers (${filteredUsers.length})`}
+                {activeTab === "trial" && `Users with Trial Available (${filteredUsers.length})`}
+                {activeTab === "banned" && `Banned Users (${filteredUsers.length})`}
+              </CardTitle>
+              <CardDescription>
+                {activeTab === "subscribers" && "Users with active paid subscriptions"}
+                {activeTab === "trial" && "Users who haven't used their free trial yet"}
+                {activeTab === "banned" && "Users who have been banned from the platform"}
+                {activeTab === "all" && "All registered users"}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Admin Access</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredUsers.map((user) => (
                 <TableRow key={user.id}>
                   <TableCell className="font-medium">{user.email}</TableCell>
                   <TableCell>
@@ -477,6 +529,8 @@ export default function AdminUsers() {
           </Table>
         </CardContent>
       </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
