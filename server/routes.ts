@@ -416,6 +416,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Get or create user (auto-create if first time via Firebase Auth)
       let user = await storage.getUser(userId);
+      const userEmail = req.user.claims.email;
+      
+      // Fallback to email lookup for legacy users
+      if (!user && userEmail) {
+        user = await storage.getUserByEmail(userEmail);
+      }
+      
       if (!user) {
         // User authenticated via Firebase but doesn't exist in DB yet
         // Create them automatically with info from token
@@ -428,20 +435,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
+      // Admins get free unlimited access (bypass all checks)
+      const isAdmin = user.isAdmin === true;
+      
       // Check admin-granted access (overrides subscription/trial)
       const hasAdminAccess = user.adminGrantedAccess && 
         (!user.adminAccessExpiresAt || new Date(user.adminAccessExpiresAt) > new Date());
       
       // Check subscription status and free trial
-      const subscription = await storage.getActiveSubscription(userId);
+      const subscription = await storage.getActiveSubscription(user.id);
       const hasUsedFreeTrial = user.hasUsedFreeTrial;
       
-      // Determine question count: 30 for free trial, 50 for subscribed or admin access
+      // Determine question count: 30 for free trial, 50 for subscribed, admin-granted, or admin users
       let questionCount = 50;
       let isFreeTrialAttempt = false;
       
-      if (!subscription && !hasAdminAccess) {
-        // No active subscription or admin access
+      if (!subscription && !hasAdminAccess && !isAdmin) {
+        // No active subscription, admin access, or admin role
         if (hasUsedFreeTrial) {
           // User has used free trial and has no subscription or admin access
           return res.status(403).json({ 
