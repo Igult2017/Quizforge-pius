@@ -17,7 +17,7 @@ import {
   SidebarHeader,
   SidebarFooter,
 } from "@/components/ui/sidebar";
-import { Link, useLocation } from "wouter";
+import { useLocation } from "wouter";
 
 const menuItems = [
   {
@@ -38,7 +38,7 @@ const menuItems = [
 ];
 
 export function AdminSidebar() {
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
 
   return (
     <Sidebar>
@@ -60,11 +60,13 @@ export function AdminSidebar() {
             <SidebarMenu>
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild isActive={location === item.url}>
-                    <Link href={item.url} data-testid={`link-admin-${item.title.toLowerCase()}`}>
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.title}</span>
-                    </Link>
+                  <SidebarMenuButton 
+                    isActive={location === item.url}
+                    onClick={() => setLocation(item.url)}
+                    data-testid={`link-admin-${item.title.toLowerCase()}`}
+                  >
+                    <item.icon className="h-4 w-4" />
+                    <span>{item.title}</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
@@ -73,12 +75,14 @@ export function AdminSidebar() {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter className="border-t p-4">
-        <Link href="/" data-testid="link-exit-admin">
-          <SidebarMenuButton className="w-full">
-            <LogOut className="h-4 w-4" />
-            <span>Exit Admin</span>
-          </SidebarMenuButton>
-        </Link>
+        <SidebarMenuButton 
+          className="w-full"
+          onClick={() => setLocation("/")}
+          data-testid="link-exit-admin"
+        >
+          <LogOut className="h-4 w-4" />
+          <span>Exit Admin</span>
+        </SidebarMenuButton>
       </SidebarFooter>
     </Sidebar>
   );
