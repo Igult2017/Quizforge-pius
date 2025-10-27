@@ -16,7 +16,7 @@ const firebaseConfig = {
   projectId: "quizeforge-44a83",
   storageBucket: "quizeforge-44a83.firebasestorage.app",
   messagingSenderId: "997024322375",
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  appId: "1:997024322375:web:a54247e484f7f2468df262",
 };
 
 // Initialize Firebase (only if not already initialized)
