@@ -12,7 +12,10 @@ import {
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  authDomain: "quizeforge-44a83.firebaseapp.com",
+  projectId: "quizeforge-44a83",
+  storageBucket: "quizeforge-44a83.firebasestorage.app",
+  messagingSenderId: "997024322375",
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
