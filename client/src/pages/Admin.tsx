@@ -21,7 +21,7 @@ export default function Admin() {
   const { toast } = useToast();
 
   const { data: currentUser, isLoading: isCheckingAdmin } = useQuery<CurrentUser>({
-    queryKey: ["/api/auth/me"],
+    queryKey: ["/api/auth/user"],
   });
 
   useEffect(() => {
