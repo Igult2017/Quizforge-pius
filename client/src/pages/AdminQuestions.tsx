@@ -12,9 +12,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2, Brain, Database, Plus, CheckCircle2, XCircle, AlertCircle } from "lucide-react";
+import { Loader2, Brain, Database, Plus, CheckCircle2, XCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface QuestionCount {
   category: string;
@@ -103,13 +102,16 @@ export default function AdminQuestions() {
   if (countsError) {
     return (
       <div className="p-6">
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Error loading question counts</AlertTitle>
-          <AlertDescription>
-            {countsError instanceof Error ? countsError.message : "Failed to load question counts"}
-          </AlertDescription>
-        </Alert>
+        <Card className="border-destructive">
+          <CardHeader>
+            <CardTitle className="text-destructive">Error loading question counts</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground">
+              {countsError instanceof Error ? countsError.message : "Failed to load question counts. Please refresh the page."}
+            </p>
+          </CardContent>
+        </Card>
       </div>
     );
   }
