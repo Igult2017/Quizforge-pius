@@ -126,7 +126,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Generate unique merchant reference
       const merchantReference = `NB-${plan.toUpperCase()}-${nanoid(12)}`;
-      const callbackUrl = `${process.env.APP_URL || process.env.REPLIT_DOMAINS?.split(',')[0] || 'http://localhost:5000'}/payment/callback`;
+      
+      // Determine callback URL with fallback chain: APP_URL -> REPLIT_DOMAINS -> localhost
+      const baseUrl = process.env.APP_URL || process.env.REPLIT_DOMAINS?.split(',')[0] || 'http://localhost:5000';
+      
+      // Warn if APP_URL is not set in production (outside Replit)
+      if (process.env.NODE_ENV === 'production' && !process.env.APP_URL && !process.env.REPLIT_DOMAINS) {
+        console.warn('WARNING: APP_URL environment variable is not set. Payment callbacks may fail. Please set APP_URL to your application\'s public URL.');
+      }
+      
+      const callbackUrl = `${baseUrl}/payment/callback`;
 
       // Create payment record in database
       const payment = await storage.createPayment({
