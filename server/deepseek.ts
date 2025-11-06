@@ -2,10 +2,20 @@ import OpenAI from "openai";
 import type { InsertQuestion } from "@shared/schema";
 import { insertQuestionSchema } from "@shared/schema";
 
-const client = new OpenAI({
-  baseURL: 'https://api.deepseek.com',
-  apiKey: process.env.DEEPSEEK_API_KEY,
-});
+let client: OpenAI | null = null;
+
+function getClient(): OpenAI {
+  if (!client) {
+    if (!process.env.DEEPSEEK_API_KEY) {
+      throw new Error("DEEPSEEK_API_KEY environment variable is not set. Please add your DeepSeek API key to use AI question generation.");
+    }
+    client = new OpenAI({
+      baseURL: 'https://api.deepseek.com',
+      apiKey: process.env.DEEPSEEK_API_KEY,
+    });
+  }
+  return client;
+}
 
 interface GenerateQuestionsParams {
   category: "NCLEX" | "TEAS" | "HESI";
@@ -44,7 +54,8 @@ Return ONLY a valid JSON array of questions with this exact structure:
 Make questions realistic and clinically relevant. Ensure proper formatting with exactly 4 options per question.`;
 
   try {
-    const completion = await client.chat.completions.create({
+    const deepseekClient = getClient();
+    const completion = await deepseekClient.chat.completions.create({
       model: "deepseek-chat",
       messages: [
         { role: "system", content: systemPrompt },
