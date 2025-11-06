@@ -126,7 +126,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Generate unique merchant reference
       const merchantReference = `NB-${plan.toUpperCase()}-${nanoid(12)}`;
-      const callbackUrl = `${process.env.REPLIT_DOMAINS?.split(',')[0] || 'http://localhost:5000'}/payment/callback`;
+      const callbackUrl = `${process.env.APP_URL || process.env.REPLIT_DOMAINS?.split(',')[0] || 'http://localhost:5000'}/payment/callback`;
 
       // Create payment record in database
       const payment = await storage.createPayment({
