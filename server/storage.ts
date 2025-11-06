@@ -1,6 +1,5 @@
-import { neon } from "@neondatabase/serverless";
-import { drizzle } from "drizzle-orm/neon-http";
 import { eq, and, sql } from "drizzle-orm";
+import { db } from "./db";
 import {
   users,
   subscriptions,
@@ -22,14 +21,6 @@ import {
   type Payment,
   type InsertPayment,
 } from "@shared/schema";
-
-const dbUrl = process.env.DATABASE_URL;
-if (!dbUrl) {
-  throw new Error("DATABASE_URL is not set");
-}
-
-const client = neon(dbUrl);
-const db = drizzle(client);
 
 export interface IStorage {
   // Users (Replit Auth required methods)
@@ -399,3 +390,4 @@ export class PostgresStorage implements IStorage {
 }
 
 export const storage = new PostgresStorage();
+
