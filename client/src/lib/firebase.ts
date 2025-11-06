@@ -1,4 +1,4 @@
-import { initializeApp, getApps, getApp } from "firebase/app";
+import { initializeApp, getApps, getApp, type FirebaseApp } from "firebase/app";
 import { 
   getAuth, 
   signInWithEmailAndPassword,
@@ -7,23 +7,46 @@ import {
   GoogleAuthProvider,
   signOut,
   onAuthStateChanged,
-  User
+  User,
+  type Auth
 } from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: "quizeforge-44a83.firebaseapp.com",
-  projectId: "quizeforge-44a83",
-  storageBucket: "quizeforge-44a83.firebasestorage.app",
-  messagingSenderId: "997024322375",
-  appId: "1:997024322375:web:a54247e484f7f2468df262",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "quizeforge-44a83.firebaseapp.com",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "quizeforge-44a83",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "quizeforge-44a83.firebasestorage.app",
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "997024322375",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:997024322375:web:a54247e484f7f2468df262",
 };
 
-// Initialize Firebase (only if not already initialized)
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
+// Lazy Firebase initialization
+let app: FirebaseApp | null = null;
+let authInstance: Auth | null = null;
 
-// Initialize Firebase Authentication
-export const auth = getAuth(app);
+function initializeFirebase(): FirebaseApp {
+  if (!app) {
+    if (!firebaseConfig.apiKey) {
+      throw new Error("Firebase API key is not configured. Please set VITE_FIREBASE_API_KEY environment variable.");
+    }
+    app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
+  }
+  return app;
+}
+
+function getAuthInstance(): Auth {
+  if (!authInstance) {
+    const firebaseApp = initializeFirebase();
+    authInstance = getAuth(firebaseApp);
+  }
+  return authInstance;
+}
+
+export const auth = new Proxy({} as Auth, {
+  get(_, prop) {
+    return getAuthInstance()[prop as keyof Auth];
+  }
+});
 
 // Google Auth Provider
 const googleProvider = new GoogleAuthProvider();
