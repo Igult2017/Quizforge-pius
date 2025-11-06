@@ -155,6 +155,10 @@ The following files were modified to work outside Replit:
 2. **postcss.config.cjs**
    - Updated PostCSS plugin configuration format
 
+3. **suppress-postcss-warning.mjs**
+   - Wrapper script that suppresses harmless PostCSS "from" option warning from Tailwind CSS
+   - Does not affect production builds (only used in development)
+
 ## Replit-Specific Notes
 
 If you're deploying on Replit:

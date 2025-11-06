@@ -10,6 +10,14 @@ The application follows a modern full-stack architecture with a React frontend, 
 
 Preferred communication style: Simple, everyday language.
 
+## Recent Changes (November 2025)
+
+### Deployment Migration Preparation
+- Added `APP_URL` environment variable support for payment callbacks (replaces Replit-specific `REPLIT_DOMAINS`)
+- Created comprehensive DEPLOYMENT.md with deployment instructions for external platforms
+- Added runtime warnings for missing APP_URL in production environments
+- Suppressed harmless PostCSS warning from Tailwind CSS (cosmetic issue, doesn't affect functionality)
+
 ## System Architecture
 
 ### Frontend Architecture
