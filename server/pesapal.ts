@@ -1,30 +1,39 @@
-import axios from "axios";
+// pesapal-client.ts
+// Simple, safe PesaPal client (TypeScript)
+// Copy-paste this file. Fill environment variables before running.
 
-// PesaPal API base URL
+import axios, { AxiosError } from "axios";
+
+/**
+ * Configuration -- use environment variables.
+ * - Set these in your hosting environment or a .env file (do NOT commit secrets).
+ */
+const CONSUMER_KEY = process.env.PESAPAL_CONSUMER_KEY || "";
+const CONSUMER_SECRET = process.env.PESAPAL_CONSUMER_SECRET || "";
+// Dormant placeholder for the IPN ID (leave empty for now; fill later after you register IPN)
+const PESAPAL_IPN_ID = process.env.PESAPAL_IPN_ID || ""; // <-- dormant by default
+
 const PESAPAL_BASE_URL =
   process.env.NODE_ENV === "production"
     ? "https://pay.pesapal.com/v3/api"
     : "https://cybqa.pesapal.com/pesapalv3/api";
 
-// PesaPal credentials
-const CONSUMER_KEY = "k9EjadZje6IwRXWeINaUsbgcSTSYKBkC";
-const CONSUMER_SECRET = "SYszBnJxaPht0NCWcROxpn4D7CU=";
-
 if (!CONSUMER_KEY || !CONSUMER_SECRET) {
-  console.warn("Warning: PesaPal credentials not configured");
+  console.warn("[PesaPal] Warning: consumer key/secret not set in environment variables.");
 }
 
+// Simple token cache
 let cachedToken: string | null = null;
 let tokenExpiry: number | null = null;
 
-// Get PesaPal access token
+/** Get and cache access token */
 export async function getAccessToken(): Promise<string> {
-  if (cachedToken && tokenExpiry && tokenExpiry > Date.now()) {
+  if (cachedToken && tokenExpiry && Date.now() < tokenExpiry) {
     return cachedToken;
   }
 
   try {
-    const response = await axios.post(
+    const resp = await axios.post(
       `${PESAPAL_BASE_URL}/Auth/RequestToken`,
       {
         consumer_key: CONSUMER_KEY,
@@ -38,23 +47,27 @@ export async function getAccessToken(): Promise<string> {
       }
     );
 
-    const token = response.data.token;
+    const data = resp.data || {};
+    const token = data.token;
+    const expiryInSeconds = data.expiry_in_seconds || 600; // fallback 10 minutes
+
     if (!token) {
       throw new Error("No token returned from PesaPal");
     }
 
     cachedToken = token;
-    tokenExpiry = Date.now() + 10 * 60 * 1000; // 10 minutes
+    tokenExpiry = Date.now() + expiryInSeconds * 1000;
     return token;
-  } catch (error: any) {
-    console.error("PesaPal authentication error:", error.response?.data || error.message);
+  } catch (err) {
+    const e = err as AxiosError;
+    console.error("[PesaPal] Authentication error:", e.response?.data ?? e.message);
     throw new Error("Failed to authenticate with PesaPal");
   }
 }
 
-// Order data interface
+/** Order input */
 export interface CreateOrderData {
-  id: string; // merchant reference (unique order ID)
+  id: string;
   amount: number;
   email: string;
   firstName: string;
@@ -62,33 +75,35 @@ export interface CreateOrderData {
   phone: string;
   description: string;
   callbackUrl: string;
+  currency?: string; // optional, default USD
+  countryCode?: string; // optional, default US
 }
 
-// PesaPal order response interface
+/** Order response */
 export interface PesaPalOrderResponse {
   order_tracking_id: string;
   merchant_reference: string;
   redirect_url: string;
-  error?: any;
   status: string;
+  error?: any;
 }
 
-// Create a payment order
+/** Create a payment order */
 export async function createOrder(orderData: CreateOrderData): Promise<PesaPalOrderResponse> {
   const token = await getAccessToken();
 
-  const orderPayload = {
+  const payload = {
     id: orderData.id,
-    currency: "USD",
+    currency: orderData.currency || "USD",
     amount: orderData.amount,
     description: orderData.description,
     callback_url: orderData.callbackUrl,
-    notification_id: process.env.PESAPAL_IPN_ID || "",
+    notification_id: PESAPAL_IPN_ID, // dormant (empty) until you register and fill it
     payment_method: "CARD",
     billing_address: {
       email_address: orderData.email,
       phone_number: orderData.phone,
-      country_code: "US", // replace with actual country code if needed
+      country_code: orderData.countryCode || "US",
       first_name: orderData.firstName,
       last_name: orderData.lastName,
       line_1: "N/A",
@@ -99,63 +114,57 @@ export async function createOrder(orderData: CreateOrderData): Promise<PesaPalOr
   };
 
   try {
-    const response = await axios.post(
-      `${PESAPAL_BASE_URL}/Transactions/SubmitOrderRequest`,
-      orderPayload,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-      }
-    );
+    const resp = await axios.post(`${PESAPAL_BASE_URL}/Transactions/SubmitOrderRequest`, payload, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+    });
 
-    // Normalize redirect URL
-    const redirect_url = response.data?.redirect_url || response.data?.RedirectURL || null;
+    const data = resp.data || {};
+    const redirect_url = data.redirect_url || data.RedirectURL || null;
+
     if (!redirect_url) {
-      console.warn("PesaPal response without redirect_url:", response.data);
+      console.warn("[PesaPal] createOrder: no redirect_url in response", data);
       throw new Error("No redirect URL returned from PesaPal");
     }
 
     return {
-      order_tracking_id: response.data.order_tracking_id,
-      merchant_reference: response.data.merchant_reference,
+      order_tracking_id: data.order_tracking_id,
+      merchant_reference: data.merchant_reference,
       redirect_url,
-      status: response.data.status,
-      error: response.data.error,
+      status: data.status,
+      error: data.error,
     };
-  } catch (error: any) {
-    console.error("PesaPal create order error:", error.response?.data || error.message);
+  } catch (err) {
+    const e = err as AxiosError;
+    console.error("[PesaPal] createOrder error:", e.response?.data ?? e.message);
     throw new Error("Failed to create payment order");
   }
 }
 
-// Transaction status interface
+/** Transaction status type (partial) */
 export interface TransactionStatus {
   payment_method: string;
   amount: number;
   created_date: string;
   confirmation_code: string;
   payment_status_description: string;
-  description: string;
-  message: string;
-  payment_account: string;
-  call_back_url: string;
-  status_code: number;
   merchant_reference: string;
-  account_number: string;
-  payment_status_code: string;
   currency: string;
+  [key: string]: any;
 }
 
-// Get transaction status
+/** Get transaction status by orderTrackingId */
 export async function getTransactionStatus(orderTrackingId: string): Promise<TransactionStatus> {
   const token = await getAccessToken();
 
   try {
-    const response = await axios.get(
-      `${PESAPAL_BASE_URL}/Transactions/GetTransactionStatus?orderTrackingId=${orderTrackingId}`,
+    const resp = await axios.get(
+      `${PESAPAL_BASE_URL}/Transactions/GetTransactionStatus?orderTrackingId=${encodeURIComponent(
+        orderTrackingId
+      )}`,
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -164,10 +173,25 @@ export async function getTransactionStatus(orderTrackingId: string): Promise<Tra
       }
     );
 
-    return response.data;
-  } catch (error: any) {
-    console.error("PesaPal transaction status error:", error.response?.data || error.message);
+    return resp.data;
+  } catch (err) {
+    const e = err as AxiosError;
+    console.error("[PesaPal] getTransactionStatus error:", e.response?.data ?? e.message);
     throw new Error("Failed to get transaction status");
   }
 }
+
+/* -------------------------
+  Minimal usage example:
+
+  (1) Set environment vars:
+      PESAPAL_CONSUMER_KEY=yourkey
+      PESAPAL_CONSUMER_SECRET=yoursecret
+      (PESAPAL_IPN_ID left blank for now)
+
+  (2) Call createOrder(...) and redirect user to the returned redirect_url.
+
+  We will register the IPN and fill PESAPAL_IPN_ID later — one step at a time.
+------------------------- */
+
 
