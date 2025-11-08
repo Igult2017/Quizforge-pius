@@ -16,7 +16,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 // Simple logging middleware
-app.use((req, res, next) => { // ✅ Changed _res to res
+app.use((req, res, next) => {
   const start = Date.now();
   res.on("finish", () => {
     if (req.path.startsWith("/api")) {
@@ -29,6 +29,11 @@ app.use((req, res, next) => { // ✅ Changed _res to res
     }
   });
   next();
+});
+
+// Handle favicon requests safely
+app.get("/favicon.ico", (_req, res) => {
+  res.status(204).end(); // no content
 });
 
 (async () => {
