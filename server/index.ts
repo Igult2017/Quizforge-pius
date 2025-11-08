@@ -2,6 +2,12 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import path from "path";
+import { fileURLToPath } from "url";
+
+// ES-module-safe __dirname (optional, in case you need it later)
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 
@@ -10,13 +16,16 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 // Simple logging middleware
-app.use((req, _res, next) => {
+app.use((req, res, next) => { // ✅ Changed _res to res
   const start = Date.now();
   res.on("finish", () => {
     if (req.path.startsWith("/api")) {
       const duration = Date.now() - start;
-      const logLine = `${req.method} ${req.path} ${res.statusCode} in ${duration}ms`;
-      log(logLine.length > 80 ? logLine.slice(0, 79) + "…" : logLine);
+      let logLine = `${req.method} ${req.path} ${res.statusCode} in ${duration}ms`;
+      if (logLine.length > 80) {
+        logLine = logLine.slice(0, 79) + "…";
+      }
+      log(logLine);
     }
   });
   next();
@@ -33,7 +42,7 @@ app.use((req, _res, next) => {
         const status = err.status || err.statusCode || 500;
         const message = err.message || "Internal Server Error";
         res.status(status).json({ message });
-        // Only log, do not throw in production to prevent crashing
+        // Only throw in development to prevent crashing in production
         if (app.get("env") === "development") {
           throw err;
         }
@@ -58,3 +67,4 @@ app.use((req, _res, next) => {
     process.exit(1); // Exit if server fails to start
   }
 })();
+
