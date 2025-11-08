@@ -1,17 +1,20 @@
+// generateQuestions.ts
 import OpenAI from "openai";
 import type { InsertQuestion } from "@shared/schema";
 import { insertQuestionSchema } from "@shared/schema";
 
 let client: OpenAI | null = null;
 
+// Initialize Gemini (via OpenAI client) safely
 function getClient(): OpenAI {
   if (!client) {
-    if (!process.env.DEEPSEEK_API_KEY) {
-      throw new Error("DEEPSEEK_API_KEY environment variable is not set. Please add your DeepSeek API key to use AI question generation.");
+    if (!process.env.GEMINI_API_KEY) {
+      throw new Error(
+        "GEMINI_API_KEY environment variable is not set. Please add your Gemini API key."
+      );
     }
     client = new OpenAI({
-      baseURL: 'https://api.deepseek.com',
-      apiKey: process.env.DEEPSEEK_API_KEY,
+      apiKey: process.env.GEMINI_API_KEY,
     });
   }
   return client;
@@ -24,7 +27,9 @@ interface GenerateQuestionsParams {
   difficulty?: "easy" | "medium" | "hard";
 }
 
-export async function generateQuestions(params: GenerateQuestionsParams): Promise<InsertQuestion[]> {
+export async function generateQuestions(
+  params: GenerateQuestionsParams
+): Promise<InsertQuestion[]> {
   const { category, count, subject, difficulty } = params;
 
   const systemPrompt = `You are an expert nursing exam question writer. Generate high-quality, realistic practice questions for ${category} exams.
@@ -49,24 +54,26 @@ Return ONLY a valid JSON array of questions with this exact structure:
   }
 ]`;
 
-  const userPrompt = `Generate ${count} ${difficulty || 'medium'} difficulty ${category} questions${subject ? ` on ${subject}` : ''}.
+  const userPrompt = `Generate ${count} ${difficulty || "medium"} difficulty ${category} questions${
+    subject ? ` on ${subject}` : ""
+  }.
 
 Make questions realistic and clinically relevant. Ensure proper formatting with exactly 4 options per question.`;
 
   try {
-    const deepseekClient = getClient();
-    const completion = await deepseekClient.chat.completions.create({
-      model: "deepseek-chat",
+    const geminiClient = getClient();
+    const completion = await geminiClient.chat.completions.create({
+      model: "gemini-1.5", // replace with your specific Gemini model if needed
       messages: [
         { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt }
+        { role: "user", content: userPrompt },
       ],
       temperature: 0.7,
     });
 
-    const content = completion.choices[0].message.content;
+    const content = completion.choices[0].message?.content;
     if (!content) {
-      throw new Error("No content received from DeepSeek");
+      throw new Error("No content received from Gemini");
     }
 
     // Strip markdown code fences if present
@@ -77,17 +84,17 @@ Make questions realistic and clinically relevant. Ensure proper formatting with 
       cleanContent = cleanContent.replace(/^```\n?/, "").replace(/\n?```$/, "");
     }
 
-    // Parse the JSON response
+    // Parse JSON
     let questions;
     try {
       questions = JSON.parse(cleanContent);
     } catch (parseError: any) {
-      console.error("Failed to parse DeepSeek response:", cleanContent);
-      throw new Error(`Invalid JSON response from DeepSeek: ${parseError.message}`);
+      console.error("Failed to parse Gemini response:", cleanContent);
+      throw new Error(`Invalid JSON response from Gemini: ${parseError.message}`);
     }
 
     if (!Array.isArray(questions)) {
-      throw new Error("DeepSeek response is not an array of questions");
+      throw new Error("Gemini response is not an array of questions");
     }
 
     // Validate and transform to InsertQuestion format
@@ -106,7 +113,6 @@ Make questions realistic and clinically relevant. Ensure proper formatting with 
         validatedQuestions.push(validated);
       } catch (validationError: any) {
         console.error("Question validation failed:", validationError);
-        // Continue with other questions instead of failing completely
       }
     }
 
@@ -116,7 +122,7 @@ Make questions realistic and clinically relevant. Ensure proper formatting with 
 
     return validatedQuestions;
   } catch (error: any) {
-    console.error("Error generating questions with DeepSeek:", error);
+    console.error("Error generating questions with Gemini:", error);
     throw new Error(`Failed to generate questions: ${error.message}`);
   }
 }
