@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { User } from "firebase/auth";
 import { onAuthChange } from "@/lib/firebase";
+import { queryClient } from "@/lib/queryClient";
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
@@ -14,6 +15,10 @@ export function useAuth() {
       unsubscribe = onAuthChange((firebaseUser) => {
         setUser(firebaseUser);
         setIsLoading(false);
+        
+        // Invalidate user data query when auth state changes
+        // This ensures fresh user data is fetched after login/logout
+        queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
       });
     } catch (error: any) {
       console.warn("Firebase authentication not configured:", error.message);

@@ -60,32 +60,20 @@ export default function Login() {
     setIsLoading(true);
 
     try {
-      // NOTE: Using mocked function due to compilation error in previous attempt
       await loginWithEmail(email, password);
-      
-      // Fetch user data to check if admin
-      const userData = await queryClient.fetchQuery({
-        queryKey: ["/api/auth/user"],
-      });
       
       toast({
         title: "Welcome back!",
         description: "You've successfully logged in.",
       });
       
-      // Redirect based on admin status
-      if (userData && (userData as any).isAdmin) {
-        setLocation("/admin");
-      } else {
-        setLocation("/");
-      }
+      // Router will automatically redirect based on auth state
     } catch (error: any) {
       toast({
         variant: "destructive",
         title: "Login failed",
         description: error.message || "Invalid email or password",
       });
-    } finally {
       setIsLoading(false);
     }
   };
@@ -93,32 +81,20 @@ export default function Login() {
   const handleGoogleLogin = async () => {
     setIsLoading(true);
     try {
-      // NOTE: Using mocked function due to compilation error in previous attempt
       await loginWithGoogle();
-      
-      // Fetch user data to check if admin
-      const userData = await queryClient.fetchQuery({
-        queryKey: ["/api/auth/user"],
-      });
       
       toast({
         title: "Welcome back!",
         description: "You've successfully logged in with Google.",
       });
       
-      // Redirect based on admin status
-      if (userData && (userData as any).isAdmin) {
-        setLocation("/admin");
-      } else {
-        setLocation("/");
-      }
+      // Router will automatically redirect based on auth state
     } catch (error: any) {
       toast({
         variant: "destructive",
         title: "Login failed",
         description: error.message || "Could not sign in with Google",
       });
-    } finally {
       setIsLoading(false);
     }
   };

@@ -41,22 +41,20 @@ export default function Signup() {
     setIsLoading(true);
 
     try {
-      // NOTE: Uses MOCKED function
-      const result = await signupWithEmail(email, password);
-      console.log("Signup successful:", result.user.email);
+      await signupWithEmail(email, password);
+      
       toast({
         title: "Welcome to NurseBrace!",
         description: "Your account has been created successfully.",
       });
-      setLocation("/");
+      
+      // Router will automatically redirect based on auth state
     } catch (error: any) {
-      console.error("Signup error:", error);
       toast({
         variant: "destructive",
         title: "Signup failed",
         description: error.message || "Could not create account",
       });
-    } finally {
       setIsLoading(false);
     }
   };
@@ -64,20 +62,20 @@ export default function Signup() {
   const handleGoogleSignup = async () => {
     setIsLoading(true);
     try {
-      // NOTE: Uses MOCKED function
       await loginWithGoogle();
+      
       toast({
         title: "Welcome to NurseBrace!",
         description: "Your account has been created successfully.",
       });
-      setLocation("/");
+      
+      // Router will automatically redirect based on auth state
     } catch (error: any) {
       toast({
         variant: "destructive",
         title: "Signup failed",
         description: error.message || "Could not sign up with Google",
       });
-    } finally {
       setIsLoading(false);
     }
   };
