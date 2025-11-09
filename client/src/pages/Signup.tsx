@@ -1,90 +1,13 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useLocation } from "wouter";
-// Removed external imports for components and hooks, replacing them with mocks below
-import { Loader2, GraduationCap } from "lucide-react"; // Chrome removed, replaced by custom SVG
+import { Loader2, GraduationCap } from "lucide-react";
 import { Link } from "wouter";
-
-// --- MOCK UTILITIES AND COMPONENTS (For single-file compilation) ---
-
-// 1. Mock useToast hook
-// In a single file context, we mock the toast to use console logging.
-const useToast = () => {
-  const toast = (options) => {
-    console.log(`[TOAST] ${options.title}: ${options.description}`, options.variant);
-  };
-  return { toast };
-};
-
-// 2. Mock Firebase Functions (Dummy logic to allow signup flow)
-const signupWithEmail = (email, password) => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      console.log(`Attempting signup for: ${email}`);
-      resolve({ user: { email } });
-    }, 1500);
-  });
-};
-
-const loginWithGoogle = () => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      console.log("Google login successful (Mocked)");
-      resolve({});
-    }, 1500);
-  });
-};
-
-// 3. Mock UI Components (Replacing shadcn/ui with styled divs/buttons)
-
-const Card = ({ children, className }) => (
-  <div className={`bg-white rounded-lg p-6 ${className}`}>{children}</div>
-);
-const CardHeader = ({ children, className }) => (
-  <div className={`mb-4 ${className}`}>{children}</div>
-);
-const CardTitle = ({ children, className }) => (
-  <h2 className={`text-lg font-semibold ${className}`}>{children}</h2>
-);
-const CardDescription = ({ children, className }) => (
-  <p className={`text-sm text-gray-500 ${className}`}>{children}</p>
-);
-const CardContent = ({ children, className }) => (
-  <div className={className}>{children}</div>
-);
-const Label = ({ children, htmlFor, className }) => (
-  <label htmlFor={htmlFor} className={`text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 ${className}`}>{children}</label>
-);
-const Input = ({ className, ...props }) => (
-  <input
-    className={`flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-colors ${className}`}
-    {...props}
-  />
-);
-
-// We need a proper button that handles variants and disabled states
-const Button = ({ children, className, variant, disabled, ...props }) => {
-  let baseClasses = "inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none h-10 px-4 py-2";
-  let variantClasses = "";
-
-  if (variant === "outline") {
-    variantClasses = "border border-input bg-background hover:bg-accent hover:text-accent-foreground";
-  } else {
-    // Default/Primary button style
-    variantClasses = "bg-primary text-primary-foreground hover:bg-primary/90 shadow-md";
-  }
-
-  // Combine with custom class names
-  const finalClasses = `${baseClasses} ${variantClasses} ${className}`;
-
-  return (
-    <button className={finalClasses} disabled={disabled} {...props}>
-      {children}
-    </button>
-  );
-};
-
-
-// --- SIGNUP COMPONENT (Original logic preserved) ---
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
+import { signupWithEmail, loginWithGoogle } from "@/lib/firebase";
 
 export default function Signup() {
   const [, setLocation] = useLocation();

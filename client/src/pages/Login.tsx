@@ -7,16 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-
-// FIX: Cannot resolve path aliases like "@/lib/firebase" and "@/lib/queryClient"
-// For the purpose of running in this environment, we will treat them as external or environment variables.
-// If this fails again, the functionality must be mocked.
-const loginWithEmail = async () => console.log("Login with email mocked");
-const loginWithGoogle = async () => console.log("Login with Google mocked");
-const queryClient = {
-  fetchQuery: async () => ({ isAdmin: false })
-};
-const useToast = () => ({ toast: (props) => console.log("Toast:", props) });
+import { loginWithEmail, loginWithGoogle } from "@/lib/firebase";
+import { queryClient } from "@/lib/queryClient";
 
 
 import { Loader2, GraduationCap } from "lucide-react"; // Chrome is removed
