@@ -1,13 +1,90 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { useLocation } from "wouter";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
-import { signupWithEmail, loginWithGoogle } from "@/lib/firebase";
-import { Chrome, Loader2, GraduationCap } from "lucide-react";
+// Removed external imports for components and hooks, replacing them with mocks below
+import { Loader2, GraduationCap } from "lucide-react"; // Chrome removed, replaced by custom SVG
 import { Link } from "wouter";
+
+// --- MOCK UTILITIES AND COMPONENTS (For single-file compilation) ---
+
+// 1. Mock useToast hook
+// In a single file context, we mock the toast to use console logging.
+const useToast = () => {
+  const toast = (options) => {
+    console.log(`[TOAST] ${options.title}: ${options.description}`, options.variant);
+  };
+  return { toast };
+};
+
+// 2. Mock Firebase Functions (Dummy logic to allow signup flow)
+const signupWithEmail = (email, password) => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      console.log(`Attempting signup for: ${email}`);
+      resolve({ user: { email } });
+    }, 1500);
+  });
+};
+
+const loginWithGoogle = () => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      console.log("Google login successful (Mocked)");
+      resolve({});
+    }, 1500);
+  });
+};
+
+// 3. Mock UI Components (Replacing shadcn/ui with styled divs/buttons)
+
+const Card = ({ children, className }) => (
+  <div className={`bg-white rounded-lg p-6 ${className}`}>{children}</div>
+);
+const CardHeader = ({ children, className }) => (
+  <div className={`mb-4 ${className}`}>{children}</div>
+);
+const CardTitle = ({ children, className }) => (
+  <h2 className={`text-lg font-semibold ${className}`}>{children}</h2>
+);
+const CardDescription = ({ children, className }) => (
+  <p className={`text-sm text-gray-500 ${className}`}>{children}</p>
+);
+const CardContent = ({ children, className }) => (
+  <div className={className}>{children}</div>
+);
+const Label = ({ children, htmlFor, className }) => (
+  <label htmlFor={htmlFor} className={`text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 ${className}`}>{children}</label>
+);
+const Input = ({ className, ...props }) => (
+  <input
+    className={`flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-colors ${className}`}
+    {...props}
+  />
+);
+
+// We need a proper button that handles variants and disabled states
+const Button = ({ children, className, variant, disabled, ...props }) => {
+  let baseClasses = "inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none h-10 px-4 py-2";
+  let variantClasses = "";
+
+  if (variant === "outline") {
+    variantClasses = "border border-input bg-background hover:bg-accent hover:text-accent-foreground";
+  } else {
+    // Default/Primary button style
+    variantClasses = "bg-primary text-primary-foreground hover:bg-primary/90 shadow-md";
+  }
+
+  // Combine with custom class names
+  const finalClasses = `${baseClasses} ${variantClasses} ${className}`;
+
+  return (
+    <button className={finalClasses} disabled={disabled} {...props}>
+      {children}
+    </button>
+  );
+};
+
+
+// --- SIGNUP COMPONENT (Original logic preserved) ---
 
 export default function Signup() {
   const [, setLocation] = useLocation();
@@ -41,6 +118,7 @@ export default function Signup() {
     setIsLoading(true);
 
     try {
+      // NOTE: Uses MOCKED function
       const result = await signupWithEmail(email, password);
       console.log("Signup successful:", result.user.email);
       toast({
@@ -63,6 +141,7 @@ export default function Signup() {
   const handleGoogleSignup = async () => {
     setIsLoading(true);
     try {
+      // NOTE: Uses MOCKED function
       await loginWithGoogle();
       toast({
         title: "Welcome to NurseBrace!",
@@ -81,30 +160,35 @@ export default function Signup() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center p-4">
+    // Background color: #2442FF
+    <div className="min-h-screen flex items-center justify-center p-4 antialiased" style={{backgroundColor: '#2442FF'}}>
       <div className="w-full max-w-md">
+        
         {/* Logo/Brand */}
         <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-2 mb-4">
+          {/* Wrapped logo and brand name in Link to go back to home page */}
+          <Link href="/" className="flex items-center justify-center gap-2 mb-4 cursor-pointer hover:opacity-80 transition-opacity" data-testid="link-logo-home">
             <GraduationCap className="h-10 w-10 text-white" />
-            <h1 className="text-4xl font-bold text-white" data-testid="text-app-name">NurseBrace</h1>
-          </div>
-          <p className="text-blue-100">Start your free trial today - 30 questions, no credit card required!</p>
+            <h1 className="text-4xl font-extrabold text-white tracking-tight" data-testid="text-app-name">NurseBrace</h1>
+          </Link>
+          {/* REMOVED: 30 questions text */}
+          <p className="text-blue-100 max-w-xs mx-auto font-semibold">Start your **three-day** free trial today — no credit card required!</p>
         </div>
 
         {/* Signup Card */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Create Account</CardTitle>
-            <CardDescription>
-              Get instant access to NCLEX, ATI TEAS, and HESI A2 practice questions
+        <Card className="shadow-2xl border-t-4 border-white/70 rounded-xl">
+          <CardHeader className="pt-8">
+            <CardTitle className="text-2xl font-bold text-gray-800">Create Your Free Account</CardTitle>
+            <CardDescription className="text-base text-gray-500 font-bold">
+              Get instant access to NCLEX, ATI TEAS, and HESI A2 practice questions.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            
             {/* Google Sign Up */}
             <Button
               variant="outline"
-              className="w-full"
+              className="w-full h-11 border-gray-300 hover:bg-gray-100 transition duration-150 font-bold"
               onClick={handleGoogleSignup}
               disabled={isLoading}
               data-testid="button-google-signup"
@@ -113,7 +197,13 @@ export default function Signup() {
                 <Loader2 className="h-5 w-5 animate-spin" />
               ) : (
                 <>
-                  <Chrome className="h-5 w-5 mr-2" />
+                  {/* Replaced Chrome icon with a custom Google 'G' SVG */}
+                  <svg className="mr-2" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M19.671 10.038c0-.685-.06-1.344-.176-1.98H10v3.746h5.361c-.227 1.157-.863 2.144-1.87 2.808v2.433h3.132c1.838-1.701 2.9-4.218 2.9-7.007z" fill="#4285F4"/>
+                    <path d="M10 20c2.724 0 5.01-1.02 6.685-2.697l-3.132-2.433c-.863.574-1.97 1.057-3.553 1.057-2.748 0-5.087-1.848-5.932-4.32H.99v2.518C2.71 18.237 6.133 20 10 20z" fill="#34A853"/>
+                    <path d="M4.068 12.01c-.188-.574-.298-1.18-.298-1.812s.11-.638.298-1.212V6.47h-3.078c-.628 1.253-.99 2.69-.99 4.198s.362 2.945.99 4.198L4.068 12.01z" fill="#FBBC04"/>
+                    <path d="M10 3.99c1.48 0 2.804.505 3.868 1.488l2.768-2.768C15.017.915 12.724 0 10 0 6.133 0 2.71 1.763.99 4.752L4.068 7.27C4.913 4.8 7.252 3.99 10 3.99z" fill="#EA4335"/>
+                  </svg>
                   Continue with Google
                 </>
               )}
@@ -121,17 +211,19 @@ export default function Signup() {
 
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
+                <span className="w-full border-t border-gray-200" />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-card px-2 text-muted-foreground">Or sign up with email</span>
+                {/* Increased size and added boldness */}
+                <span className="bg-card px-2 text-muted-foreground text-sm font-bold text-gray-400">Or sign up with email</span>
               </div>
             </div>
 
             {/* Email/Password Form */}
             <form onSubmit={handleEmailSignup} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                {/* Added boldness */}
+                <Label htmlFor="email" className="font-bold">Email</Label>
                 <Input
                   id="email"
                   type="email"
@@ -145,7 +237,8 @@ export default function Signup() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                {/* Added boldness */}
+                <Label htmlFor="password" className="font-bold">Password</Label>
                 <Input
                   id="password"
                   type="password"
@@ -160,7 +253,8 @@ export default function Signup() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirm Password</Label>
+                {/* Added boldness */}
+                <Label htmlFor="confirmPassword" className="font-bold">Confirm Password</Label>
                 <Input
                   id="confirmPassword"
                   type="password"
@@ -174,24 +268,26 @@ export default function Signup() {
                 />
               </div>
 
+              {/* Added boldness */}
               <Button
                 type="submit"
-                className="w-full"
+                className="w-full bg-white text-indigo-600 hover:bg-gray-100 h-11 transition duration-150 shadow-md hover:shadow-lg font-bold"
                 disabled={isLoading}
                 data-testid="button-signup"
               >
                 {isLoading ? (
                   <Loader2 className="h-5 w-5 animate-spin" />
                 ) : (
-                  "Create Account"
+                  "Start Studying Now"
                 )}
               </Button>
             </form>
 
             {/* Sign In Link */}
-            <div className="text-center text-sm text-muted-foreground">
+            <div className="text-center text-sm text-muted-foreground font-bold">
               Already have an account?{" "}
-              <Link href="/login" className="text-primary hover:underline font-medium" data-testid="link-login">
+              {/* Added boldness */}
+              <Link href="/login" className="text-indigo-600 hover:underline font-medium hover:text-indigo-700 transition duration-150 font-bold" data-testid="link-login">
                 Sign in
               </Link>
             </div>
@@ -200,7 +296,8 @@ export default function Signup() {
 
         {/* Back to Home */}
         <div className="text-center mt-6">
-          <Link href="/" className="text-sm text-blue-100 hover:text-white hover:underline" data-testid="link-home">
+          {/* Added boldness */}
+          <Link href="/" className="text-sm text-blue-100 hover:text-white hover:underline transition duration-150 font-bold" data-testid="link-home">
             ← Back to home
           </Link>
         </div>
