@@ -67,57 +67,44 @@ export default function Landing() {
         onGetStarted={() => setLocation("/signup")}
       />
       {/* Hero Section with Blue Background and Images */}
-      <section className="relative bg-gradient-to-br from-blue-600 to-blue-800 text-white py-20 px-4 overflow-hidden">
-        {/* Decorative circles */}
-        <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/30 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-700/20 rounded-full blur-3xl"></div>
-        
-        <div className="container mx-auto max-w-6xl relative z-10">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+      <section style={{ backgroundColor: '#1e40af' }} className="py-16 md:py-24 lg:py-32">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-8 items-center">
             {/* Left Column - Text Content */}
-            <div>
-              <h1 className="text-5xl md:text-6xl font-bold mb-6 leading-tight" data-testid="text-hero-title">
+            <div className="text-white">
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-tight mb-6" data-testid="text-hero-title">
                 Pass Your Nursing Exams on the First Try
               </h1>
-              <p className="text-xl md:text-2xl mb-8 text-blue-50">
+              <p className="text-lg font-semibold opacity-90 mb-10 max-w-lg">
                 10,000+ NCLEX, ATI TEAS, and HESI A2 practice questions with instant feedback 
-                and smart analytics to boost your scores.
+                and smart analytics to boost your score.
               </p>
               
-              <div className="flex flex-wrap gap-4 mb-8">
+              <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 mb-10">
                 <Link href="/signup">
-                  <Button 
-                    size="lg" 
-                    className="bg-white text-blue-600 hover:bg-blue-50 text-lg px-8" 
-                    data-testid="button-start-trial"
-                  >
+                  <button className="inline-flex items-center justify-center bg-white text-blue-900 font-bold py-3 px-6 rounded-lg shadow-xl hover:bg-gray-100 transition duration-200">
                     Start Free Trial
-                    <ArrowRight className="ml-2 h-5 w-5" />
-                  </Button>
+                    <ArrowRight className="w-5 h-5 ml-2" />
+                  </button>
                 </Link>
                 <Link href="/pricing">
-                  <Button 
-                    size="lg" 
-                    variant="outline" 
-                    className="border-2 border-white text-white hover:bg-white/10 text-lg px-8 bg-transparent backdrop-blur-sm"
-                    data-testid="button-learn-more"
-                  >
+                  <button className="inline-flex items-center justify-center text-white font-semibold py-3 px-6 rounded-lg border-2 border-white hover:bg-white hover:text-blue-900 transition duration-200">
                     Learn More
-                  </Button>
+                  </button>
                 </Link>
               </div>
 
-              <div className="flex flex-wrap gap-6 text-sm md:text-base">
-                <div className="flex items-center gap-2">
-                  <Check className="h-5 w-5" />
+              <div className="space-y-3">
+                <div className="flex items-center text-sm font-medium opacity-80">
+                  <Check className="w-5 h-5 text-green-300 mr-2" />
                   <span>No credit card required</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Check className="h-5 w-5" />
+                <div className="flex items-center text-sm font-medium opacity-80">
+                  <Check className="w-5 h-5 text-green-300 mr-2" />
                   <span>Cancel anytime</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Check className="h-5 w-5" />
+                <div className="flex items-center text-sm font-medium opacity-80">
+                  <Check className="w-5 h-5 text-green-300 mr-2" />
                   <span>30-question free trial</span>
                 </div>
               </div>
@@ -129,19 +116,19 @@ export default function Landing() {
                 <img 
                   src={nurseImage1} 
                   alt="Professional nurse in healthcare setting" 
-                  className="rounded-md shadow-2xl w-full h-64 object-cover"
+                  className="rounded-xl shadow-2xl w-full h-64 object-cover"
                 />
                 <img 
                   src={nurseImage2} 
                   alt="Nursing professional" 
-                  className="rounded-md shadow-2xl w-full h-48 object-cover"
+                  className="rounded-xl shadow-2xl w-full h-48 object-cover"
                 />
               </div>
               <div className="pt-8">
                 <img 
                   src={nurseImage3} 
                   alt="Healthcare professional studying" 
-                  className="rounded-md shadow-2xl w-full h-80 object-cover"
+                  className="rounded-xl shadow-2xl w-full h-80 object-cover"
                 />
               </div>
             </div>
@@ -426,3 +413,4 @@ export default function Landing() {
     </div>
   );
 }
+
