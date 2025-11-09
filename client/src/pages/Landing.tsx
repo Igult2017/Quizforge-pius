@@ -8,6 +8,7 @@ import { useUserData } from "@/hooks/useUserData";
 import nurseImage1 from "@assets/stock_images/professional_nurse_h_3a5fecdd.jpg";
 import nurseImage2 from "@assets/stock_images/professional_nurse_h_9b50f451.jpg";
 import nurseImage3 from "@assets/stock_images/professional_nurse_h_6647a984.jpg";
+import React from "react";
 
 export default function Landing() {
   const [, setLocation] = useLocation();
@@ -60,357 +61,136 @@ export default function Landing() {
     return false;
   };
 
+  // --- GraphicalTrialButton Component with Fallback ---
+  const GraphicalTrialButton: React.FC = () => {
+    const BLUE = "#2563EB";
+
+    try {
+      return (
+        <Link href="/signup">
+          <button className="relative block group outline-none focus:ring-4 focus:ring-blue-300 transition duration-300">
+            <div className="absolute inset-0 z-0">
+              <svg width="250" height="70" viewBox="0 0 250 70" fill="none" xmlns="http://www.w3.org/2000/svg" className="absolute">
+                <rect x="2" y="2" width="246" height="66" rx="33" stroke="black" strokeWidth="2" strokeDasharray="6 6"/>
+                <rect x="7" y="7" width="236" height="56" rx="28" fill={BLUE} />
+                <line x1="25" y1="10" x2="225" y2="10" stroke="black" strokeWidth="1.5" />
+                <line x1="25" y1="60" x2="225" y2="60" stroke="black" strokeWidth="1.5" />
+                <circle cx="10" cy="35" r="4" fill={BLUE} stroke="black" strokeWidth="1.5" />
+                <circle cx="70" cy="10" r="3" fill="black" />
+                <circle cx="125" cy="10" r="3" fill="black" />
+                <circle cx="180" cy="10" r="3" fill="black" />
+                <circle cx="240" cy="35" r="4" fill={BLUE} stroke="black" strokeWidth="1.5" />
+              </svg>
+            </div>
+            <div className="relative z-10 w-[250px] h-[70px] flex items-center justify-center">
+              <span className="text-white font-extrabold text-xl tracking-wider group-hover:scale-[1.03] transition-transform duration-300">
+                START FREE TRIAL
+              </span>
+            </div>
+          </button>
+        </Link>
+      );
+    } catch (error) {
+      console.warn("GraphicalTrialButton failed, using fallback", error);
+      return (
+        <Link href="/signup">
+          <Button size="lg" className="bg-blue-600 text-white hover:bg-blue-700 px-8">
+            START FREE TRIAL
+          </Button>
+        </Link>
+      );
+    }
+  };
+  // --- End GraphicalTrialButton ---
+
   return (
     <div className="min-h-screen bg-background">
       <Header 
         onSignIn={() => setLocation("/login")}
         onGetStarted={() => setLocation("/signup")}
       />
-      {/* Hero Section with Blue Background and Images */}
+      {/* Hero Section */}
       <section style={{ backgroundColor: '#1e40af' }} className="py-16 md:py-24 lg:py-32">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-8 items-center">
-            {/* Left Column - Text Content */}
-            <div className="text-white">
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-tight mb-6" data-testid="text-hero-title">
-                Pass Your Nursing Exams on the First Try
-              </h1>
-              <p className="text-lg font-semibold opacity-90 mb-10 max-w-lg">
-                10,000+ NCLEX, ATI TEAS, and HESI A2 practice questions with instant feedback 
-                and smart analytics to boost your score.
-              </p>
-              
-              <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 mb-10">
-                <Link href="/signup">
-                  <button className="inline-flex items-center justify-center bg-white text-blue-900 font-bold py-3 px-6 rounded-lg shadow-xl hover:bg-gray-100 transition duration-200">
-                    Start Free Trial
-                    <ArrowRight className="w-5 h-5 ml-2" />
-                  </button>
-                </Link>
-                <Link href="/pricing">
-                  <button className="inline-flex items-center justify-center text-white font-semibold py-3 px-6 rounded-lg border-2 border-white hover:bg-white hover:text-blue-900 transition duration-200">
-                    Learn More
-                  </button>
-                </Link>
-              </div>
-
-              <div className="space-y-3">
-                <div className="flex items-center text-sm font-medium opacity-80">
-                  <Check className="w-5 h-5 text-green-300 mr-2" />
-                  <span>No credit card required</span>
-                </div>
-                <div className="flex items-center text-sm font-medium opacity-80">
-                  <Check className="w-5 h-5 text-green-300 mr-2" />
-                  <span>Cancel anytime</span>
-                </div>
-                <div className="flex items-center text-sm font-medium opacity-80">
-                  <Check className="w-5 h-5 text-green-300 mr-2" />
-                  <span>30-question free trial</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Right Column - Nursing Images */}
-            <div className="hidden lg:grid grid-cols-2 gap-4">
-              <div className="space-y-4">
-                <img 
-                  src={nurseImage1} 
-                  alt="Professional nurse in healthcare setting" 
-                  className="rounded-xl shadow-2xl w-full h-64 object-cover"
-                />
-                <img 
-                  src={nurseImage2} 
-                  alt="Nursing professional" 
-                  className="rounded-xl shadow-2xl w-full h-48 object-cover"
-                />
-              </div>
-              <div className="pt-8">
-                <img 
-                  src={nurseImage3} 
-                  alt="Healthcare professional studying" 
-                  className="rounded-xl shadow-2xl w-full h-80 object-cover"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
+        {/* ... existing hero content ... */}
       </section>
 
       {/* Practice, Learn, and Pass Section */}
       <section className="py-16 px-4 bg-muted/30">
-        <div className="container mx-auto max-w-4xl text-center">
-          <h2 className="text-4xl md:text-5xl font-bold mb-6">
-            Practice, Learn, and <span className="text-primary">Pass</span>
-          </h2>
-          <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto">
-            Master every nursing exam with targeted practice, detailed explanations, and 
-            proven study strategies designed for your success.
-          </p>
-        </div>
+        {/* ... existing section content ... */}
       </section>
 
-      {/* Features Grid */}
+      {/* Features Grid and Pricing Section */}
       <section className="py-16 px-4">
-        <div className="container mx-auto max-w-6xl">
-          <div className="grid md:grid-cols-3 gap-6">
-            <Card>
-              <CardHeader>
-                <BookOpen className="h-10 w-10 text-primary mb-2" />
-                <CardTitle>Comprehensive Question Bank</CardTitle>
-                <CardDescription>
-                  Access practice questions across NCLEX, ATI TEAS, and HESI A2 categories
-                </CardDescription>
-              </CardHeader>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <TrendingUp className="h-10 w-10 text-primary mb-2" />
-                <CardTitle>Detailed Explanations</CardTitle>
-                <CardDescription>
-                  Learn from comprehensive explanations for each question to understand the concepts
-                </CardDescription>
-              </CardHeader>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <Award className="h-10 w-10 text-primary mb-2" />
-                <CardTitle>Track Your Progress</CardTitle>
-                <CardDescription>
-                  Monitor your performance and identify areas that need improvement
-                </CardDescription>
-              </CardHeader>
-            </Card>
-          </div>
-
-          {/* Pricing Section */}
-          <div className="mt-20">
-            <h2 className="text-3xl font-bold text-center mb-12">Simple, Affordable Pricing</h2>
-            <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Free Trial</CardTitle>
-                  <CardDescription className="text-2xl font-bold mt-2">$0</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-3">
-                    <li className="flex items-start gap-2">
-                      <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                      <span>30 practice questions</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                      <span>All question categories</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                      <span>Detailed explanations</span>
-                    </li>
-                  </ul>
-                </CardContent>
-                <CardFooter>
-                  <Button 
-                    variant="outline" 
-                    className="w-full"
-                    onClick={handleFreeTrial}
-                    disabled={isButtonDisabled("free", "free")}
-                    data-testid="button-landing-free-trial"
-                  >
-                    {getButtonText("free", "free")}
-                  </Button>
-                </CardFooter>
-              </Card>
-
-              <Card className="border-primary border-2">
-                <CardHeader>
-                  <Badge className="mb-2 w-fit">
-                    {hasActiveSubscription && subscription?.plan === "monthly" ? "Current Plan" : "Most Popular"}
-                  </Badge>
-                  <CardTitle>Monthly Plan</CardTitle>
-                  <CardDescription className="text-2xl font-bold mt-2">$15/month</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-3">
-                    <li className="flex items-start gap-2">
-                      <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                      <span>Unlimited practice sessions</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                      <span>50 questions per session</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                      <span>All features included</span>
-                    </li>
-                  </ul>
-                </CardContent>
-                <CardFooter>
-                  <Button 
-                    className="w-full"
-                    onClick={() => handlePaidPlan("Monthly")}
-                    disabled={isButtonDisabled("paid", "monthly")}
-                    data-testid="button-landing-monthly"
-                  >
-                    {getButtonText("paid", "Monthly")}
-                  </Button>
-                </CardFooter>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  {hasActiveSubscription && subscription?.plan === "weekly" && (
-                    <Badge className="mb-2 w-fit">Current Plan</Badge>
-                  )}
-                  <CardTitle>Weekly Plan</CardTitle>
-                  <CardDescription className="text-2xl font-bold mt-2">$5/week</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-3">
-                    <li className="flex items-start gap-2">
-                      <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                      <span>Unlimited practice sessions</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                      <span>50 questions per session</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                      <span>All features included</span>
-                    </li>
-                  </ul>
-                </CardContent>
-                <CardFooter>
-                  <Button 
-                    variant="outline" 
-                    className="w-full"
-                    onClick={() => handlePaidPlan("Weekly")}
-                    disabled={isButtonDisabled("paid", "weekly")}
-                    data-testid="button-landing-weekly"
-                  >
-                    {getButtonText("paid", "Weekly")}
-                  </Button>
-                </CardFooter>
-              </Card>
-            </div>
-          </div>
-        </div>
+        {/* ... existing cards and pricing content ... */}
       </section>
 
       {/* Why Choose NurseBrace Section */}
       <section className="py-16 px-4 bg-background">
-        <div className="container mx-auto max-w-6xl">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold mb-4">
-              Why Choose <span className="text-primary">NurseBrace</span>
-            </h2>
-            <p className="text-xl text-muted-foreground">
-              Everything you need to pass your nursing exams, all in one place
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
-            {/* Pass Rate Card */}
-            <Card className="text-center">
-              <CardContent className="pt-6">
-                <div className="flex justify-center mb-4">
-                  <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-                    <TrendingUp className="h-8 w-8 text-primary" />
-                  </div>
-                </div>
-                <p className="text-sm text-muted-foreground mb-2">Pass Rate</p>
-                <p className="text-4xl font-bold mb-1">95%</p>
-                <p className="text-sm text-muted-foreground">Students improved scores</p>
-              </CardContent>
-            </Card>
-
-            {/* Students Helped Card */}
-            <Card className="text-center">
-              <CardContent className="pt-6">
-                <div className="flex justify-center mb-4">
-                  <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Users className="h-8 w-8 text-primary" />
-                  </div>
-                </div>
-                <p className="text-sm text-muted-foreground mb-2">Students Helped</p>
-                <p className="text-4xl font-bold mb-1">10,000+</p>
-                <p className="text-sm text-muted-foreground">Across the country</p>
-              </CardContent>
-            </Card>
-
-            {/* Student Rating Card */}
-            <Card className="text-center">
-              <CardContent className="pt-6">
-                <div className="flex justify-center mb-4">
-                  <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Star className="h-8 w-8 text-primary" />
-                  </div>
-                </div>
-                <p className="text-sm text-muted-foreground mb-2">Student Rating</p>
-                <p className="text-4xl font-bold mb-1">4.9/5</p>
-                <p className="text-sm text-muted-foreground">Based on reviews</p>
-              </CardContent>
-            </Card>
-
-            {/* Free Trial Card */}
-            <Card className="text-center">
-              <CardContent className="pt-6">
-                <div className="flex justify-center mb-4">
-                  <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Clock className="h-8 w-8 text-primary" />
-                  </div>
-                </div>
-                <p className="text-sm text-muted-foreground mb-2">Free Trial</p>
-                <p className="text-4xl font-bold mb-1">3 Days</p>
-                <p className="text-sm text-muted-foreground">No credit card needed</p>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Flexible Pricing Description */}
-          <div className="text-center max-w-3xl mx-auto">
-            <h3 className="text-3xl font-bold mb-4">
-              Flexible Pricing for Every <span className="text-primary">Nursing Student</span>
-            </h3>
-            <p className="text-lg text-muted-foreground">
-              One subscription gives you access to all exams: NCLEX-RN, NCLEX-PN, ATI TEAS, 
-              HESI A2, and all nursing question banks. No hidden fees, no surprises.
-            </p>
-          </div>
-        </div>
+        {/* ... existing cards and description content ... */}
       </section>
 
-      {/* Footer Section */}
-      <footer className="bg-gradient-to-br from-blue-600 to-blue-800 text-white">
-        {/* Call to Action - Only for non-authenticated users */}
+      {/* ----------- New Footer Inline ----------- */}
+      <footer className="bg-white text-black shadow-2xl shadow-gray-200 border-t border-gray-300">
         {!isAuthenticated && (
-          <div className="py-12 px-4">
+          <div className="py-16 px-4 bg-white border-b border-gray-200">
             <div className="container mx-auto max-w-6xl text-center">
-              <Link href="/signup">
-                <Button 
-                  size="lg"
-                  className="bg-white text-blue-600 hover:bg-blue-50 text-lg px-8"
-                  data-testid="button-footer-start-trial"
-                >
-                  Start Free Trial
-                </Button>
-              </Link>
+              <h3 className="text-3xl font-extrabold text-gray-900 mb-8">Ready to Empower Your Practice?</h3>
+              <GraphicalTrialButton />
             </div>
           </div>
         )}
 
-        {/* Copyright */}
-        <div className={`border-t border-white/20 py-6 px-4 ${!isAuthenticated ? '' : 'mt-0'}`}>
+        <div className="mx-auto max-w-6xl px-4 py-20">
+          <div className="grid grid-cols-2 gap-x-8 gap-y-12 md:grid-cols-6 lg:gap-x-12">
+            <div className="col-span-2 md:col-span-2">
+              <h4 className="text-3xl font-extrabold mb-3 text-blue-600">NurseBrace</h4>
+              <p className="text-gray-700 text-lg">Empowering healthcare professionals.</p>
+            </div>
+
+            <div className="col-span-1">
+              <h5 className="font-extrabold text-gray-900 mb-6 uppercase text-base tracking-widest border-b-2 border-blue-500/50 pb-2 inline-block">Product</h5>
+              <ul className="space-y-4 text-base">
+                <li><Link href="/features" className="text-gray-700">Features</Link></li>
+                <li><Link href="/pricing" className="text-gray-700">Pricing</Link></li>
+                <li><Link href="/integrations" className="text-gray-700">Integrations</Link></li>
+                <li><Link href="/updates" className="text-gray-700">Latest Updates</Link></li>
+              </ul>
+            </div>
+
+            <div className="col-span-1">
+              <h5 className="font-extrabold text-gray-900 mb-6 uppercase text-base tracking-widest border-b-2 border-blue-500/50 pb-2 inline-block">Company</h5>
+              <ul className="space-y-4 text-base">
+                <li><Link href="/about" className="text-gray-700">About Us</Link></li>
+                <li><Link href="/careers" className="text-gray-700">Careers</Link></li>
+                <li><Link href="/contact" className="text-gray-700">Contact</Link></li>
+              </ul>
+            </div>
+
+            <div className="col-span-1">
+              <h5 className="font-extrabold text-gray-900 mb-6 uppercase text-base tracking-widest border-b-2 border-blue-500/50 pb-2 inline-block">Resources</h5>
+              <ul className="space-y-4 text-base">
+                <li><Link href="/guides" className="text-gray-700">User Guides</Link></li>
+                <li><Link href="/faq" className="text-gray-700">FAQ</Link></li>
+              </ul>
+            </div>
+
+            <div className="col-span-1">
+              <h5 className="font-extrabold text-gray-900 mb-6 uppercase text-base tracking-widest border-b-2 border-blue-500/50 pb-2 inline-block">Legal</h5>
+              <ul className="space-y-4 text-base">
+                <li><Link href="/privacy" className="text-gray-700">Privacy Policy</Link></li>
+                <li><Link href="/terms" className="text-gray-700">Terms of Service</Link></li>
+                <li><Link href="/cookie" className="text-gray-700">Cookie Policy</Link></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div className="border-t border-gray-300 py-8 px-4 bg-gray-100">
           <div className="container mx-auto max-w-6xl text-center">
-            <p className="text-blue-100">
-              © 2025 NurseBrace. All rights reserved.
-            </p>
+            <p className="text-gray-700 text-sm font-medium">© 2025 NurseBrace. All rights reserved.</p>
           </div>
         </div>
       </footer>
     </div>
   );
 }
-
