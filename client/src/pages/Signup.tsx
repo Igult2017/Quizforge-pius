@@ -48,7 +48,8 @@ export default function Signup() {
         description: "Your account has been created successfully.",
       });
       
-      // Router will automatically redirect based on auth state
+      // Keep loading state while Router redirects based on auth state
+      // The loading state will be cleared when component unmounts during navigation
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -69,7 +70,8 @@ export default function Signup() {
         description: "Your account has been created successfully.",
       });
       
-      // Router will automatically redirect based on auth state
+      // Keep loading state while Router redirects based on auth state
+      // The loading state will be cleared when component unmounts during navigation
     } catch (error: any) {
       toast({
         variant: "destructive",

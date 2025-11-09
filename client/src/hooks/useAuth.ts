@@ -13,12 +13,21 @@ export function useAuth() {
 
     try {
       unsubscribe = onAuthChange((firebaseUser) => {
+        const wasAuthenticated = user !== null;
+        const isNowAuthenticated = firebaseUser !== null;
+        
         setUser(firebaseUser);
         setIsLoading(false);
         
-        // Invalidate user data query when auth state changes
-        // This ensures fresh user data is fetched after login/logout
-        queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+        // When logging in, invalidate to force fresh user data fetch
+        if (!wasAuthenticated && isNowAuthenticated) {
+          queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+        }
+        
+        // When logging out, reset the query to clear cached data
+        if (wasAuthenticated && !isNowAuthenticated) {
+          queryClient.resetQueries({ queryKey: ["/api/auth/user"] });
+        }
       });
     } catch (error: any) {
       console.warn("Firebase authentication not configured:", error.message);
@@ -32,7 +41,7 @@ export function useAuth() {
         unsubscribe();
       }
     };
-  }, []);
+  }, [user]);
 
   return {
     user,
