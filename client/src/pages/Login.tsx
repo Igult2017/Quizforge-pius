@@ -143,10 +143,19 @@ export default function Login() {
 
           {/* Logo/Brand Section */}
           <div className="text-center mb-10">
-            <div className="flex items-center justify-center gap-3 mb-2">
-              <GraduationCap className="h-12 w-12 text-white" />
-              <h1 className="text-5xl font-extrabold text-white tracking-wider" data-testid="text-app-name">NurseBrace</h1>
-            </div>
+            {/* Logo wrapped in Link component to navigate to home ("/") */}
+            <Link href="/" className="inline-block cursor-pointer group">
+                <div className="flex items-center justify-center gap-3 mb-2 transition-opacity duration-200 group-hover:opacity-80">
+                  <GraduationCap className="h-12 w-12 text-white" />
+                  <h1 
+                    className="text-5xl font-extrabold text-white tracking-wider" 
+                    data-testid="text-app-name"
+                  >
+                    NurseBrace
+                  </h1>
+                </div>
+            </Link>
+
             {/* Dynamic Welcome Text */}
             <p className="text-blue-100 text-lg font-light">
               {welcomeText}
