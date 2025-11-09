@@ -6,6 +6,9 @@ import {
   LayoutGrid
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
+import nurseImage1 from "@assets/generated_images/Professional_Nurse_Portrait_c25f7b05.png";
+import nurseImage2 from "@assets/generated_images/Nursing_Professional_Portrait_72f6c6ff.png";
+import nurseImage3 from "@assets/generated_images/Healthcare_Student_Studying_944b5e0c.png";
 
 // =================================================================
 // CUSTOM ICON COMPONENT (Based on User's Gear/Process Image)
@@ -210,11 +213,6 @@ const Header = ({ onSignIn, onGetStarted }) => {
 // =================================================================
 // 2. MAIN LANDING PAGE LOGIC & DISPLAY
 // =================================================================
-
-// Placeholder images for stock assets
-const nurseImage1 = "https://placehold.co/400x400/1e40af/ffffff?text=Professional+Nurse+1";
-const nurseImage2 = "https://placehold.co/400x400/1e40af/ffffff?text=Nursing+Professional+2";
-const nurseImage3 = "https://placehold.co/400x400/1e40af/ffffff?text=Healthcare+Student+3";
 
 /**
  * Footer Component - Light grey background, blue & black text.
