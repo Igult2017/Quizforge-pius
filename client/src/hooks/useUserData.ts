@@ -29,12 +29,13 @@ export function useUserData() {
   });
 
   return {
-    userData,
+    userData: isAuthenticated ? userData : null,
     isLoading: authLoading || userLoading,
     isAuthenticated,
-    hasActiveSubscription: userData?.hasActiveSubscription || false,
-    hasUsedFreeTrial: userData?.hasUsedFreeTrial || false,
-    subscription: userData?.subscription || null,
+    hasActiveSubscription: isAuthenticated && userData?.hasActiveSubscription || false,
+    hasUsedFreeTrial: isAuthenticated && userData?.hasUsedFreeTrial || false,
+    subscription: isAuthenticated ? userData?.subscription || null : null,
     refetch,
   };
 }
+
