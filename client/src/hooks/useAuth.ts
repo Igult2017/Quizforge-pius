@@ -10,10 +10,11 @@ export function useAuth() {
 
   useEffect(() => {
     let unsubscribe: (() => void) | undefined;
+    let previousUser: User | null = null;
 
     try {
       unsubscribe = onAuthChange((firebaseUser) => {
-        const wasAuthenticated = user !== null;
+        const wasAuthenticated = previousUser !== null;
         const isNowAuthenticated = firebaseUser !== null;
         
         setUser(firebaseUser);
@@ -28,6 +29,9 @@ export function useAuth() {
         if (wasAuthenticated && !isNowAuthenticated) {
           queryClient.resetQueries({ queryKey: ["/api/auth/user"] });
         }
+        
+        // Update previous user for next comparison
+        previousUser = firebaseUser;
       });
     } catch (error: any) {
       console.warn("Firebase authentication not configured:", error.message);
@@ -41,7 +45,7 @@ export function useAuth() {
         unsubscribe();
       }
     };
-  }, [user]);
+  }, []);
 
   return {
     user,
