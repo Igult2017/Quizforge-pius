@@ -1,8 +1,25 @@
+import React from "react";
+import { Switch, Route, Redirect } from "react-router-dom";
+import { useAuth } from "./hooks/useAuth";
+import { useUserData } from "./hooks/useUserData";
+import Loader2 from "./components/Loader2";
+import Landing from "./pages/Landing";
+import Login from "./pages/Login";
+import Signup from "./pages/Signup";
+import Checkout from "./pages/Checkout";
+import PostPaymentSignup from "./pages/PostPaymentSignup";
+import Pricing from "./pages/Pricing";
+import Contact from "./pages/Contact";
+import Categories from "./pages/Categories";
+import Quiz from "./pages/Quiz";
+import Results from "./pages/Results";
+import NotFound from "./pages/NotFound";
+
 function Router() {
   const { isAuthenticated, isLoading: authLoading, user } = useAuth();
   const { userData, isLoading: userLoading } = useUserData();
 
-  // Wait for auth state or user data to determine role
+  // Wait for auth or user data
   const isLoading = authLoading || userLoading;
 
   if (isLoading) {
@@ -28,15 +45,12 @@ function Router() {
     );
   }
 
-  // Determine role
   const isAdmin = userData?.isAdmin || false;
 
-  // Immediately redirect admin users
   if (isAdmin) {
     return <Redirect to="/admin" />;
   }
 
-  // Normal users go to categories
   return (
     <Switch>
       <Route path="/" component={Categories} />
@@ -50,4 +64,7 @@ function Router() {
     </Switch>
   );
 }
+
+// ✅ Default export so main.tsx can import without braces
+export default Router;
 
