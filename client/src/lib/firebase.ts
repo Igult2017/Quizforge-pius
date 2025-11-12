@@ -42,11 +42,8 @@ function getAuthInstance(): Auth {
   return authInstance;
 }
 
-export const auth = new Proxy({} as Auth, {
-  get(_, prop) {
-    return getAuthInstance()[prop as keyof Auth];
-  }
-});
+// ✅ Export the real auth instance directly (no Proxy)
+export const auth = getAuthInstance();
 
 // Google Auth Provider
 const googleProvider = new GoogleAuthProvider();
@@ -71,3 +68,4 @@ export const logout = () => {
 export const onAuthChange = (callback: (user: User | null) => void) => {
   return onAuthStateChanged(auth, callback);
 };
+
