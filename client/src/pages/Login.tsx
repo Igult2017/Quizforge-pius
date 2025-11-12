@@ -1,21 +1,19 @@
 // Login.tsx
 import { useState } from "react";
 import { useLocation } from "wouter";
+import { auth, loginWithEmail, loginWithGoogle } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { loginWithEmail, loginWithGoogle } from "@/lib/firebase";
 import { queryClient, getQueryFn } from "@/lib/queryClient";
 import { Loader2, GraduationCap } from "lucide-react";
 import { Link } from "wouter";
 
 const style = `
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
-  .font-inter {
-    font-family: 'Inter', sans-serif;
-  }
+  .font-inter { font-family: 'Inter', sans-serif; }
 `;
 
 const checkIsReturningUser = () => Math.random() < 0.7;
@@ -45,13 +43,13 @@ export default function Login() {
     setIsLoading(true);
 
     try {
-      const user = await loginWithEmail(email, password);
-      if (!user) throw new Error("Firebase login failed: no user returned.");
+      await loginWithEmail(email, password);
 
-      // Ensure token is ready
+      const user = auth.currentUser;
+      if (!user) throw new Error("Firebase login failed: user not found.");
+
       await user.getIdToken(true);
 
-      // Invalidate and immediately fetch user query
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
       const fetchUser = getQueryFn({ on401: "throw" });
       const freshUser = await fetchUser({ queryKey: ["/api/auth/user"] });
@@ -62,7 +60,7 @@ export default function Login() {
         description: "You've successfully logged in.",
       });
 
-      setLocation("/"); // redirect to authenticated route
+      setLocation("/"); // redirect after login
     } catch (error: any) {
       console.error("Email login error:", error);
       toast({
@@ -76,14 +74,15 @@ export default function Login() {
 
   const handleGoogleLogin = async () => {
     setIsLoading(true);
-    try {
-      const user = await loginWithGoogle();
-      if (!user) throw new Error("Google login failed: no user returned.");
 
-      // Ensure token is ready
+    try {
+      await loginWithGoogle();
+
+      const user = auth.currentUser;
+      if (!user) throw new Error("Google login failed: user not found.");
+
       await user.getIdToken(true);
 
-      // Invalidate and immediately fetch user query
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
       const fetchUser = getQueryFn({ on401: "throw" });
       const freshUser = await fetchUser({ queryKey: ["/api/auth/user"] });
@@ -94,7 +93,7 @@ export default function Login() {
         description: "You've successfully logged in with Google.",
       });
 
-      setLocation("/"); // redirect to authenticated route
+      setLocation("/"); // redirect after login
     } catch (error: any) {
       console.error("Google login error:", error);
       toast({
