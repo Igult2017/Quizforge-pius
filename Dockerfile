@@ -1,29 +1,17 @@
-# hadolint ignore=DL3041
-ARG FIREBASE_API_KEY
-# hadolint ignore=DL3041
-ARG FIREBASE_AUTH_DOMAIN
-# hadolint ignore=DL3041
-ARG VITE_FIREBASE_API_KEY
-# hadolint ignore=DL3041
-ARG VITE_FIREBASE_AUTH_DOMAIN
-# hadolint ignore=DL3041
-ARG PESAPAL_CONSUMER_KEY
-# hadolint ignore=DL3041
-ARG PESAPAL_CONSUMER_SECRET
-# hadolint ignore=DL3041
-ARG GEMINI_API_KEY
-# hadolint ignore=DL3041
-ARG DATABASE_URL
-
-FROM node:18-alpine
-
+FROM node:20-alpine AS builder
 WORKDIR /app
-
 COPY package*.json ./
-RUN npm install
-
+RUN npm ci
 COPY . .
-
 RUN npm run build
 
+FROM node:20-alpine
+WORKDIR /app
+ENV NODE_ENV=production
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package*.json ./
+EXPOSE 5000
 CMD ["npm", "start"]
+
+
