@@ -10,7 +10,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install all dependencies including devDependencies for build
-RUN npm ci
+RUN npm install
 
 # Copy the rest of the source code
 COPY . .
@@ -46,5 +46,3 @@ EXPOSE 5000
 
 # Start the server
 CMD ["npm", "start"]
-
-
