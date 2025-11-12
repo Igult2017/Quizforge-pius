@@ -24,7 +24,7 @@ function Router() {
   const { isAuthenticated, isLoading } = useAuth();
   const { userData, isLoading: isUserDataLoading } = useUserData();
 
-  // Wait for both authentication and user data
+  // ✅ Wait for both authentication and user data
   if (isLoading || isUserDataLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -48,13 +48,13 @@ function Router() {
     );
   }
 
-  // Redirect admins to admin panel on root path
+  // ✅ User is authenticated
   const isAdmin = userData?.isAdmin || false;
 
   return (
     <Switch>
       <Route path="/">
-        {isAdmin ? <Redirect to="/admin" /> : <Categories />}
+        {isAdmin ? <Redirect to="/admin" /> : <Redirect to="/categories" />}
       </Route>
       <Route path="/categories" component={Categories} />
       <Route path="/quiz" component={Quiz} />
@@ -84,4 +84,3 @@ function App() {
 }
 
 export default App;
-
