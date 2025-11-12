@@ -1,55 +1,42 @@
-# ========================
-# Stage 1: Build
-# ========================
+# ===== Build Stage =====
 FROM node:20-alpine AS builder
 
 # Set working directory
 WORKDIR /app
 
-# Copy root package files first
+# Copy server package.json and install dependencies
 COPY package*.json ./
-
-# Install root dependencies (if any)
 RUN npm install
 
-# Copy client package.json separately
+# Copy client package.json and install client dependencies
 COPY client/package*.json ./client/
-
-# Install client dependencies
 WORKDIR /app/client
 RUN npm install
 
-# Copy the rest of the project
-COPY . .
+# Copy client source code
+COPY client/ ./
 
 # Build client
-WORKDIR /app/client
 RUN npm run build
 
-# Build server
-WORKDIR /app
-RUN esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
-
-# ========================
-# Stage 2: Production image
-# ========================
+# ===== Production Stage =====
 FROM node:20-alpine
 
+# Set working directory
 WORKDIR /app
 
-ENV NODE_ENV=production
+# Copy server files
+COPY package*.json ./
+RUN npm install --production
 
-# Copy built files
-COPY --from=builder /app/dist ./dist
+# Copy server source code
+COPY . .
 
-# Copy production dependencies
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/client/node_modules ./client/node_modules
+# Copy built client files from builder
+COPY --from=builder /app/client/dist ./client/dist
 
-# Copy package files
-COPY --from=builder /app/package*.json ./
-COPY --from=builder /app/client/package*.json ./client/
+# Expose your server port
+EXPOSE 3000
 
-EXPOSE 5000
-
-CMD ["npm", "start"]
+# Start the server
+CMD ["node", "server/index.js"]
