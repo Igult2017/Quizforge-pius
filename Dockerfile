@@ -1,42 +1,37 @@
-# ===== Build Stage =====
+# Use Node Alpine image
 FROM node:20-alpine AS builder
 
-# Set working directory
-WORKDIR /app
-
-# Copy server package.json and install dependencies
-COPY package*.json ./
-RUN npm install
-
-# Copy client package.json and install client dependencies
-COPY client/package*.json ./client/
+# Set working directory for the client
 WORKDIR /app/client
+
+# Copy only client package files first
+COPY client/package*.json ./
+
+# Install client dependencies
 RUN npm install
 
-# Copy client source code
-COPY client/ ./
+# Copy the rest of the client source code
+COPY client/. ./
 
-# Build client
+# Build the client
 RUN npm run build
 
-# ===== Production Stage =====
-FROM node:20-alpine
-
-# Set working directory
+# -------------------------------
+# Optional: build server in the same image
 WORKDIR /app
 
-# Copy server files
+# Copy server package files
 COPY package*.json ./
-RUN npm install --production
 
-# Copy server source code
+# Install server dependencies
+RUN npm install
+
+# Copy server code
 COPY . .
 
-# Copy built client files from builder
-COPY --from=builder /app/client/dist ./client/dist
+# Build server if needed
+# RUN npm run build-server (if you have a build step)
 
-# Expose your server port
-EXPOSE 3000
+# Final image
+CMD ["node", "server/index.js"]  # adjust if your entry point is different
 
-# Start the server
-CMD ["node", "server/index.js"]
