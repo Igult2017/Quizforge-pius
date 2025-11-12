@@ -22,10 +22,10 @@ import { Loader2 } from "lucide-react";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
-  const { userData } = useUserData();
+  const { userData, isLoading: isUserDataLoading } = useUserData();
 
-  // Only wait for authentication check, not user data
-  if (isLoading) {
+  // Wait for both authentication and user data
+  if (isLoading || isUserDataLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
         <Loader2 className="h-12 w-12 animate-spin text-primary" data-testid="loader-auth" />
@@ -85,4 +85,3 @@ function App() {
 
 export default App;
 
-  
