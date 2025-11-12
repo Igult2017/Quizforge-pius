@@ -1,21 +1,16 @@
+// Login.tsx
 import { useState } from "react";
 import { useLocation } from "wouter";
-// Assuming these components and utilities are available via aliases or are mocked/passed in the canvas environment
-// Since the environment could not resolve the aliases, we keep them as simple references.
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { loginWithEmail, loginWithGoogle } from "@/lib/firebase";
-import { queryClient } from "@/lib/queryClient";
-
-
-import { Loader2, GraduationCap } from "lucide-react"; // Chrome is removed
+import { queryClient, getQueryFn } from "@/lib/queryClient";
+import { Loader2, GraduationCap } from "lucide-react";
 import { Link } from "wouter";
 
-
-// Inject Inter font styling globally (assuming Tailwind is configured)
 const style = `
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
   .font-inter {
@@ -23,12 +18,8 @@ const style = `
   }
 `;
 
-// Mock function to simulate checking if the user is a returning user
-const checkIsReturningUser = () => {
-  return Math.random() < 0.7; // 70% chance of being a returning user
-};
+const checkIsReturningUser = () => Math.random() < 0.7;
 
-// Google Icon SVG (inline for simplicity, could be a separate component)
 const GoogleIcon = () => (
   <svg className="h-5 w-5 mr-3" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path fillRule="evenodd" clipRule="evenodd" d="M44.5 24.316c0-.853-.06-1.67-.18-2.463H24v4.664h11.834c-.517 2.583-2.008 4.773-4.502 6.27V38.11h6.096c3.56-3.284 5.61-8.1 5.61-13.794Z" fill="#4285F4"/>
@@ -38,19 +29,13 @@ const GoogleIcon = () => (
   </svg>
 );
 
-
 export default function Login() {
-  // --- Original Code Logic Preserved ---
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  
-  // New state to manage the dynamic welcome message
   const [isReturningUser] = useState(checkIsReturningUser());
-  
-  // Dynamic Welcome Text
   const welcomeText = isReturningUser 
     ? "Welcome back! Continue your exam prep journey."
     : "Sign in to start your exam prep journey.";
@@ -60,16 +45,26 @@ export default function Login() {
     setIsLoading(true);
 
     try {
-      await loginWithEmail(email, password);
-      
+      const user = await loginWithEmail(email, password);
+      if (!user) throw new Error("Firebase login failed: no user returned.");
+
+      // Ensure token is ready
+      await user.getIdToken(true);
+
+      // Invalidate and immediately fetch user query
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      const fetchUser = getQueryFn({ on401: "throw" });
+      const freshUser = await fetchUser({ queryKey: ["/api/auth/user"] });
+      queryClient.setQueryData(["/api/auth/user"], freshUser);
+
       toast({
         title: "Welcome back!",
         description: "You've successfully logged in.",
       });
-      
-      // Keep loading state while Router redirects based on auth state
-      // The loading state will be cleared when component unmounts during navigation
+
+      setLocation("/"); // redirect to authenticated route
     } catch (error: any) {
+      console.error("Email login error:", error);
       toast({
         variant: "destructive",
         title: "Login failed",
@@ -82,16 +77,26 @@ export default function Login() {
   const handleGoogleLogin = async () => {
     setIsLoading(true);
     try {
-      await loginWithGoogle();
-      
+      const user = await loginWithGoogle();
+      if (!user) throw new Error("Google login failed: no user returned.");
+
+      // Ensure token is ready
+      await user.getIdToken(true);
+
+      // Invalidate and immediately fetch user query
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      const fetchUser = getQueryFn({ on401: "throw" });
+      const freshUser = await fetchUser({ queryKey: ["/api/auth/user"] });
+      queryClient.setQueryData(["/api/auth/user"], freshUser);
+
       toast({
         title: "Welcome back!",
         description: "You've successfully logged in with Google.",
       });
-      
-      // Keep loading state while Router redirects based on auth state
-      // The loading state will be cleared when component unmounts during navigation
+
+      setLocation("/"); // redirect to authenticated route
     } catch (error: any) {
+      console.error("Google login error:", error);
       toast({
         variant: "destructive",
         title: "Login failed",
@@ -100,61 +105,40 @@ export default function Login() {
       setIsLoading(false);
     }
   };
-  // --- End of Original Code Logic ---
 
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: style }} />
-      {/* Background: bg-blue-700 */}
       <div className="min-h-screen flex items-center justify-center p-4 bg-blue-700 relative overflow-hidden font-inter">
-        
-        {/* Main Content Container */}
         <div className="w-full max-w-md z-10">
-
-          {/* Logo/Brand Section */}
           <div className="text-center mb-10">
-            {/* Logo wrapped in Link component to navigate to home ("/") */}
             <Link href="/" className="inline-block cursor-pointer group">
-                <div className="flex items-center justify-center gap-3 mb-2 transition-opacity duration-200 group-hover:opacity-80">
-                  <GraduationCap className="h-12 w-12 text-white" />
-                  <h1 
-                    className="text-5xl font-extrabold text-white tracking-wider" 
-                    data-testid="text-app-name"
-                  >
-                    NurseBrace
-                  </h1>
-                </div>
+              <div className="flex items-center justify-center gap-3 mb-2 transition-opacity duration-200 group-hover:opacity-80">
+                <GraduationCap className="h-12 w-12 text-white" />
+                <h1 className="text-5xl font-extrabold text-white tracking-wider">NurseBrace</h1>
+              </div>
             </Link>
-
-            {/* Dynamic Welcome Text */}
-            <p className="text-blue-100 text-lg font-light">
-              {welcomeText}
-            </p>
+            <p className="text-blue-100 text-lg font-light">{welcomeText}</p>
           </div>
 
-          {/* Login Card */}
           <Card className="rounded-2xl shadow-2xl transition-all duration-300 hover:shadow-blue-300/50 border-t-4 border-blue-500 bg-white/95 backdrop-blur-sm">
             <CardHeader className="pt-6 pb-4">
               <CardTitle className="text-3xl font-bold text-blue-700">Sign In</CardTitle>
-              <CardDescription>
-                Access your practice questions and track your progress
-              </CardDescription>
+              <CardDescription>Access your practice questions and track your progress</CardDescription>
             </CardHeader>
-
             <CardContent className="space-y-6">
-              {/* Google Sign In Button with actual Google logo */}
+
               <Button
                 variant="outline"
                 className="w-full h-12 text-base font-semibold border-gray-300 hover:border-blue-500 transition-colors flex items-center justify-center"
                 onClick={handleGoogleLogin}
                 disabled={isLoading}
-                data-testid="button-google-signin"
               >
                 {isLoading ? (
                   <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
                 ) : (
                   <>
-                    <GoogleIcon /> {/* Replaced Chrome with GoogleIcon */}
+                    <GoogleIcon />
                     Continue with Google
                   </>
                 )}
@@ -169,7 +153,6 @@ export default function Login() {
                 </div>
               </div>
 
-              {/* Email/Password Form */}
               <form onSubmit={handleEmailLogin} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="email" className="text-gray-700 font-semibold">Email</Label>
@@ -181,7 +164,6 @@ export default function Login() {
                     onChange={(e) => setEmail(e.target.value)}
                     required
                     disabled={isLoading}
-                    data-testid="input-email"
                     className="focus:ring-blue-500 focus:border-blue-500 h-10"
                   />
                 </div>
@@ -196,7 +178,6 @@ export default function Login() {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     disabled={isLoading}
-                    data-testid="input-password"
                     className="focus:ring-blue-500 focus:border-blue-500 h-10"
                   />
                 </div>
@@ -205,42 +186,25 @@ export default function Login() {
                   type="submit"
                   className="w-full bg-blue-600 hover:bg-blue-700 h-12 text-lg font-bold shadow-md transition-shadow"
                   disabled={isLoading}
-                  data-testid="button-signin"
                 >
-                  {isLoading ? (
-                    <Loader2 className="h-5 w-5 animate-spin" />
-                  ) : (
-                    "Sign In"
-                  )}
+                  {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Sign In"}
                 </Button>
               </form>
 
-              {/* Sign Up Link */}
               <div className="text-center text-sm text-gray-500 pt-2">
                 Don't have an account?{" "}
-                <Link 
-                  href="/signup" 
-                  className="text-blue-600 hover:text-blue-800 font-bold hover:underline transition duration-150" 
-                  data-testid="link-signup"
-                >
-                  Sign up for free
-                </Link>
+                <Link href="/signup" className="text-blue-600 hover:text-blue-800 font-bold hover:underline">Sign up for free</Link>
               </div>
+
             </CardContent>
           </Card>
 
-          {/* Back to Home Link */}
           <div className="text-center mt-6">
-            <Link 
-              href="/" 
-              className="text-sm text-blue-100 hover:text-white hover:underline transition duration-150" 
-              data-testid="link-home"
-            >
-              ← Back to home
-            </Link>
+            <Link href="/" className="text-sm text-blue-100 hover:text-white hover:underline">← Back to home</Link>
           </div>
         </div>
       </div>
     </>
   );
 }
+
