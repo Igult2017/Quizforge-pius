@@ -18,14 +18,15 @@ export default defineConfig({
       "@shared": path.resolve(__dirname, "shared"),
       "@assets": path.resolve(__dirname, "attached_assets"),
     },
-    dedupe: ["react", "react-dom"], // <--- ADD THIS
+    dedupe: ["react", "react-dom"], // prevents multiple React versions
   },
-  root: path.resolve(__dirname, "client"),
+  root: path.resolve(__dirname, "client"), // set root to client folder
   build: {
-    outDir: path.resolve(__dirname, "dist/public"),
+    outDir: path.resolve(__dirname, "dist/public"), // final output folder
     emptyOutDir: true,
     rollupOptions: {
-      external: [], // <--- ENSURE react-router-dom is not externalized
+      external: [], // DO NOT externalize react-router-dom
+      // If needed, explicitly mark packages here that shouldn't be bundled
     },
   },
   server: {
@@ -35,5 +36,4 @@ export default defineConfig({
     },
   },
 });
-
 
