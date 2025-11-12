@@ -18,11 +18,15 @@ export default defineConfig({
       "@shared": path.resolve(__dirname, "shared"),
       "@assets": path.resolve(__dirname, "attached_assets"),
     },
+    dedupe: ["react", "react-dom"], // <--- ADD THIS
   },
   root: path.resolve(__dirname, "client"),
   build: {
     outDir: path.resolve(__dirname, "dist/public"),
     emptyOutDir: true,
+    rollupOptions: {
+      external: [], // <--- ENSURE react-router-dom is not externalized
+    },
   },
   server: {
     fs: {
@@ -31,4 +35,5 @@ export default defineConfig({
     },
   },
 });
+
 
