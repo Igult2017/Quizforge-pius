@@ -1,7 +1,8 @@
+// useAuth.ts
 import { useState, useEffect } from "react";
 import { User } from "firebase/auth";
 import { onAuthChange } from "@/lib/firebase";
-import { queryClient } from "@/lib/queryClient";
+import { queryClient, getQueryFn } from "@/lib/queryClient";
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
@@ -16,21 +17,38 @@ export function useAuth() {
       unsubscribe = onAuthChange((firebaseUser) => {
         const wasAuthenticated = previousUser !== null;
         const isNowAuthenticated = firebaseUser !== null;
-        
+
+        // Update React state immediately for UI
         setUser(firebaseUser);
         setIsLoading(false);
-        
-        // When logging in, invalidate to force fresh user data fetch
+
+        // Handle login
         if (!wasAuthenticated && isNowAuthenticated) {
-          queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+          // Fetch fresh ID token, then update user query
+          firebaseUser?.getIdToken(true)
+            .then(async () => {
+              // Invalidate cached query to refetch user data
+              queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+
+              // Optional enhancement: fetch the user immediately and update cache
+              try {
+                const fetchUser = getQueryFn({ on401: "returnNull" });
+                const freshUser = await fetchUser({ queryKey: ["/api/auth/user"] });
+                queryClient.setQueryData(["/api/auth/user"], freshUser);
+              } catch (fetchError) {
+                console.error("Error fetching fresh user data:", fetchError);
+              }
+            })
+            .catch((tokenError) => {
+              console.error("Error fetching Firebase ID token:", tokenError);
+            });
         }
-        
-        // When logging out, reset the query to clear cached data
+
+        // Handle logout
         if (wasAuthenticated && !isNowAuthenticated) {
           queryClient.resetQueries({ queryKey: ["/api/auth/user"] });
         }
-        
-        // Update previous user for next comparison
+
         previousUser = firebaseUser;
       });
     } catch (error: any) {
@@ -39,7 +57,6 @@ export function useAuth() {
       setIsLoading(false);
     }
 
-    // Cleanup subscription on unmount
     return () => {
       if (unsubscribe) {
         unsubscribe();
