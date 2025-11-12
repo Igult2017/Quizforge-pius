@@ -10,11 +10,16 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install
 
-# Copy the rest of the project
+# Copy everything
 COPY . .
 
-# Build client and server
+# Build client (Vite) and server (esbuild)
+WORKDIR /app/client
 RUN npm run build
+
+# Build server separately if needed
+WORKDIR /app
+RUN npx esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
 
 # ========================
 # Stage 2: Production image
@@ -26,7 +31,7 @@ WORKDIR /app
 # Set production environment
 ENV NODE_ENV=production
 
-# Copy built files from builder
+# Copy built files
 COPY --from=builder /app/dist ./dist
 
 # Copy production dependencies
@@ -35,7 +40,7 @@ COPY --from=builder /app/node_modules ./node_modules
 # Copy package files
 COPY --from=builder /app/package*.json ./
 
-# Expose application port
+# Expose port
 EXPOSE 5000
 
 # Start the server
