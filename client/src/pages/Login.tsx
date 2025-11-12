@@ -43,13 +43,14 @@ export default function Login() {
     setIsLoading(true);
 
     try {
-      await loginWithEmail(email, password);
-
-      const user = auth.currentUser;
-      if (!user) throw new Error("Firebase login failed: user not found.");
+      // Login and get the user credential
+      const credential = await loginWithEmail(email, password);
+      const user = credential.user;
+      if (!user) throw new Error("Firebase login failed: user not returned.");
 
       await user.getIdToken(true);
 
+      // Update React Query with fresh user data
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
       const fetchUser = getQueryFn({ on401: "throw" });
       const freshUser = await fetchUser({ queryKey: ["/api/auth/user"] });
@@ -60,7 +61,7 @@ export default function Login() {
         description: "You've successfully logged in.",
       });
 
-      setLocation("/"); // redirect after login
+      setLocation("/"); // Redirect to authenticated route
     } catch (error: any) {
       console.error("Email login error:", error);
       toast({
@@ -76,13 +77,13 @@ export default function Login() {
     setIsLoading(true);
 
     try {
-      await loginWithGoogle();
-
-      const user = auth.currentUser;
-      if (!user) throw new Error("Google login failed: user not found.");
+      const credential = await loginWithGoogle();
+      const user = credential.user;
+      if (!user) throw new Error("Google login failed: user not returned.");
 
       await user.getIdToken(true);
 
+      // Update React Query
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
       const fetchUser = getQueryFn({ on401: "throw" });
       const freshUser = await fetchUser({ queryKey: ["/api/auth/user"] });
@@ -93,7 +94,7 @@ export default function Login() {
         description: "You've successfully logged in with Google.",
       });
 
-      setLocation("/"); // redirect after login
+      setLocation("/"); // Redirect
     } catch (error: any) {
       console.error("Google login error:", error);
       toast({
@@ -126,7 +127,6 @@ export default function Login() {
               <CardDescription>Access your practice questions and track your progress</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-
               <Button
                 variant="outline"
                 className="w-full h-12 text-base font-semibold border-gray-300 hover:border-blue-500 transition-colors flex items-center justify-center"
@@ -206,4 +206,5 @@ export default function Login() {
     </>
   );
 }
+
 
