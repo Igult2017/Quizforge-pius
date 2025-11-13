@@ -1,37 +1,28 @@
-# Use Node Alpine image
-FROM node:20-alpine AS builder
+# Use lightweight Node image
+FROM node:20-alpine
 
-# Set working directory for the client
-WORKDIR /app/client
-
-# Copy only client package files first
-COPY client/package*.json ./
-
-# Install client dependencies
-RUN npm install
-
-# Copy the rest of the client source code
-COPY client/. ./
-
-# Build the client
-RUN npm run build
-
-# -------------------------------
-# Optional: build server in the same image
+# Set working directory to root of project
 WORKDIR /app
 
-# Copy server package files
+# Copy root package.json and package-lock.json (if exists)
 COPY package*.json ./
 
-# Install server dependencies
+# Install root dependencies
 RUN npm install
 
-# Copy server code
+# Copy the rest of the project files
 COPY . .
 
-# Build server if needed
-# RUN npm run build-server (if you have a build step)
+# Build the React client
+WORKDIR /app/client
+RUN npm install       # Install client-specific dependencies (if any)
+RUN npm run build     # Build the client
 
-# Final image
-CMD ["node", "server/index.js"]  # adjust if your entry point is different
+# Optionally, build the server (if you have a server folder/build step)
+WORKDIR /app
+# RUN npm run build-server   # uncomment if you have a server build step
+
+# Default command (adjust according to your server start script)
+CMD ["node", "server/index.js"]
+
 
