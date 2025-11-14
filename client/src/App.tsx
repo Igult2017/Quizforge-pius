@@ -1,5 +1,5 @@
 import React from "react";
-import { Switch, Route, Redirect } from "react-router-dom";
+import { Switch, Route, Redirect } from "wouter";
 import { useAuth } from "./hooks/useAuth";
 import { useUserData } from "./hooks/useUserData";
 import Loader2 from "./components/Loader2";
@@ -16,10 +16,9 @@ import Results from "./pages/Results";
 import NotFound from "./pages/NotFound";
 
 function Router() {
-  const { isAuthenticated, isLoading: authLoading, user } = useAuth();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const { userData, isLoading: userLoading } = useUserData();
 
-  // Wait for auth or user data
   const isLoading = authLoading || userLoading;
 
   if (isLoading) {
@@ -30,41 +29,98 @@ function Router() {
     );
   }
 
+  // -------------------------
+  // Unauthenticated routes
+  // -------------------------
   if (!isAuthenticated) {
     return (
       <Switch>
-        <Route path="/" component={Landing} />
-        <Route path="/login" component={Login} />
-        <Route path="/signup" component={Signup} />
-        <Route path="/checkout" component={Checkout} />
-        <Route path="/post-payment-signup" component={PostPaymentSignup} />
-        <Route path="/pricing" component={Pricing} />
-        <Route path="/contact" component={Contact} />
-        <Route path="/:rest*" component={Landing} />
+        <Route path="/">
+          <Landing />
+        </Route>
+
+        <Route path="/login">
+          <Login />
+        </Route>
+
+        <Route path="/signup">
+          <Signup />
+        </Route>
+
+        <Route path="/checkout">
+          <Checkout />
+        </Route>
+
+        <Route path="/post-payment-signup">
+          <PostPaymentSignup />
+        </Route>
+
+        <Route path="/pricing">
+          <Pricing />
+        </Route>
+
+        <Route path="/contact">
+          <Contact />
+        </Route>
+
+        {/* Catch-all */}
+        <Route>
+          <Landing />
+        </Route>
       </Switch>
     );
   }
 
+  // -------------------------
+  // Authenticated user
+  // -------------------------
   const isAdmin = userData?.isAdmin || false;
 
+  // Redirect admin
   if (isAdmin) {
     return <Redirect to="/admin" />;
   }
 
+  // -------------------------
+  // Normal user routes
+  // -------------------------
   return (
     <Switch>
-      <Route path="/" component={Categories} />
-      <Route path="/categories" component={Categories} />
-      <Route path="/quiz" component={Quiz} />
-      <Route path="/results" component={Results} />
-      <Route path="/pricing" component={Pricing} />
-      <Route path="/contact" component={Contact} />
-      <Route path="/checkout" component={Checkout} />
-      <Route path="/:rest*" component={NotFound} />
+      <Route path="/">
+        <Categories />
+      </Route>
+
+      <Route path="/categories">
+        <Categories />
+      </Route>
+
+      <Route path="/quiz">
+        <Quiz />
+      </Route>
+
+      <Route path="/results">
+        <Results />
+      </Route>
+
+      <Route path="/pricing">
+        <Pricing />
+      </Route>
+
+      <Route path="/contact">
+        <Contact />
+      </Route>
+
+      <Route path="/checkout">
+        <Checkout />
+      </Route>
+
+      {/* Catch-all */}
+      <Route>
+        <NotFound />
+      </Route>
     </Switch>
   );
 }
 
-// ✅ Default export so main.tsx can import without braces
 export default Router;
 
