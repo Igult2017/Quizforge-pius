@@ -13,7 +13,7 @@ import Contact from "./pages/Contact";
 import Categories from "./pages/Categories";
 import Quiz from "./pages/Quiz";
 import Results from "./pages/Results";
-import NotFound from "./pages/NotFound";
+import NotFound from "./pages/not-found"; // updated import to match actual file
 
 function App() {
   const { isAuthenticated, isLoading: authLoading } = useAuth();
