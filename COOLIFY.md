@@ -1,0 +1,211 @@
+# Deploying NurseBrace to Coolify
+
+This guide explains how to deploy the NurseBrace application to Coolify.
+
+## Important: Firebase Environment Variables
+
+**Critical**: Vite requires Firebase environment variables at **BUILD TIME**, not runtime. You must configure these correctly in Coolify or the app will show "Firebase not configured" errors.
+
+## Step 1: Create a New Service in Coolify
+
+1. Log into your Coolify dashboard
+2. Create a new **Docker Compose** or **Dockerfile** service
+3. Connect your GitHub repository
+4. Set the build path to use the `Dockerfile` in the root directory
+
+## Step 2: Configure Environment Variables
+
+Coolify has TWO types of environment variables:
+- **Build Environment Variables** - Available during Docker build (for Vite)
+- **Runtime Environment Variables** - Available when container runs (for Express server)
+
+### Build Environment Variables (Required for Firebase)
+
+In Coolify service settings, go to **Environment Variables** → **Build**:
+
+```bash
+VITE_FIREBASE_API_KEY=AIzaSy...
+VITE_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=your-project-id
+VITE_FIREBASE_STORAGE_BUCKET=your-project.firebasestorage.app
+VITE_FIREBASE_MESSAGING_SENDER_ID=123456789
+VITE_FIREBASE_APP_ID=1:123456789:web:abc123
+```
+
+**How to set Build Variables in Coolify:**
+1. Go to your service → **Environment Variables**
+2. Click **"Add Environment Variable"**
+3. For each VITE_* variable, check the **"Available during build"** option
+4. Save each variable
+
+### Runtime Environment Variables
+
+In Coolify service settings, go to **Environment Variables** → **Runtime**:
+
+```bash
+# Database
+DATABASE_URL=postgresql://user:password@host:5432/nursebrace
+
+# Backend API Keys
+DEEPSEEK_API_KEY=your-deepseek-api-key
+PESAPAL_CONSUMER_KEY=your-pesapal-key
+PESAPAL_CONSUMER_SECRET=your-pesapal-secret
+
+# Session
+SESSION_SECRET=generate-a-random-32-character-string
+
+# App URL (for payment callbacks)
+APP_URL=https://yourdomain.com
+
+# Environment
+NODE_ENV=production
+```
+
+## Step 3: Configure Build Settings
+
+In Coolify service settings:
+
+- **Port**: `5000`
+- **Health Check Path**: `/` (optional)
+- **Build Command**: Automatically runs `docker build`
+- **Start Command**: Automatically uses `CMD` from Dockerfile
+
+## Step 4: Database Setup
+
+### Option A: Use Coolify's Built-in PostgreSQL
+
+1. In Coolify, create a new **PostgreSQL** database service
+2. Note the connection details
+3. Add `DATABASE_URL` to runtime environment variables
+
+### Option B: Use External PostgreSQL (Neon, Supabase, etc.)
+
+1. Create a database on your provider
+2. Copy the connection string
+3. Add `DATABASE_URL` to runtime environment variables
+
+### Run Migrations
+
+After first deployment, run migrations via Coolify's terminal:
+
+```bash
+npm run db:push
+```
+
+## Step 5: Deploy
+
+1. Click **Deploy** in Coolify
+2. Watch the build logs to ensure:
+   - VITE_* variables are available during build
+   - `npm run build` completes successfully
+   - Container starts on port 5000
+
+## Troubleshooting
+
+### "Firebase not configured" error
+
+**Cause**: VITE_* environment variables weren't available during the Docker build.
+
+**Solution**:
+1. Verify variables are set in **Build** section, not just Runtime
+2. Check the **"Available during build"** checkbox for each VITE_* variable
+3. Trigger a new build (not just restart) to rebuild with env vars
+
+### Build fails with environment variable errors
+
+**Check**:
+- Ensure all VITE_* variables are set in Build environment
+- Variables must be set BEFORE triggering build
+- Use Coolify's build logs to verify variables are passed to Docker
+
+### Database connection errors
+
+**Check**:
+- `DATABASE_URL` format: `postgresql://user:password@host:5432/database`
+- Database is accessible from Coolify network
+- Run `npm run db:push` to create tables
+
+### Port 5000 not accessible
+
+**Check**:
+- Dockerfile `EXPOSE 5000` is present (it is)
+- Coolify port mapping is set to `5000:5000`
+- Application is binding to `0.0.0.0:5000` (it does)
+
+## Environment Variable Reference
+
+### Firebase Setup
+
+Get Firebase credentials from [Firebase Console](https://console.firebase.google.com/):
+
+1. Go to Project Settings → General
+2. Scroll to "Your apps" → Web app
+3. Copy the config object values:
+   - `apiKey` → `VITE_FIREBASE_API_KEY`
+   - `authDomain` → `VITE_FIREBASE_AUTH_DOMAIN`
+   - `projectId` → `VITE_FIREBASE_PROJECT_ID`
+   - `storageBucket` → `VITE_FIREBASE_STORAGE_BUCKET`
+   - `messagingSenderId` → `VITE_FIREBASE_MESSAGING_SENDER_ID`
+   - `appId` → `VITE_FIREBASE_APP_ID`
+
+### PesaPal Setup
+
+Get PesaPal credentials from [PesaPal Dashboard](https://www.pesapal.com/):
+
+1. Log into PesaPal merchant account
+2. Go to API Keys section
+3. Copy Consumer Key → `PESAPAL_CONSUMER_KEY`
+4. Copy Consumer Secret → `PESAPAL_CONSUMER_SECRET`
+
+### DeepSeek API
+
+Get DeepSeek API key from [DeepSeek Platform](https://platform.deepseek.com/):
+
+1. Create account on DeepSeek
+2. Go to API Keys
+3. Generate new key → `DEEPSEEK_API_KEY`
+
+## Post-Deployment Checklist
+
+- [ ] Application loads at your domain
+- [ ] Sign up page works (tests Firebase)
+- [ ] Login page works
+- [ ] Database is connected (check admin panel)
+- [ ] Payment integration works (test checkout)
+- [ ] Quiz functionality works
+- [ ] Admin panel accessible to admin users
+
+## Security Notes
+
+- Firebase API keys are public (client-side) - they're safe in the frontend bundle
+- Keep `SESSION_SECRET`, `PESAPAL_CONSUMER_SECRET`, and `DEEPSEEK_API_KEY` private
+- Use strong passwords for database connections
+- Enable Firebase security rules to protect data
+
+## Need Help?
+
+- Check Coolify logs: Service → Logs
+- Check application logs: Service → Terminal
+- Verify environment variables: Service → Environment Variables
+- Test Firebase config: Try signing up a new user
+
+## Coolify-Specific Tips
+
+### Automatic Deployments
+
+Enable automatic deployments from GitHub:
+1. Service Settings → Source
+2. Enable "Automatic Deployment"
+3. Set branch to `main` or your production branch
+
+### Custom Domains
+
+1. Service Settings → Domains
+2. Add your custom domain
+3. Coolify handles SSL via Let's Encrypt automatically
+
+### Scaling
+
+- Coolify can auto-scale based on resource usage
+- Configure in Service Settings → Resources
+- Monitor resource usage in Service → Metrics
