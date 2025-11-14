@@ -665,7 +665,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ============= ADMIN ROUTES =============
   
   // Create a single question (admin only)
-  app.post("/api/admin/questions", async (req, res) => {
+  app.post("/api/admin/questions", isAuthenticated, isAdmin, async (req, res) => {
     try {
       const questionData = insertQuestionSchema.parse(req.body);
       const question = await storage.createQuestion(questionData);
@@ -680,7 +680,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Bulk create questions (admin only)
-  app.post("/api/admin/questions/bulk", async (req, res) => {
+  app.post("/api/admin/questions/bulk", isAuthenticated, isAdmin, async (req, res) => {
     try {
       const { questions } = req.body;
       

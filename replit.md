@@ -12,6 +12,20 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes (November 2025)
 
+### Application Fixes and Security Improvements (November 14, 2025)
+- **Fixed blank screen issue**: Made Firebase optional - app now runs without Firebase configuration
+  - Firebase authentication is gracefully disabled when API keys are not provided
+  - App falls back to unauthenticated state when Firebase is not configured
+- **Fixed admin routing**: Properly secured admin panel with proper role-based access control
+  - Admins are automatically redirected to /admin panel on login
+  - Non-admin users cannot access admin routes (enforced on both client and server)
+  - Added missing middleware protection to `/api/admin/questions` and `/api/admin/questions/bulk` routes
+- **Fixed Dockerfile**: Updated for Coolify deployment with proper monorepo build process
+  - Removed incorrect client directory operations
+  - Uses `npm run build` and `npm run start` for production deployment
+- **Fixed main.tsx**: Added QueryClientProvider and other necessary providers to prevent runtime errors
+- All routing already uses wouter correctly (no changes needed)
+
 ### Deployment Migration Preparation
 - Added `APP_URL` environment variable support for payment callbacks (replaces Replit-specific `REPLIT_DOMAINS`)
 - Created comprehensive DEPLOYMENT.md with deployment instructions for external platforms
