@@ -18,11 +18,10 @@ WORKDIR /app/client
 RUN npm install       # Install client-specific dependencies (if any)
 RUN npm run build     # Build the client
 
-# Optionally, build the server (if you have a server folder/build step)
+# Set working directory back to root for server
 WORKDIR /app
-# RUN npm run build-server   # uncomment if you have a server build step
 
-# Default command (adjust according to your server start script)
-CMD ["node", "server/index.js"]
+# Default command: run server/index.ts using tsx
+CMD ["npx", "tsx", "server/index.ts"]
 
 
