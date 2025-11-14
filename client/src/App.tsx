@@ -2,7 +2,6 @@ import React from "react";
 import { Switch, Route, Redirect } from "wouter";
 import { useAuth } from "./hooks/useAuth";
 import { useUserData } from "./hooks/useUserData";
-import Loader2 from "./components/Loader2";
 
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
@@ -28,7 +27,8 @@ function App() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        {/* Tailwind spinner */}
+        <div className="h-12 w-12 border-4 border-t-primary border-gray-200 rounded-full animate-spin"></div>
       </div>
     );
   }
@@ -42,31 +42,24 @@ function App() {
         <Route path="/">
           <Landing />
         </Route>
-
         <Route path="/login">
           <Login />
         </Route>
-
         <Route path="/signup">
           <Signup />
         </Route>
-
         <Route path="/checkout">
           <Checkout />
         </Route>
-
         <Route path="/post-payment-signup">
           <PostPaymentSignup />
         </Route>
-
         <Route path="/pricing">
           <Pricing />
         </Route>
-
         <Route path="/contact">
           <Contact />
         </Route>
-
         {/* Catch-all */}
         <Route>
           <Landing />
@@ -92,31 +85,24 @@ function App() {
       <Route path="/">
         <Categories />
       </Route>
-
       <Route path="/categories">
         <Categories />
       </Route>
-
       <Route path="/quiz">
         <Quiz />
       </Route>
-
       <Route path="/results">
         <Results />
       </Route>
-
       <Route path="/pricing">
         <Pricing />
       </Route>
-
       <Route path="/contact">
         <Contact />
       </Route>
-
       <Route path="/checkout">
         <Checkout />
       </Route>
-
       {/* Catch-all */}
       <Route>
         <NotFound />
@@ -126,3 +112,4 @@ function App() {
 }
 
 export default App;
+
