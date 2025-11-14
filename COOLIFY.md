@@ -19,7 +19,9 @@ Coolify has TWO types of environment variables:
 - **Build Environment Variables** - Available during Docker build (for Vite)
 - **Runtime Environment Variables** - Available when container runs (for Express server)
 
-### Build Environment Variables (Required for Firebase)
+**You have two options for providing Firebase environment variables during build:**
+
+### Option A: Build Environment Variables (Recommended)
 
 In Coolify service settings, go to **Environment Variables** → **Build**:
 
@@ -37,6 +39,35 @@ VITE_FIREBASE_APP_ID=1:123456789:web:abc123
 2. Click **"Add Environment Variable"**
 3. For each VITE_* variable, check the **"Available during build"** option
 4. Save each variable
+5. **Important**: After changing build variables, trigger a **full rebuild** (not just restart)
+
+### Option B: .env File in Repository (Alternative)
+
+If Coolify doesn't properly pass build variables or you prefer managing environment variables in your repository:
+
+1. Create a `.env` file in your project root (this file is gitignored by default)
+2. Add your Firebase variables to `.env`:
+   ```bash
+   VITE_FIREBASE_API_KEY=AIzaSy...
+   VITE_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
+   VITE_FIREBASE_PROJECT_ID=your-project-id
+   VITE_FIREBASE_STORAGE_BUCKET=your-project.firebasestorage.app
+   VITE_FIREBASE_MESSAGING_SENDER_ID=123456789
+   VITE_FIREBASE_APP_ID=1:123456789:web:abc123
+   ```
+
+3. **Security Warning**: If using this approach, either:
+   - Add `.env` to `.gitignore` and manually copy it to your deployment server
+   - OR use a private repository only (never commit `.env` to public repos)
+
+4. Vite will automatically load these values during `npm run build`
+
+**When to use Option B:**
+- Coolify's build environment variables aren't working
+- You need to test the build locally first
+- You prefer managing all config in one place
+
+**Recommended**: Use Option A (build environment variables) for better security and separation of config from code.
 
 ### Runtime Environment Variables
 
@@ -102,14 +133,41 @@ npm run db:push
 
 ## Troubleshooting
 
-### "Firebase not configured" error
+### Verify Firebase Configuration Locally
+
+Before deploying, test that your Firebase configuration works:
+
+```bash
+# Create a .env file with your Firebase keys
+cp .env.example .env
+# Edit .env and add your Firebase credentials
+
+# Test the build
+npm run build
+
+# Check if your Firebase project ID is baked into the bundle
+# Replace "your-project-id" with your actual Firebase project ID
+grep -r "your-project-id" dist/client/assets/*.js
+
+# If you see output containing your project ID, Firebase is configured correctly
+# If grep returns nothing, the environment variables weren't available during build
+```
+
+**Alternative verification**: Open `dist/client/assets/index-*.js` in a text editor and search for your Firebase project ID. If you find it, Firebase is configured correctly.
+
+**What to expect**:
+- ✅ **Correct**: You should find your Firebase project ID and other config values in the bundle
+- ❌ **Wrong**: If you see `undefined` or don't find any Firebase values, environment variables weren't set during build
+
+### "Firebase not configured" error in production
 
 **Cause**: VITE_* environment variables weren't available during the Docker build.
 
 **Solution**:
 1. Verify variables are set in **Build** section, not just Runtime
 2. Check the **"Available during build"** checkbox for each VITE_* variable
-3. Trigger a new build (not just restart) to rebuild with env vars
+3. Trigger a **full rebuild** (not just restart) - rebuilds are required for build variables
+4. Check Coolify build logs to confirm variables are passed to Docker
 
 ### Build fails with environment variable errors
 
