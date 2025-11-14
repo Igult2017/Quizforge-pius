@@ -3,6 +3,7 @@ import { Switch, Route, Redirect } from "wouter";
 import { useAuth } from "./hooks/useAuth";
 import { useUserData } from "./hooks/useUserData";
 import Loader2 from "./components/Loader2";
+
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
@@ -15,12 +16,15 @@ import Quiz from "./pages/Quiz";
 import Results from "./pages/Results";
 import NotFound from "./pages/NotFound";
 
-function Router() {
+function App() {
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const { userData, isLoading: userLoading } = useUserData();
 
   const isLoading = authLoading || userLoading;
 
+  // -------------------------------------
+  // Loading state
+  // -------------------------------------
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -29,9 +33,9 @@ function Router() {
     );
   }
 
-  // -------------------------
+  // -------------------------------------
   // Unauthenticated routes
-  // -------------------------
+  // -------------------------------------
   if (!isAuthenticated) {
     return (
       <Switch>
@@ -71,19 +75,18 @@ function Router() {
     );
   }
 
-  // -------------------------
+  // -------------------------------------
   // Authenticated user
-  // -------------------------
+  // -------------------------------------
   const isAdmin = userData?.isAdmin || false;
 
-  // Redirect admin
   if (isAdmin) {
     return <Redirect to="/admin" />;
   }
 
-  // -------------------------
+  // -------------------------------------
   // Normal user routes
-  // -------------------------
+  // -------------------------------------
   return (
     <Switch>
       <Route path="/">
@@ -122,5 +125,4 @@ function Router() {
   );
 }
 
-export default Router;
-
+export default App;
