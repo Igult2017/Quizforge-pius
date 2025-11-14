@@ -16,13 +16,20 @@ Preferred communication style: Simple, everyday language.
 - **Fixed blank screen issue**: Made Firebase optional - app now runs without Firebase configuration
   - Firebase authentication is gracefully disabled when API keys are not provided
   - App falls back to unauthenticated state when Firebase is not configured
+  - Signup page works correctly even without Firebase (graceful degradation)
 - **Fixed admin routing**: Properly secured admin panel with proper role-based access control
   - Admins are automatically redirected to /admin panel on login
   - Non-admin users cannot access admin routes (enforced on both client and server)
   - Added missing middleware protection to `/api/admin/questions` and `/api/admin/questions/bulk` routes
-- **Fixed Dockerfile**: Updated for Coolify deployment with proper monorepo build process
-  - Removed incorrect client directory operations
-  - Uses `npm run build` and `npm run start` for production deployment
+- **Coolify Deployment Configuration**:
+  - Updated Dockerfile to accept build-time environment variables using ARG and ENV with ${VAR} syntax
+  - Firebase VITE_* environment variables must be set as "Build" variables in Coolify (not just runtime)
+  - Created comprehensive COOLIFY.md deployment guide with two options:
+    - Option A: Coolify build environment variables (recommended)
+    - Option B: .env file in repository (alternative)
+  - Added .env.example showing all required environment variables
+  - Added local verification steps to test Firebase configuration before deployment
+  - Emphasized need for full rebuilds (not just restarts) when changing build variables
 - **Fixed main.tsx**: Added QueryClientProvider and other necessary providers to prevent runtime errors
 - All routing already uses wouter correctly (no changes needed)
 
