@@ -4,24 +4,22 @@ FROM node:20-alpine
 # Set working directory to root of project
 WORKDIR /app
 
-# Copy root package.json and package-lock.json (if exists)
+# Copy package files
 COPY package*.json ./
 
-# Install root dependencies
+# Install all dependencies
 RUN npm install
 
 # Copy the rest of the project files
 COPY . .
 
-# Build the React client
-WORKDIR /app/client
-RUN npm install       # Install client-specific dependencies (if any)
-RUN npm run build     # Build the client
+# Build the application (both frontend and backend)
+RUN npm run build
 
-# Set working directory back to root for server
-WORKDIR /app
+# Expose port 5000
+EXPOSE 5000
 
-# Default command: run server/index.ts using tsx
-CMD ["npx", "tsx", "server/index.ts"]
+# Start the production server
+CMD ["npm", "run", "start"]
 
 

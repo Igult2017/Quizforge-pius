@@ -13,7 +13,8 @@ import Contact from "./pages/Contact";
 import Categories from "./pages/Categories";
 import Quiz from "./pages/Quiz";
 import Results from "./pages/Results";
-import NotFound from "./pages/not-found"; // updated import to match actual file
+import Admin from "./pages/Admin";
+import NotFound from "./pages/not-found";
 
 function App() {
   const { isAuthenticated, isLoading: authLoading } = useAuth();
@@ -73,8 +74,21 @@ function App() {
   // -------------------------------------
   const isAdmin = userData?.isAdmin || false;
 
+  // Redirect admins to admin panel
   if (isAdmin) {
-    return <Redirect to="/admin" />;
+    return (
+      <Switch>
+        <Route path="/admin">
+          <Admin />
+        </Route>
+        <Route path="/admin/:rest*">
+          <Admin />
+        </Route>
+        <Route>
+          <Redirect to="/admin" />
+        </Route>
+      </Switch>
+    );
   }
 
   // -------------------------------------
