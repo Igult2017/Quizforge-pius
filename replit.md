@@ -184,7 +184,7 @@ Preferred communication style: Simple, everyday language.
 
 **Environment Requirements**
 - `DATABASE_URL` - PostgreSQL connection string (required)
-- `DEEPSEEK_API_KEY` - API key for question generation (required for content creation)
+- `DEEPSEEK_API_KEY` - DeepSeek AI API key for question generation (required for admin question generation feature)
 - `VITE_FIREBASE_API_KEY` - Firebase client API key (required for auth)
 - `VITE_FIREBASE_PROJECT_ID` - Firebase project ID (required for auth)
 - `VITE_FIREBASE_APP_ID` - Firebase app ID (required for auth)
@@ -192,3 +192,5 @@ Preferred communication style: Simple, everyday language.
 - `PESAPAL_CONSUMER_SECRET` - PesaPal consumer secret (required for payments)
 - `SESSION_SECRET` - Session encryption key (required)
 - `NODE_ENV` - Environment flag (development/production)
+
+**Note**: The question generation feature uses DeepSeek AI (not Gemini). Get your API key from https://platform.deepseek.com

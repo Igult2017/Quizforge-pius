@@ -58,13 +58,23 @@ export default function Pricing() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background font-poppins">
+      <style dangerouslySetInnerHTML={{ __html: `
+        .pricing-section h1, 
+        .pricing-section h2, 
+        .pricing-section h3, 
+        .pricing-section h4, 
+        .pricing-section h5, 
+        .pricing-section h6 {
+          font-family: 'Poppins', sans-serif !important;
+        }
+      `}} />
       <Header
         onSignIn={() => setLocation("/login")}
         onGetStarted={() => setLocation("/signup")}
       />
 
-      <div className="container mx-auto px-4 py-16">
+      <div className="container mx-auto px-4 py-16 pricing-section">
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl font-bold mb-4">
             Flexible Pricing for Every <span className="text-primary">Nursing Student</span>

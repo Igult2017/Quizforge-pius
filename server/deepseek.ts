@@ -5,16 +5,17 @@ import { insertQuestionSchema } from "@shared/schema";
 
 let client: OpenAI | null = null;
 
-// Initialize Gemini (via OpenAI client) safely
+// Initialize DeepSeek (via OpenAI client) safely
 function getClient(): OpenAI {
   if (!client) {
-    if (!process.env.GEMINI_API_KEY) {
+    if (!process.env.DEEPSEEK_API_KEY) {
       throw new Error(
-        "GEMINI_API_KEY environment variable is not set. Please add your Gemini API key."
+        "DEEPSEEK_API_KEY environment variable is not set. Please add your DeepSeek API key."
       );
     }
     client = new OpenAI({
-      apiKey: process.env.GEMINI_API_KEY,
+      apiKey: process.env.DEEPSEEK_API_KEY,
+      baseURL: "https://api.deepseek.com",
     });
   }
   return client;
@@ -61,9 +62,9 @@ Return ONLY a valid JSON array of questions with this exact structure:
 Make questions realistic and clinically relevant. Ensure proper formatting with exactly 4 options per question.`;
 
   try {
-    const geminiClient = getClient();
-    const completion = await geminiClient.chat.completions.create({
-      model: "gemini-1.5", // replace with your specific Gemini model if needed
+    const deepseekClient = getClient();
+    const completion = await deepseekClient.chat.completions.create({
+      model: "deepseek-chat",
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt },
@@ -73,7 +74,7 @@ Make questions realistic and clinically relevant. Ensure proper formatting with 
 
     const content = completion.choices[0].message?.content;
     if (!content) {
-      throw new Error("No content received from Gemini");
+      throw new Error("No content received from DeepSeek");
     }
 
     // Strip markdown code fences if present
@@ -89,12 +90,12 @@ Make questions realistic and clinically relevant. Ensure proper formatting with 
     try {
       questions = JSON.parse(cleanContent);
     } catch (parseError: any) {
-      console.error("Failed to parse Gemini response:", cleanContent);
-      throw new Error(`Invalid JSON response from Gemini: ${parseError.message}`);
+      console.error("Failed to parse DeepSeek response:", cleanContent);
+      throw new Error(`Invalid JSON response from DeepSeek: ${parseError.message}`);
     }
 
     if (!Array.isArray(questions)) {
-      throw new Error("Gemini response is not an array of questions");
+      throw new Error("DeepSeek response is not an array of questions");
     }
 
     // Validate and transform to InsertQuestion format
@@ -122,7 +123,7 @@ Make questions realistic and clinically relevant. Ensure proper formatting with 
 
     return validatedQuestions;
   } catch (error: any) {
-    console.error("Error generating questions with Gemini:", error);
+    console.error("Error generating questions with DeepSeek:", error);
     throw new Error(`Failed to generate questions: ${error.message}`);
   }
 }
