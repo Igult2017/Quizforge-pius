@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Mail, UserCheck, UserX, XCircle, Ban, Clock, Users, CreditCard, TestTube, ShieldAlert } from "lucide-react";
+import { Mail, UserCheck, UserX, XCircle, Ban, Clock, Users, CreditCard, TestTube, ShieldAlert, Shield, ShieldOff } from "lucide-react";
 
 interface User {
   id: string;
@@ -213,6 +213,46 @@ export default function AdminUsers() {
     },
   });
 
+  const makeAdminMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      return await apiRequest("POST", `/api/admin/users/${userId}/make-admin`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      toast({
+        title: "Success",
+        description: "User is now an admin",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to make user admin",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const revokeAdminMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      return await apiRequest("POST", `/api/admin/users/${userId}/revoke-admin`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      toast({
+        title: "Success",
+        description: "Admin status revoked successfully",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to revoke admin status",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleGrantAccess = () => {
     if (selectedUser) {
       const days = accessDays ? parseInt(accessDays) : null;
@@ -392,6 +432,30 @@ export default function AdminUsers() {
                           data-testid={`button-revoke-access-${user.id}`}
                         >
                           <UserX className="h-4 w-4" />
+                        </Button>
+                      )}
+
+                      {!user.isAdmin ? (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => makeAdminMutation.mutate(user.id)}
+                          disabled={makeAdminMutation.isPending}
+                          data-testid={`button-make-admin-${user.id}`}
+                          title="Make this user an admin"
+                        >
+                          <Shield className="h-4 w-4 text-green-600" />
+                        </Button>
+                      ) : (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => revokeAdminMutation.mutate(user.id)}
+                          disabled={revokeAdminMutation.isPending}
+                          data-testid={`button-revoke-admin-${user.id}`}
+                          title="Revoke admin status"
+                        >
+                          <ShieldOff className="h-4 w-4 text-orange-600" />
                         </Button>
                       )}
 

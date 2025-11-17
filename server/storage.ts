@@ -36,6 +36,8 @@ export interface IStorage {
   getAllUsers(): Promise<User[]>;
   grantAdminAccess(userId: string, expiresAt: Date | null): Promise<void>;
   revokeAdminAccess(userId: string): Promise<void>;
+  makeUserAdmin(userId: string): Promise<void>;
+  revokeAdminStatus(userId: string): Promise<void>;
   banUser(userId: string): Promise<void>;
   unbanUser(userId: string): Promise<void>;
 
@@ -141,6 +143,26 @@ export class PostgresStorage implements IStorage {
       .set({ 
         adminGrantedAccess: false, 
         adminAccessExpiresAt: null,
+        updatedAt: new Date() 
+      })
+      .where(eq(users.id, userId));
+  }
+
+  async makeUserAdmin(userId: string): Promise<void> {
+    await db
+      .update(users)
+      .set({ 
+        isAdmin: true,
+        updatedAt: new Date() 
+      })
+      .where(eq(users.id, userId));
+  }
+
+  async revokeAdminStatus(userId: string): Promise<void> {
+    await db
+      .update(users)
+      .set({ 
+        isAdmin: false,
         updatedAt: new Date() 
       })
       .where(eq(users.id, userId));

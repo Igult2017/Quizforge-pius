@@ -849,6 +849,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Make user an admin (permanent admin status)
+  app.post("/api/admin/users/:userId/make-admin", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { userId } = req.params;
+
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      if (user.isAdmin) {
+        return res.status(400).json({ error: "User is already an admin" });
+      }
+
+      await storage.makeUserAdmin(userId);
+      
+      res.json({
+        success: true,
+        message: `${user.email} is now an admin`,
+      });
+    } catch (error) {
+      console.error("Error making user admin:", error);
+      res.status(500).json({ error: "Failed to make user admin" });
+    }
+  });
+
+  // Revoke admin status (remove permanent admin status)
+  app.post("/api/admin/users/:userId/revoke-admin", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { userId } = req.params;
+      const currentAdminId = req.user.claims.sub;
+
+      // Prevent admins from revoking their own admin status
+      if (userId === currentAdminId) {
+        return res.status(400).json({ error: "Cannot revoke your own admin status. Ask another admin to do this." });
+      }
+
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      if (!user.isAdmin) {
+        return res.status(400).json({ error: "User is not an admin" });
+      }
+
+      // Prevent removing the last admin (recount after excluding target user)
+      const allUsers = await storage.getAllUsers();
+      const remainingAdmins = allUsers.filter(u => u.isAdmin && u.id !== userId);
+      if (remainingAdmins.length === 0) {
+        return res.status(400).json({ error: "Cannot revoke admin status of the last admin" });
+      }
+
+      await storage.revokeAdminStatus(userId);
+      
+      res.json({
+        success: true,
+        message: `Admin status revoked for ${user.email}`,
+      });
+    } catch (error) {
+      console.error("Error revoking admin status:", error);
+      res.status(500).json({ error: "Failed to revoke admin status" });
+    }
+  });
+
   // End user subscription
   app.post("/api/admin/users/:userId/end-subscription", isAuthenticated, isAdmin, async (req: any, res) => {
     try {

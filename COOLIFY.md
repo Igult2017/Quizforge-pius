@@ -82,6 +82,11 @@ DEEPSEEK_API_KEY=your-deepseek-api-key
 PESAPAL_CONSUMER_KEY=your-pesapal-key
 PESAPAL_CONSUMER_SECRET=your-pesapal-secret
 
+# Firebase Admin (Optional - for custom service account)
+# FIREBASE_SERVICE_ACCOUNT_KEY={"type":"service_account","project_id":"..."}
+# FIREBASE_PROJECT_ID=your-firebase-project-id
+# Note: Firebase Admin can also use Application Default Credentials automatically
+
 # Session
 SESSION_SECRET=generate-a-random-32-character-string
 
@@ -194,7 +199,9 @@ grep -r "your-project-id" dist/client/assets/*.js
 
 ### Firebase Setup
 
-Get Firebase credentials from [Firebase Console](https://console.firebase.google.com/):
+#### Client-Side Firebase Config (Required)
+
+Get Firebase web app credentials from [Firebase Console](https://console.firebase.google.com/):
 
 1. Go to Project Settings → General
 2. Scroll to "Your apps" → Web app
@@ -205,6 +212,34 @@ Get Firebase credentials from [Firebase Console](https://console.firebase.google
    - `storageBucket` → `VITE_FIREBASE_STORAGE_BUCKET`
    - `messagingSenderId` → `VITE_FIREBASE_MESSAGING_SENDER_ID`
    - `appId` → `VITE_FIREBASE_APP_ID`
+
+**These must be set as BUILD environment variables (see Option A above)**
+
+#### Server-Side Firebase Admin (Optional but Recommended)
+
+For production deployments, you should configure Firebase Admin SDK credentials:
+
+**Option 1: Service Account Key (Recommended for most deployments)**
+
+1. Go to Firebase Console → Project Settings → Service Accounts
+2. Click "Generate New Private Key"
+3. Save the JSON file securely
+4. Set as runtime environment variable:
+   ```
+   FIREBASE_SERVICE_ACCOUNT_KEY={"type":"service_account","project_id":"...","private_key":"..."}
+   ```
+
+**Option 2: Application Default Credentials**
+
+If deploying on Google Cloud Platform, Cloud Run, or similar:
+- The platform will automatically provide credentials
+- No manual configuration needed
+
+**What if I don't set Firebase Admin credentials?**
+
+The app will still work for authentication (logging in/signing up) but you'll see warnings in logs. ID token verification works with just the project ID, but any admin operations (like creating users via admin API) will fail.
+
+**For production, we strongly recommend setting Firebase Admin credentials via Option 1 or deploying on a platform that supports Option 2.**
 
 ### PesaPal Setup
 
