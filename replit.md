@@ -12,6 +12,26 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes (November 2025)
 
+### UI and Feature Enhancements (November 17, 2025)
+- **Poppins font implementation in pricing section**: Modernized pricing page typography
+  - Imported Poppins Google Font globally in index.css
+  - Added poppins to Tailwind fontFamily configuration
+  - Applied font-poppins class to pricing page root
+  - Added scoped CSS override for all headings within pricing section (including nested PricingCard components)
+  - Pricing section now has clean, modern typography distinct from site-wide Merriweather headings
+- **Fixed question generation AI integration**: Migrated from Gemini to DeepSeek
+  - Changed environment variable from GEMINI_API_KEY to DEEPSEEK_API_KEY
+  - Updated API base URL to https://api.deepseek.com
+  - Changed model from gemini-pro to deepseek-chat
+  - Updated all error messages and logging references
+  - Documented DeepSeek API key requirement in replit.md with setup URL
+  - .env.example already configured with correct DEEPSEEK_API_KEY reference
+- **Verified admin detection logic**: Confirmed secure authentication implementation
+  - Firebase ID token verification with custom claims check
+  - Database admin flag lookup with email fallback for legacy users
+  - Proper 403 forbidden responses for non-admin access attempts
+  - Client-side admin status combines Firebase claims and database flags
+
 ### Replit Environment Setup and Navigation Fix (November 17, 2025)
 - **Replit GitHub Import Setup**: Successfully configured the project for the Replit environment
   - Installed all npm dependencies including tsx for TypeScript execution
