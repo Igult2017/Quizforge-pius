@@ -117,7 +117,14 @@ function App() {
       <Route path="/checkout">
         <Checkout />
       </Route>
-      {/* Catch-all */}
+      {/* Redirect login/signup routes for authenticated users */}
+      <Route path="/login">
+        <Redirect to="/categories" />
+      </Route>
+      <Route path="/signup">
+        <Redirect to="/categories" />
+      </Route>
+      {/* Catch-all - show 404 for truly missing routes */}
       <Route>
         <NotFound />
       </Route>
