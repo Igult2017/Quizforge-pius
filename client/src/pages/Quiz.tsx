@@ -44,6 +44,7 @@ export default function Quiz() {
   const [attemptId, setAttemptId] = useState<number | null>(null);
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [subscriptionError, setSubscriptionError] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Get category from URL params or default to NCLEX
   const category = new URLSearchParams(window.location.search).get("category") || "NCLEX";
@@ -66,6 +67,12 @@ export default function Quiz() {
       // Check for subscription error first (403 status)
       if (error.message.includes("403:") || error.message.includes("Subscription required")) {
         setSubscriptionError("Your free trial has been used. Please subscribe to continue practicing.");
+      } else if (error.message.includes("404:")) {
+        // Extract the error message from the 404 response
+        const noQuestionsMsg = error.message.includes("No questions available") 
+          ? "No questions available. This category doesn't have any questions yet. Please try another category or contact support."
+          : "No questions found for this category. Please try another category.";
+        setErrorMessage(noQuestionsMsg);
       } else if (isUnauthorizedError(error)) {
         toast({
           title: "Unauthorized",
@@ -75,6 +82,9 @@ export default function Quiz() {
         setTimeout(() => {
           window.location.href = "/api/login";
         }, 500);
+      } else {
+        // Generic error
+        setErrorMessage(error.message || "Failed to load quiz. Please try again.");
       }
     },
   });
@@ -209,20 +219,35 @@ export default function Quiz() {
   }
 
   // Error state
-  if (startQuizMutation.isError) {
+  if (startQuizMutation.isError || errorMessage) {
     return (
       <div className="min-h-screen bg-background">
         <Header />
         <div className="flex items-center justify-center h-[calc(100vh-200px)]">
-          <div className="text-center">
-            <p className="text-destructive mb-4">Failed to load quiz. Please try again.</p>
-            <button
-              onClick={() => startQuizMutation.mutate()}
-              className="px-4 py-2 bg-primary text-primary-foreground rounded-md"
-              data-testid="button-retry-quiz"
-            >
-              Retry
-            </button>
+          <div className="text-center max-w-md">
+            <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
+            <p className="text-destructive mb-2 font-semibold">Quiz Loading Error</p>
+            <p className="text-muted-foreground mb-6">
+              {errorMessage || "Failed to load quiz. Please try again."}
+            </p>
+            <div className="flex gap-3 justify-center">
+              <UIButton
+                onClick={() => {
+                  setErrorMessage(null);
+                  startQuizMutation.mutate();
+                }}
+                data-testid="button-retry-quiz"
+              >
+                Retry
+              </UIButton>
+              <UIButton
+                variant="outline"
+                onClick={() => setLocation("/categories")}
+                data-testid="button-back-to-categories"
+              >
+                Back to Categories
+              </UIButton>
+            </div>
           </div>
         </div>
       </div>

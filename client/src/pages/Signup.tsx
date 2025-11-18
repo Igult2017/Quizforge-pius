@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useLocation } from "wouter";
 import { Loader2, GraduationCap } from "lucide-react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -9,8 +8,34 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { signupWithEmail, loginWithGoogle } from "@/lib/firebase";
 
+// Email validation function
+const validateEmail = (email: string): { valid: boolean; message?: string } => {
+  // Basic format check
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    return { valid: false, message: "Please enter a valid email address" };
+  }
+
+  // Check for common temporary email domains
+  const disposableDomains = [
+    "tempmail", "throwaway", "guerrillamail", "10minutemail", "mailinator",
+    "trashmail", "fakeinbox", "yopmail", "maildrop", "sharklasers"
+  ];
+  
+  const domain = email.split("@")[1].toLowerCase();
+  if (disposableDomains.some(d => domain.includes(d))) {
+    return { valid: false, message: "Please use a permanent email address" };
+  }
+
+  // Check for basic invalid patterns
+  if (email.includes("..") || email.startsWith(".") || email.endsWith(".")) {
+    return { valid: false, message: "Invalid email format" };
+  }
+
+  return { valid: true };
+};
+
 export default function Signup() {
-  const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -19,6 +44,17 @@ export default function Signup() {
 
   const handleEmailSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate email
+    const emailValidation = validateEmail(email);
+    if (!emailValidation.valid) {
+      toast({
+        variant: "destructive",
+        title: "Invalid Email",
+        description: emailValidation.message,
+      });
+      return;
+    }
 
     if (password !== confirmPassword) {
       toast({

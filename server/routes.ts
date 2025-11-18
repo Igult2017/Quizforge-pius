@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { isAuthenticated } from "./firebaseAuth";
-import { generateQuestions } from "./deepseek";
+import { generateQuestions } from "./gemini";
 import { z } from "zod";
 import { insertQuestionSchema, insertQuizAttemptSchema, insertQuizAnswerSchema, insertPaymentSchema } from "@shared/schema";
 import { createOrder, getTransactionStatus } from "./pesapal";
@@ -747,7 +747,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log(`Generating ${count} ${category} questions...`);
       
-      // Generate questions using DeepSeek
+      // Generate questions using Gemini AI
       const generatedQuestions = await generateQuestions({
         category,
         count: Number(count),
@@ -846,6 +846,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error revoking access:", error);
       res.status(500).json({ error: "Failed to revoke access" });
+    }
+  });
+
+  // Initialize first admin (only works when there are no existing admins)
+  app.post("/api/admin/initialize-first-admin", isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUserId = req.user.claims.sub;
+      
+      // Check if any admins already exist
+      const allUsers = await storage.getAllUsers();
+      const existingAdmins = allUsers.filter(u => u.isAdmin);
+      
+      if (existingAdmins.length > 0) {
+        return res.status(403).json({ 
+          error: "Admin initialization not allowed",
+          message: "An admin already exists. Contact an existing admin to grant you admin privileges."
+        });
+      }
+      
+      // Make the current user an admin
+      await storage.makeUserAdmin(currentUserId);
+      const user = await storage.getUser(currentUserId);
+      
+      res.json({
+        success: true,
+        message: `Congratulations! You are now the first admin of NurseBrace.`,
+        user: {
+          id: user?.id,
+          email: user?.email,
+          isAdmin: true,
+        }
+      });
+    } catch (error) {
+      console.error("Error initializing first admin:", error);
+      res.status(500).json({ error: "Failed to initialize first admin" });
     }
   });
 

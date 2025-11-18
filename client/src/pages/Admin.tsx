@@ -6,23 +6,55 @@ import AdminDashboard from "./AdminDashboard";
 import AdminUsers from "./AdminUsers";
 import AdminQuestions from "./AdminQuestions";
 import AdminMarketing from "./AdminMarketing";
-import { Menu, Loader2 } from "lucide-react";
-import { useEffect } from "react";
+import { Menu, Loader2, ShieldCheck } from "lucide-react";
+import { useEffect, useState } from "react";
 import { UserData } from "@/hooks/useUserData";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 
 export default function Admin() {
   const [, setLocation] = useLocation();
+  const { toast } = useToast();
+  const [isInitializing, setIsInitializing] = useState(false);
   
   const { data: userData, isLoading } = useQuery<UserData | null>({
     queryKey: ["/api/auth/user"],
   });
 
-  // Redirect non-admins
-  useEffect(() => {
-    if (!isLoading && userData && !userData.isAdmin) {
-      setLocation("/categories");
+  const handleInitializeFirstAdmin = async () => {
+    setIsInitializing(true);
+    try {
+      const response = await apiRequest("POST", "/api/admin/initialize-first-admin", {});
+      const data = await response.json();
+      
+      if (data.success) {
+        toast({
+          title: "Success!",
+          description: data.message || "You are now an admin.",
+        });
+        
+        // Refresh user data to get the updated isAdmin status
+        queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Initialization Failed",
+          description: data.message || data.error || "Could not initialize admin status.",
+        });
+      }
+    } catch (error: any) {
+      console.error("Error initializing admin:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Failed to initialize admin status.",
+      });
+    } finally {
+      setIsInitializing(false);
     }
-  }, [userData, isLoading, setLocation]);
+  };
 
   if (isLoading) {
     return (
@@ -32,8 +64,51 @@ export default function Admin() {
     );
   }
 
+  // Show admin initialization option for non-admin users
   if (!userData?.isAdmin) {
-    return null;
+    return (
+      <div className="flex items-center justify-center h-screen bg-background p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <div className="flex justify-center mb-4">
+              <ShieldCheck className="h-16 w-16 text-primary" />
+            </div>
+            <CardTitle className="text-2xl">Admin Access Required</CardTitle>
+            <CardDescription>
+              You need administrator privileges to access this area.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground text-center">
+              If this is a new installation and no admin exists yet, you can become the first administrator.
+            </p>
+            <Button 
+              className="w-full" 
+              onClick={handleInitializeFirstAdmin}
+              disabled={isInitializing}
+              data-testid="button-initialize-admin"
+            >
+              {isInitializing ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Initializing...
+                </>
+              ) : (
+                "Become First Admin"
+              )}
+            </Button>
+            <Button 
+              variant="outline" 
+              className="w-full" 
+              onClick={() => setLocation("/categories")}
+              data-testid="button-back-to-app"
+            >
+              Back to App
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   const style = {

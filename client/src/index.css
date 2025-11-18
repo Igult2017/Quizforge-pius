@@ -78,9 +78,9 @@
   --chart-4: 25 85% 50%;
   --chart-5: 180 65% 45%;
 
-  --font-sans: Inter, sans-serif;
-  --font-heading: Merriweather, serif;
-  --font-mono: JetBrains Mono, monospace;
+  --font-sans: Poppins, sans-serif;
+  --font-heading: Poppins, sans-serif;
+  --font-mono: Poppins, monospace;
   --radius: .5rem; /* 8px */
   --shadow-2xs: 0px 1px 2px 0px hsl(215 25% 15% / 0.04);
   --shadow-xs: 0px 1px 2px 0px hsl(215 25% 15% / 0.06);

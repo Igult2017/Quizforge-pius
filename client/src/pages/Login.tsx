@@ -1,6 +1,5 @@
 // Login.tsx
 import { useState } from "react";
-import { useLocation } from "wouter";
 import { auth, loginWithEmail, loginWithGoogle } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,7 +27,6 @@ const GoogleIcon = () => (
 );
 
 export default function Login() {
-  const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -61,7 +59,8 @@ export default function Login() {
         description: "You've successfully logged in.",
       });
 
-      setLocation("/"); // Redirect to authenticated route
+      // Keep loading state while Router redirects based on auth state
+      // The loading state will be cleared when component unmounts during navigation
     } catch (error: any) {
       console.error("Email login error:", error);
       toast({
@@ -94,7 +93,8 @@ export default function Login() {
         description: "You've successfully logged in with Google.",
       });
 
-      setLocation("/"); // Redirect
+      // Keep loading state while Router redirects based on auth state
+      // The loading state will be cleared when component unmounts during navigation
     } catch (error: any) {
       console.error("Google login error:", error);
       toast({

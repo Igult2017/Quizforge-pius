@@ -1,0 +1,35 @@
+1. Fix Routing Issue on Login/Signup:
+•	Currently, logging in or signing up shows this before directing you to the UI:
+“❗ 404 Page Not Found, did you forget to add the page to the router?
+•	Ensure the login and signup pages are correctly added to the app router so users can access them without errors.
+2. Fix Admin Panel Detection:
+•	The admin panel currently cannot detect admin users.
+•	Make sure the admin detection logic correctly identifies admin users by checking the user’s role or permissions.
+•	Admin users should be able to access the admin panel reliably.
+3. Update Question Generation API:
+•	Change the question generation logic from DeepSeek API to Gemini AI API.
+•	Ensure the question generation function works without errors.
+•	If there are no questions in the database, display the right message.
+Currently it is display “Failed to load quiz, please try again” which is ambiguous and it is hard to tell what the problem is
+Show a clearer message like:
+“No questions available.”
+4. Auto-Question Generation Improvements:
+•	The question generation function should automatically start generating questions as soon as the app starts, until the required number of questions is reached.
+•	If API tokens are depleted, the process should pause and resume automatically once tokens are available.
+•	Admin can still manually generate questions via a button, but automatic generation takes priority.
+•	Ensure manual generation allows generating questions on specific topics.
+5. Improve Signup Authentication:
+•	Restrict signup to only allow real emails.
+•	Implement proper email validation to block fake or malformed email addresses.
+6. Add Favicon:
+•	Add a favicon to the website so it appears in the browser tab. The favicon  should  be  NurseBrace in blue and  white 
+7. Change Website Font:
+•	Update all fonts on the website to Poppins.
+8. Provide a Summary:
+•	After making all changes, list all files that were modified.
+Notes for Execution:
+•	Prioritize fixing routing and admin detection first.
+•	Ensure the Gemini AI integration is fully functional.
+•	Maintain existing functionality while adding improvements.
+•	Test the app thoroughly after each change.
+ 
