@@ -12,7 +12,7 @@ import {
 } from "firebase/auth";
 
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyC3gq2n4MY35qxhKZHMQU20AFck5NKA7aU",
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "quizeforge-44a83.firebaseapp.com",
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "quizeforge-44a83",
   storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "quizeforge-44a83.firebasestorage.app",
@@ -20,10 +20,18 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:997024322375:web:a54247e484f7f2468df262",
 };
 
+console.log("[FIREBASE DEBUG] Config loaded:", {
+  hasApiKey: !!firebaseConfig.apiKey,
+  apiKeySource: import.meta.env.VITE_FIREBASE_API_KEY ? "env" : "hardcoded",
+  projectId: firebaseConfig.projectId,
+});
+
 // Lazy Firebase initialization
 let app: FirebaseApp | null = null;
 let authInstance: Auth | null = null;
 const isFirebaseConfigured = !!firebaseConfig.apiKey;
+
+console.log("[FIREBASE DEBUG] isFirebaseConfigured:", isFirebaseConfigured);
 
 function initializeFirebase(): FirebaseApp | null {
   if (!isFirebaseConfigured) {
