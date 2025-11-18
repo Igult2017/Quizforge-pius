@@ -47,7 +47,7 @@ export default function Admin() {
             <Button 
               variant="outline" 
               className="w-full" 
-              onClick={() => setLocation("/categories")}
+              onClick={() => setLocation("/")}
               data-testid="button-back-to-app"
             >
               Back to App
