@@ -877,45 +877,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Initialize first admin (only works when there are no existing admins)
-  app.post("/api/admin/initialize-first-admin", isAuthenticated, async (req: any, res) => {
-    try {
-      const currentUserId = req.user.claims.sub;
-      
-      // Check if any admins already exist
-      const allUsers = await storage.getAllUsers();
-      const existingAdmins = allUsers.filter(u => u.isAdmin);
-      
-      if (existingAdmins.length > 0) {
-        return res.status(403).json({ 
-          error: "Admin initialization not allowed",
-          message: "An admin already exists. Contact an existing admin to grant you admin privileges."
-        });
-      }
-      
-      // Make the current user an admin
-      await storage.makeUserAdmin(currentUserId);
-      const user = await storage.getUser(currentUserId);
-      
-      res.json({
-        success: true,
-        message: `Congratulations! You are now the first admin of NurseBrace.`,
-        user: {
-          id: user?.id,
-          email: user?.email,
-          isAdmin: true,
-        }
-      });
-    } catch (error) {
-      console.error("Error initializing first admin:", error);
-      res.status(500).json({ error: "Failed to initialize first admin" });
-    }
+  // Initialize first admin endpoint - DISABLED
+  // This feature has been disabled. Admin access is now managed through hardcoded admin emails
+  // and existing admins can add new admins through the admin panel.
+  app.post("/api/admin/initialize-first-admin", isAuthenticated, isAdmin, async (req: any, res) => {
+    return res.status(403).json({ 
+      error: "Feature disabled",
+      message: "The 'Become First Admin' feature has been disabled. Admin access is managed through the admin panel. Contact your system administrator for access."
+    });
   });
 
   // Set admin by email (DEVELOPMENT ONLY - protected endpoint for initial setup)
   // SECURITY: This endpoint requires authentication AND a secure setup token from env vars
   // This endpoint is completely disabled in production for security
-  app.post("/api/admin/set-admin-by-email", isAuthenticated, async (req: any, res) => {
+  app.post("/api/admin/set-admin-by-email", isAuthenticated, isAdmin, async (req: any, res) => {
     try {
       // SECURITY: Completely disabled in production
       if (process.env.NODE_ENV === 'production') {
