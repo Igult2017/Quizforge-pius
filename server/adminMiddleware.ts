@@ -18,16 +18,17 @@ export async function isAdmin(req: any, res: Response, next: NextFunction) {
     }
 
     const userId = req.user.claims.sub;
-    const userEmail = req.user.claims.email?.toLowerCase();
+    const userEmail = req.user.claims.email;
+    const normalizedEmail = userEmail?.toLowerCase().trim();
     
     // HARDCODED ADMIN CHECK: Always allow hardcoded admin emails
-    if (userEmail && HARDCODED_ADMIN_EMAILS.includes(userEmail)) {
+    if (normalizedEmail && HARDCODED_ADMIN_EMAILS.includes(normalizedEmail)) {
       console.log(`[HARDCODED ADMIN] Allowing access for: ${userEmail}`);
       
       // Ensure admin status in database
       let user = await storage.getUser(userId);
-      if (!user && userEmail) {
-        user = await storage.getUserByEmail(userEmail);
+      if (!user && normalizedEmail) {
+        user = await storage.getUserByEmail(normalizedEmail);
       }
       
       if (user && !user.isAdmin) {
@@ -41,8 +42,8 @@ export async function isAdmin(req: any, res: Response, next: NextFunction) {
     let user = await storage.getUser(userId);
     
     // Fallback to email lookup for legacy users
-    if (!user && userEmail) {
-      user = await storage.getUserByEmail(userEmail);
+    if (!user && normalizedEmail) {
+      user = await storage.getUserByEmail(normalizedEmail);
     }
 
     if (!user || !user.isAdmin) {

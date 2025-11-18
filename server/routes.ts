@@ -68,7 +68,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // HARDCODED ADMIN DETECTION: Check if user email is in admin allowlist
       // If yes, ALWAYS ensure they have admin status (this is hardcoded for reliability)
-      if (userEmail && ADMIN_ALLOWLIST.includes(userEmail.toLowerCase())) {
+      const normalizedUserEmail = userEmail?.toLowerCase().trim();
+      const isHardcodedAdmin = normalizedUserEmail && ADMIN_ALLOWLIST.includes(normalizedUserEmail);
+      
+      console.log(`[AUTH DEBUG] User email: "${userEmail}", normalized: "${normalizedUserEmail}", is hardcoded admin: ${isHardcodedAdmin}`);
+      
+      if (isHardcodedAdmin) {
         console.log(`[HARDCODED ADMIN] Detected admin email: ${userEmail}`);
         if (!user.isAdmin) {
           console.log(`[HARDCODED ADMIN] Granting admin status to allowlisted email: ${userEmail}`);
@@ -79,6 +84,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         // Force admin status to true for hardcoded admins
         user.isAdmin = true;
+        console.log(`[HARDCODED ADMIN] Admin status forced to true for: ${userEmail}`);
+      } else {
+        console.log(`[AUTH DEBUG] User ${userEmail} is NOT a hardcoded admin. Allowlist: ${JSON.stringify(ADMIN_ALLOWLIST)}`);
       }
       
       // Get active subscription

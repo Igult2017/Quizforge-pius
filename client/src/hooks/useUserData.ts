@@ -35,11 +35,17 @@ export function useUserData() {
   });
 
   // HARDCODED ADMIN CHECK: Check if email is in hardcoded admin list
-  const userEmail = (user as any)?.email?.toLowerCase() || userData?.email?.toLowerCase();
+  const rawEmail = (user as any)?.email || userData?.email;
+  const userEmail = rawEmail?.toLowerCase().trim();
   const isHardcodedAdmin = userEmail && HARDCODED_ADMIN_EMAILS.includes(userEmail);
   
   // Immediate admin detection from Firebase claims (if available)
   const isAdminFromClaims = (user as any)?.claims?.isAdmin || false;
+
+  // Debug logging
+  console.log(`[useUserData] Raw email: "${rawEmail}", normalized: "${userEmail}"`);
+  console.log(`[useUserData] Is hardcoded admin: ${isHardcodedAdmin}`);
+  console.log(`[useUserData] userData?.isAdmin: ${userData?.isAdmin}`);
 
   // Priority order: Hardcoded admin > Claims > Database
   // Guard against undefined userData to prevent runtime crash
@@ -53,6 +59,8 @@ export function useUserData() {
   if (isHardcodedAdmin && userData) {
     console.log(`[HARDCODED ADMIN] Frontend detected admin: ${userEmail}`);
   }
+  
+  console.log(`[useUserData] Final resolved isAdmin: ${resolvedUserData?.isAdmin}`);
 
   return {
     userData: resolvedUserData,
