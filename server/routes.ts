@@ -885,23 +885,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Set admin by email (DEVELOPMENT ONLY - protected endpoint for initial setup)
-  // This endpoint is disabled in production for security
-  app.post("/api/admin/set-admin-by-email", async (req: any, res) => {
+  // SECURITY: This endpoint requires authentication AND a secure setup token from env vars
+  // This endpoint is completely disabled in production for security
+  app.post("/api/admin/set-admin-by-email", isAuthenticated, async (req: any, res) => {
     try {
-      // SECURITY: Only allow in development mode
+      // SECURITY: Completely disabled in production
       if (process.env.NODE_ENV === 'production') {
         return res.status(403).json({ 
           error: "Forbidden",
-          message: "This endpoint is disabled in production for security. Use the admin UI to manage admins."
+          message: "This endpoint is completely disabled in production for security. Use the admin UI or initialize-first-admin endpoint."
         });
       }
 
       const { email, setupToken } = req.body;
       
-      // SECURITY: Require a setup token even in development
-      const expectedToken = process.env.ADMIN_SETUP_TOKEN || "dev-setup-token-change-in-production";
-      if (setupToken !== expectedToken) {
-        return res.status(403).json({ error: "Invalid setup token" });
+      // SECURITY: Require a setup token from environment variables
+      const expectedToken = process.env.ADMIN_SETUP_TOKEN;
+      
+      // If no token is set in environment, reject the request
+      if (!expectedToken) {
+        return res.status(403).json({ 
+          error: "Setup not configured",
+          message: "ADMIN_SETUP_TOKEN environment variable must be set to use this endpoint."
+        });
+      }
+      
+      if (!setupToken || setupToken !== expectedToken) {
+        return res.status(403).json({ error: "Invalid or missing setup token" });
       }
       
       if (!email) {
@@ -931,7 +941,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       await storage.makeUserAdmin(user.id);
       
-      console.log(`[ADMIN SETUP] ${email} has been set as admin`);
+      console.log(`[ADMIN SETUP] ${email} has been set as admin by authenticated user ${req.user.claims.email}`);
       
       res.json({
         success: true,

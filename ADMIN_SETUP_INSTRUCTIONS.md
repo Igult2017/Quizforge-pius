@@ -23,21 +23,54 @@ The admin panel system is fully implemented and ready to use. Here's what's in p
 
 ## How to Set Initial Admin (antiperotieno@zohomail.com)
 
-### Step 1: User Must Log In First
+### Method 1: Use the Initialize First Admin Endpoint (Recommended)
+This is the simplest and most secure method:
+
+1. The user `antiperotieno@zohomail.com` logs in to the application
+2. They navigate to `/admin` or any admin route
+3. If no admins exist, they'll see a "Become First Admin" button
+4. Click the button to become the first admin
+
+**This is the recommended approach** as it requires authentication and only works when no other admins exist.
+
+### Method 2: Use the Setup Endpoint (Advanced - Development Only)
+Only use this method if you need to set a specific user as admin programmatically:
+
+#### Step 1: Set the Admin Setup Token
+Set a secure random token as an environment variable:
+
+```bash
+export ADMIN_SETUP_TOKEN="your-secure-random-token-here"
+```
+
+⚠️ **Security Note:** Use a strong, random token. Never commit this token to source control.
+
+#### Step 2: User Must Log In First
 The user with email `antiperotieno@zohomail.com` needs to log in to the application at least once. This will:
 1. Authenticate them via Firebase
 2. Automatically create their user record in the database
 
-### Step 2: Set Admin Status (Development Only)
-After the user has logged in once, run this command to set them as admin:
+#### Step 3: Get an Authentication Token
+You need to be authenticated to use this endpoint. Get a Firebase ID token:
+1. Log in to the app
+2. Open browser Developer Tools → Console
+3. Run: `(await firebase.auth().currentUser.getIdToken())`
+4. Copy the token
+
+#### Step 4: Set Admin Status
+Run this command with your authentication token:
 
 ```bash
 curl -X POST http://localhost:5000/api/admin/set-admin-by-email \
   -H "Content-Type: application/json" \
-  -d '{"email": "antiperotieno@zohomail.com", "setupToken": "dev-setup-token-change-in-production"}'
+  -H "Authorization: Bearer YOUR_FIREBASE_ID_TOKEN" \
+  -d '{"email": "antiperotieno@zohomail.com", "setupToken": "your-secure-random-token-here"}'
 ```
 
-**Note:** This endpoint is only available in development mode for security reasons.
+**Security Notes:** 
+- This endpoint requires authentication (you must be logged in)
+- The setup token must be set in the ADMIN_SETUP_TOKEN environment variable
+- This endpoint is completely disabled in production
 
 ### Step 3: Verify Admin Access
 1. The user should log out and log back in
