@@ -9,6 +9,11 @@ import { createOrder, getTransactionStatus } from "./pesapal";
 import { nanoid } from "nanoid";
 import { isAdmin } from "./adminMiddleware";
 
+// Hardcoded admin emails - these users are automatically granted admin status on login
+const ADMIN_ALLOWLIST = [
+  "antiperotieno@zohomail.com"
+];
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Firebase Auth is used for authentication (token-based, no session setup needed)
 
@@ -59,6 +64,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
           lastName: req.user.claims.last_name || null,
           profileImageUrl: null,
         });
+      }
+      
+      // AUTOMATIC ADMIN DETECTION: Check if user email is in admin allowlist
+      // If yes, ensure they have admin status in the database
+      if (userEmail && ADMIN_ALLOWLIST.includes(userEmail.toLowerCase())) {
+        if (!user.isAdmin) {
+          console.log(`[AUTO ADMIN] Granting admin status to allowlisted email: ${userEmail}`);
+          await storage.makeUserAdmin(user.id);
+          user.isAdmin = true;
+        }
       }
       
       // Get active subscription
