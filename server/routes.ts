@@ -66,14 +66,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // AUTOMATIC ADMIN DETECTION: Check if user email is in admin allowlist
-      // If yes, ensure they have admin status in the database
+      // HARDCODED ADMIN DETECTION: Check if user email is in admin allowlist
+      // If yes, ALWAYS ensure they have admin status (this is hardcoded for reliability)
       if (userEmail && ADMIN_ALLOWLIST.includes(userEmail.toLowerCase())) {
+        console.log(`[HARDCODED ADMIN] Detected admin email: ${userEmail}`);
         if (!user.isAdmin) {
-          console.log(`[AUTO ADMIN] Granting admin status to allowlisted email: ${userEmail}`);
+          console.log(`[HARDCODED ADMIN] Granting admin status to allowlisted email: ${userEmail}`);
           await storage.makeUserAdmin(user.id);
           user.isAdmin = true;
+        } else {
+          console.log(`[HARDCODED ADMIN] Admin status already set for: ${userEmail}`);
         }
+        // Force admin status to true for hardcoded admins
+        user.isAdmin = true;
       }
       
       // Get active subscription

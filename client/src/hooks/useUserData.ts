@@ -2,6 +2,11 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "./useAuth";
 import { queryClient, getQueryFn } from "@/lib/queryClient";
 
+// Hardcoded admin emails - these users ALWAYS have admin access
+const HARDCODED_ADMIN_EMAILS = [
+  "antiperotieno@zohomail.com"
+];
+
 export interface UserData {
   id: string;
   email: string | null;
@@ -29,16 +34,28 @@ export function useUserData() {
     enabled: isAuthenticated,
   });
 
+  // HARDCODED ADMIN CHECK: Check if email is in hardcoded admin list
+  const userEmail = (user as any)?.email?.toLowerCase() || userData?.email?.toLowerCase();
+  const isHardcodedAdmin = userEmail && HARDCODED_ADMIN_EMAILS.includes(userEmail);
+  
   // Immediate admin detection from Firebase claims (if available)
   const isAdminFromClaims = (user as any)?.claims?.isAdmin || false;
 
-  const resolvedUserData: UserData | null = {
-    ...userData,
-    isAdmin: isAdminFromClaims || userData?.isAdmin || false,
-  } as UserData;
+  // Priority order: Hardcoded admin > Claims > Database
+  // Guard against undefined userData to prevent runtime crash
+  const resolvedUserData: UserData | null = isAuthenticated 
+    ? {
+        ...(userData || {}),
+        isAdmin: isHardcodedAdmin || isAdminFromClaims || userData?.isAdmin || false,
+      } as UserData
+    : null;
+
+  if (isHardcodedAdmin && userData) {
+    console.log(`[HARDCODED ADMIN] Frontend detected admin: ${userEmail}`);
+  }
 
   return {
-    userData: isAuthenticated ? resolvedUserData : null,
+    userData: resolvedUserData,
     isLoading: authLoading || userLoading,
     isAuthenticated,
     hasActiveSubscription: isAuthenticated && resolvedUserData?.hasActiveSubscription || false,

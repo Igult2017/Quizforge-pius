@@ -1,9 +1,15 @@
 import { Request, Response, NextFunction } from "express";
 import { storage } from "./storage";
 
+// Hardcoded admin emails - these users ALWAYS have admin access
+const HARDCODED_ADMIN_EMAILS = [
+  "antiperotieno@zohomail.com"
+];
+
 /**
  * Middleware to check if user is an admin
  * Must be used after isAuthenticated middleware
+ * HARDCODED: Emails in HARDCODED_ADMIN_EMAILS always have admin access
  */
 export async function isAdmin(req: any, res: Response, next: NextFunction) {
   try {
@@ -12,7 +18,25 @@ export async function isAdmin(req: any, res: Response, next: NextFunction) {
     }
 
     const userId = req.user.claims.sub;
-    const userEmail = req.user.claims.email;
+    const userEmail = req.user.claims.email?.toLowerCase();
+    
+    // HARDCODED ADMIN CHECK: Always allow hardcoded admin emails
+    if (userEmail && HARDCODED_ADMIN_EMAILS.includes(userEmail)) {
+      console.log(`[HARDCODED ADMIN] Allowing access for: ${userEmail}`);
+      
+      // Ensure admin status in database
+      let user = await storage.getUser(userId);
+      if (!user && userEmail) {
+        user = await storage.getUserByEmail(userEmail);
+      }
+      
+      if (user && !user.isAdmin) {
+        console.log(`[HARDCODED ADMIN] Granting admin status in DB for: ${userEmail}`);
+        await storage.makeUserAdmin(user.id);
+      }
+      
+      return next();
+    }
     
     let user = await storage.getUser(userId);
     
