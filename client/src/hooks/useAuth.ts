@@ -36,15 +36,8 @@ export function useAuth() {
 
             // Invalidate & refetch user info
             queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-
-            try {
-              const fetchUser = getQueryFn({ on401: "returnNull" });
-              const freshUser = await fetchUser({ queryKey: ["/api/auth/user"] });
-              queryClient.setQueryData(["/api/auth/user"], freshUser);
-              console.log("[Auth] User data refreshed:", freshUser);
-            } catch (fetchError) {
-              console.error("[Auth] Failed to fetch fresh user data:", fetchError);
-            }
+            
+            // Fetch will happen automatically via the query hook
           } catch (tokenError: any) {
             console.error("[Auth] Failed to get ID token:", tokenError);
             setFirebaseError(tokenError.message || "Failed to refresh token");

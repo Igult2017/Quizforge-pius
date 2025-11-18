@@ -19,17 +19,9 @@ export default function Admin() {
   const { toast } = useToast();
   const [isInitializing, setIsInitializing] = useState(false);
   
-  const { data: userData, isLoading, error } = useQuery<UserData | null>({
+  const { data: userData, isLoading } = useQuery<UserData | null>({
     queryKey: ["/api/auth/user"],
   });
-  
-  // If not authenticated (userData is null and not loading), redirect to sign in
-  useEffect(() => {
-    if (!isLoading && userData === null) {
-      console.log("[Admin] User not authenticated, redirecting to sign-in");
-      setLocation("/sign-in");
-    }
-  }, [isLoading, userData, setLocation]);
 
   const handleInitializeFirstAdmin = async () => {
     setIsInitializing(true);
@@ -72,9 +64,8 @@ export default function Admin() {
     );
   }
 
-  // Show admin access denied for non-admin users who ARE authenticated
+  // Show admin initialization option for non-admin users
   if (!userData?.isAdmin) {
-    console.log("[Admin] User authenticated but not admin. Email:", userData?.email);
     return (
       <div className="flex items-center justify-center h-screen bg-background p-4">
         <Card className="w-full max-w-md">
@@ -89,15 +80,30 @@ export default function Admin() {
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-sm text-muted-foreground text-center">
-              Contact an existing administrator to grant you admin privileges.
+              If this is a new installation and no admin exists yet, you can become the first administrator.
             </p>
             <Button 
-              variant="default" 
               className="w-full" 
-              onClick={() => setLocation("/")}
+              onClick={handleInitializeFirstAdmin}
+              disabled={isInitializing}
+              data-testid="button-initialize-admin"
+            >
+              {isInitializing ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Initializing...
+                </>
+              ) : (
+                "Become First Admin"
+              )}
+            </Button>
+            <Button 
+              variant="outline" 
+              className="w-full" 
+              onClick={() => setLocation("/categories")}
               data-testid="button-back-to-app"
             >
-              Back to Home
+              Back to App
             </Button>
           </CardContent>
         </Card>

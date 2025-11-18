@@ -42,11 +42,6 @@ export function useUserData() {
   // Immediate admin detection from Firebase claims (if available)
   const isAdminFromClaims = (user as any)?.claims?.isAdmin || false;
 
-  // Debug logging
-  console.log(`[useUserData] Raw email: "${rawEmail}", normalized: "${userEmail}"`);
-  console.log(`[useUserData] Is hardcoded admin: ${isHardcodedAdmin}`);
-  console.log(`[useUserData] userData?.isAdmin: ${userData?.isAdmin}`);
-
   // Priority order: Hardcoded admin > Claims > Database
   // Guard against undefined userData to prevent runtime crash
   const resolvedUserData: UserData | null = isAuthenticated 
@@ -59,8 +54,6 @@ export function useUserData() {
   if (isHardcodedAdmin && userData) {
     console.log(`[HARDCODED ADMIN] Frontend detected admin: ${userEmail}`);
   }
-  
-  console.log(`[useUserData] Final resolved isAdmin: ${resolvedUserData?.isAdmin}`);
 
   return {
     userData: resolvedUserData,

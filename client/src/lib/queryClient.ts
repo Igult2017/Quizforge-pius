@@ -9,6 +9,8 @@ async function throwIfResNotOk(res: Response) {
 }
 
 async function getAuthHeaders(): Promise<Record<string, string>> {
+  if (!auth) return {};
+  
   const user = auth.currentUser;
   if (user) {
     try {
