@@ -884,6 +884,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Set admin by email (setup endpoint - for initial configuration)
+  app.post("/api/admin/set-admin-by-email", async (req: any, res) => {
+    try {
+      const { email } = req.body;
+      
+      if (!email) {
+        return res.status(400).json({ error: "Email is required" });
+      }
+
+      const user = await storage.getUserByEmail(email);
+      if (!user) {
+        return res.status(404).json({ error: `User with email ${email} not found` });
+      }
+
+      if (user.isAdmin) {
+        return res.status(400).json({ 
+          error: "User is already an admin",
+          user: {
+            id: user.id,
+            email: user.email,
+            isAdmin: true,
+          }
+        });
+      }
+
+      await storage.makeUserAdmin(user.id);
+      
+      res.json({
+        success: true,
+        message: `${email} is now an admin`,
+        user: {
+          id: user.id,
+          email: user.email,
+          isAdmin: true,
+        }
+      });
+    } catch (error) {
+      console.error("Error setting admin by email:", error);
+      res.status(500).json({ error: "Failed to set admin status" });
+    }
+  });
+
   // Make user an admin (permanent admin status)
   app.post("/api/admin/users/:userId/make-admin", isAuthenticated, isAdmin, async (req: any, res) => {
     try {
