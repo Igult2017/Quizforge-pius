@@ -57,47 +57,77 @@ function getAuthInstance(): Auth | null {
   return authInstance;
 }
 
-// Export the auth instance (may be null if not configured)
-export const auth = getAuthInstance();
+// Export a getter function instead of the instance directly
+export const getAuthSafe = (): Auth | null => getAuthInstance();
+export const auth = getAuthInstance(); // Keep for backward compatibility
 export const firebaseEnabled = isFirebaseConfigured;
 
 // Google Auth Provider
 const googleProvider = new GoogleAuthProvider();
 
-// Authentication functions
-export const loginWithEmail = (email: string, password: string) => {
-  if (!auth) {
-    return Promise.reject(new Error("Firebase is not configured"));
+// Authentication functions with better error handling
+export const loginWithEmail = async (email: string, password: string) => {
+  const authInstance = getAuthSafe();
+  if (!authInstance) {
+    throw new Error("Firebase is not configured");
   }
-  return signInWithEmailAndPassword(auth, email, password);
+  try {
+    console.log("[Firebase] Attempting login with email:", email);
+    const result = await signInWithEmailAndPassword(authInstance, email, password);
+    console.log("[Firebase] Login successful:", result.user.email);
+    return result;
+  } catch (error: any) {
+    console.error("[Firebase] Login error:", error.code, error.message);
+    throw error;
+  }
 };
 
-export const signupWithEmail = (email: string, password: string) => {
-  if (!auth) {
-    return Promise.reject(new Error("Firebase is not configured"));
+export const signupWithEmail = async (email: string, password: string) => {
+  const authInstance = getAuthSafe();
+  if (!authInstance) {
+    throw new Error("Firebase is not configured");
   }
-  return createUserWithEmailAndPassword(auth, email, password);
+  try {
+    console.log("[Firebase] Attempting signup with email:", email);
+    const result = await createUserWithEmailAndPassword(authInstance, email, password);
+    console.log("[Firebase] Signup successful:", result.user.email);
+    return result;
+  } catch (error: any) {
+    console.error("[Firebase] Signup error:", error.code, error.message);
+    throw error;
+  }
 };
 
-export const loginWithGoogle = () => {
-  if (!auth) {
-    return Promise.reject(new Error("Firebase is not configured"));
+export const loginWithGoogle = async () => {
+  const authInstance = getAuthSafe();
+  if (!authInstance) {
+    throw new Error("Firebase is not configured");
   }
-  return signInWithPopup(auth, googleProvider);
+  try {
+    console.log("[Firebase] Attempting Google login");
+    const result = await signInWithPopup(authInstance, googleProvider);
+    console.log("[Firebase] Google login successful:", result.user.email);
+    return result;
+  } catch (error: any) {
+    console.error("[Firebase] Google login error:", error.code, error.message);
+    throw error;
+  }
 };
 
-export const logout = () => {
-  if (!auth) {
-    return Promise.reject(new Error("Firebase is not configured"));
+export const logout = async () => {
+  const authInstance = getAuthSafe();
+  if (!authInstance) {
+    throw new Error("Firebase is not configured");
   }
-  return signOut(auth);
+  return signOut(authInstance);
 };
 
 export const onAuthChange = (callback: (user: User | null) => void) => {
-  if (!auth) {
+  const authInstance = getAuthSafe();
+  if (!authInstance) {
     callback(null);
     return () => {};
   }
-  return onAuthStateChanged(auth, callback);
+  return onAuthStateChanged(authInstance, callback);
 };
 
