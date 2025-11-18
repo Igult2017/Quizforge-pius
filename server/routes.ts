@@ -884,18 +884,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Set admin by email (setup endpoint - for initial configuration)
+  // Set admin by email (DEVELOPMENT ONLY - protected endpoint for initial setup)
+  // This endpoint is disabled in production for security
   app.post("/api/admin/set-admin-by-email", async (req: any, res) => {
     try {
-      const { email } = req.body;
+      // SECURITY: Only allow in development mode
+      if (process.env.NODE_ENV === 'production') {
+        return res.status(403).json({ 
+          error: "Forbidden",
+          message: "This endpoint is disabled in production for security. Use the admin UI to manage admins."
+        });
+      }
+
+      const { email, setupToken } = req.body;
+      
+      // SECURITY: Require a setup token even in development
+      const expectedToken = process.env.ADMIN_SETUP_TOKEN || "dev-setup-token-change-in-production";
+      if (setupToken !== expectedToken) {
+        return res.status(403).json({ error: "Invalid setup token" });
+      }
       
       if (!email) {
         return res.status(400).json({ error: "Email is required" });
       }
 
-      const user = await storage.getUserByEmail(email);
+      let user = await storage.getUserByEmail(email);
+      
+      // If user doesn't exist in database, return helpful error message
       if (!user) {
-        return res.status(404).json({ error: `User with email ${email} not found` });
+        return res.status(404).json({ 
+          error: `User with email ${email} not found in database`,
+          message: `The user must log in at least once to create their database record. After they log in, you can run this endpoint again to grant admin status.`
+        });
       }
 
       if (user.isAdmin) {
@@ -910,6 +930,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       await storage.makeUserAdmin(user.id);
+      
+      console.log(`[ADMIN SETUP] ${email} has been set as admin`);
       
       res.json({
         success: true,
