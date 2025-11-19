@@ -1,5 +1,8 @@
 import { useState, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Mail, UserCheck, UserX, XCircle, Ban, Clock, Users, CreditCard, TestTube, ShieldAlert, Shield, ShieldOff, UserPlus } from "lucide-react";
@@ -39,6 +43,13 @@ interface User {
   }>;
 }
 
+const createAdminSchema = z.object({
+  email: z.string().email("Please enter a valid email address"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+  firstName: z.string().optional(),
+  lastName: z.string().optional(),
+});
+
 export default function AdminUsers() {
   const { toast } = useToast();
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
@@ -48,10 +59,16 @@ export default function AdminUsers() {
   const [emailMessage, setEmailMessage] = useState("");
   const [activeTab, setActiveTab] = useState("all");
   const [createAdminDialogOpen, setCreateAdminDialogOpen] = useState(false);
-  const [newAdminEmail, setNewAdminEmail] = useState("");
-  const [newAdminPassword, setNewAdminPassword] = useState("");
-  const [newAdminFirstName, setNewAdminFirstName] = useState("");
-  const [newAdminLastName, setNewAdminLastName] = useState("");
+
+  const createAdminForm = useForm<z.infer<typeof createAdminSchema>>({
+    resolver: zodResolver(createAdminSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+      firstName: "",
+      lastName: "",
+    },
+  });
 
   const { data: users, isLoading } = useQuery<User[]>({
     queryKey: ["/api/admin/users"],
@@ -259,7 +276,7 @@ export default function AdminUsers() {
   });
 
   const createAdminMutation = useMutation({
-    mutationFn: async (data: { email: string; password: string; firstName?: string; lastName?: string }) => {
+    mutationFn: async (data: z.infer<typeof createAdminSchema>) => {
       return await apiRequest("POST", "/api/admin/users/create-admin", data);
     },
     onSuccess: () => {
@@ -269,10 +286,7 @@ export default function AdminUsers() {
         description: "Admin user created successfully",
       });
       setCreateAdminDialogOpen(false);
-      setNewAdminEmail("");
-      setNewAdminPassword("");
-      setNewAdminFirstName("");
-      setNewAdminLastName("");
+      createAdminForm.reset();
     },
     onError: (error: any) => {
       toast({
@@ -303,16 +317,9 @@ export default function AdminUsers() {
     }
   };
 
-  const handleCreateAdmin = () => {
-    if (newAdminEmail && newAdminPassword) {
-      createAdminMutation.mutate({
-        email: newAdminEmail,
-        password: newAdminPassword,
-        firstName: newAdminFirstName || undefined,
-        lastName: newAdminLastName || undefined,
-      });
-    }
-  };
+  const handleCreateAdmin = createAdminForm.handleSubmit((data) => {
+    createAdminMutation.mutate(data);
+  });
 
   if (isLoading) {
     return (
@@ -347,61 +354,94 @@ export default function AdminUsers() {
                 Create a new admin user with email and password
               </DialogDescription>
             </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="new-admin-email">Email *</Label>
-                <Input
-                  id="new-admin-email"
-                  type="email"
-                  value={newAdminEmail}
-                  onChange={(e) => setNewAdminEmail(e.target.value)}
-                  placeholder="admin@example.com"
-                  data-testid="input-new-admin-email"
+            <Form {...createAdminForm}>
+              <form onSubmit={handleCreateAdmin} className="space-y-4">
+                <FormField
+                  control={createAdminForm.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email *</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          type="email"
+                          placeholder="admin@example.com"
+                          data-testid="input-new-admin-email"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-              </div>
-              <div>
-                <Label htmlFor="new-admin-password">Password *</Label>
-                <Input
-                  id="new-admin-password"
-                  type="password"
-                  value={newAdminPassword}
-                  onChange={(e) => setNewAdminPassword(e.target.value)}
-                  placeholder="Minimum 6 characters"
-                  data-testid="input-new-admin-password"
+                <FormField
+                  control={createAdminForm.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Password *</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          type="password"
+                          placeholder="Minimum 6 characters"
+                          data-testid="input-new-admin-password"
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Must be at least 6 characters
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-              </div>
-              <div>
-                <Label htmlFor="new-admin-first-name">First Name</Label>
-                <Input
-                  id="new-admin-first-name"
-                  type="text"
-                  value={newAdminFirstName}
-                  onChange={(e) => setNewAdminFirstName(e.target.value)}
-                  placeholder="Optional"
-                  data-testid="input-new-admin-first-name"
+                <FormField
+                  control={createAdminForm.control}
+                  name="firstName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>First Name</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          type="text"
+                          placeholder="Optional"
+                          data-testid="input-new-admin-first-name"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-              </div>
-              <div>
-                <Label htmlFor="new-admin-last-name">Last Name</Label>
-                <Input
-                  id="new-admin-last-name"
-                  type="text"
-                  value={newAdminLastName}
-                  onChange={(e) => setNewAdminLastName(e.target.value)}
-                  placeholder="Optional"
-                  data-testid="input-new-admin-last-name"
+                <FormField
+                  control={createAdminForm.control}
+                  name="lastName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Last Name</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          type="text"
+                          placeholder="Optional"
+                          data-testid="input-new-admin-last-name"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button
-                onClick={handleCreateAdmin}
-                disabled={createAdminMutation.isPending || !newAdminEmail || !newAdminPassword}
-                data-testid="button-confirm-create-admin"
-              >
-                {createAdminMutation.isPending ? "Creating..." : "Create Admin"}
-              </Button>
-            </DialogFooter>
+                <DialogFooter>
+                  <Button
+                    type="submit"
+                    disabled={createAdminMutation.isPending}
+                    data-testid="button-confirm-create-admin"
+                  >
+                    {createAdminMutation.isPending ? "Creating..." : "Create Admin"}
+                  </Button>
+                </DialogFooter>
+              </form>
+            </Form>
           </DialogContent>
         </Dialog>
       </div>
