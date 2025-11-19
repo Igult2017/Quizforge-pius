@@ -987,6 +987,97 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Create a new admin user (creates Firebase account + database record + sets as admin)
+  app.post("/api/admin/users/create-admin", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { email, password, firstName, lastName } = req.body;
+
+      // Validation
+      if (!email || !password) {
+        return res.status(400).json({ error: "Email and password are required" });
+      }
+
+      if (password.length < 6) {
+        return res.status(400).json({ error: "Password must be at least 6 characters" });
+      }
+
+      // Check if user already exists in database
+      const existingUser = await storage.getUserByEmail(email);
+      if (existingUser) {
+        return res.status(400).json({ error: `User with email ${email} already exists` });
+      }
+
+      // Create user in Firebase Auth
+      const admin = (await import("firebase-admin")).default;
+      let firebaseUser;
+      
+      try {
+        firebaseUser = await admin.auth().createUser({
+          email: email,
+          password: password,
+          displayName: `${firstName || ""} ${lastName || ""}`.trim() || undefined,
+        });
+        console.log(`[CREATE ADMIN] Created Firebase user: ${email} (UID: ${firebaseUser.uid})`);
+      } catch (firebaseError: any) {
+        console.error("Firebase user creation error:", firebaseError);
+        
+        // Handle specific Firebase errors
+        if (firebaseError.code === "auth/email-already-exists") {
+          return res.status(400).json({ error: "Email already exists in Firebase Auth" });
+        }
+        if (firebaseError.code === "auth/invalid-password") {
+          return res.status(400).json({ error: "Invalid password format" });
+        }
+        if (firebaseError.code === "auth/invalid-email") {
+          return res.status(400).json({ error: "Invalid email format" });
+        }
+        
+        return res.status(500).json({ error: `Failed to create Firebase user: ${firebaseError.message}` });
+      }
+
+      // Create user in database with admin status
+      try {
+        const newUser = await storage.upsertUser({
+          id: firebaseUser.uid,
+          email: email,
+          firstName: firstName || null,
+          lastName: lastName || null,
+          profileImageUrl: null,
+        });
+
+        // Set as admin
+        await storage.makeUserAdmin(newUser.id);
+
+        console.log(`[CREATE ADMIN] Created admin user: ${email}`);
+
+        res.json({
+          success: true,
+          message: `Admin user ${email} created successfully`,
+          user: {
+            id: newUser.id,
+            email: newUser.email,
+            firstName: newUser.firstName,
+            lastName: newUser.lastName,
+            isAdmin: true,
+          },
+        });
+      } catch (dbError) {
+        // If database creation fails, try to delete the Firebase user to keep things consistent
+        try {
+          await admin.auth().deleteUser(firebaseUser.uid);
+          console.log(`[CREATE ADMIN] Rolled back Firebase user creation for ${email}`);
+        } catch (rollbackError) {
+          console.error("Failed to rollback Firebase user:", rollbackError);
+        }
+        
+        throw dbError;
+      }
+    } catch (error: any) {
+      console.error("Error creating admin user:", error);
+      res.status(500).json({ error: error.message || "Failed to create admin user" });
+    }
+  });
+
   // Revoke admin status (remove permanent admin status)
   app.post("/api/admin/users/:userId/revoke-admin", isAuthenticated, isAdmin, async (req: any, res) => {
     try {

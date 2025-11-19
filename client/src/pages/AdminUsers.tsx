@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Mail, UserCheck, UserX, XCircle, Ban, Clock, Users, CreditCard, TestTube, ShieldAlert, Shield, ShieldOff } from "lucide-react";
+import { Mail, UserCheck, UserX, XCircle, Ban, Clock, Users, CreditCard, TestTube, ShieldAlert, Shield, ShieldOff, UserPlus } from "lucide-react";
 
 interface User {
   id: string;
@@ -47,6 +47,11 @@ export default function AdminUsers() {
   const [emailSubject, setEmailSubject] = useState("");
   const [emailMessage, setEmailMessage] = useState("");
   const [activeTab, setActiveTab] = useState("all");
+  const [createAdminDialogOpen, setCreateAdminDialogOpen] = useState(false);
+  const [newAdminEmail, setNewAdminEmail] = useState("");
+  const [newAdminPassword, setNewAdminPassword] = useState("");
+  const [newAdminFirstName, setNewAdminFirstName] = useState("");
+  const [newAdminLastName, setNewAdminLastName] = useState("");
 
   const { data: users, isLoading } = useQuery<User[]>({
     queryKey: ["/api/admin/users"],
@@ -253,6 +258,31 @@ export default function AdminUsers() {
     },
   });
 
+  const createAdminMutation = useMutation({
+    mutationFn: async (data: { email: string; password: string; firstName?: string; lastName?: string }) => {
+      return await apiRequest("POST", "/api/admin/users/create-admin", data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      toast({
+        title: "Success",
+        description: "Admin user created successfully",
+      });
+      setCreateAdminDialogOpen(false);
+      setNewAdminEmail("");
+      setNewAdminPassword("");
+      setNewAdminFirstName("");
+      setNewAdminLastName("");
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create admin user",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleGrantAccess = () => {
     if (selectedUser) {
       const days = accessDays ? parseInt(accessDays) : null;
@@ -273,6 +303,17 @@ export default function AdminUsers() {
     }
   };
 
+  const handleCreateAdmin = () => {
+    if (newAdminEmail && newAdminPassword) {
+      createAdminMutation.mutate({
+        email: newAdminEmail,
+        password: newAdminPassword,
+        firstName: newAdminFirstName || undefined,
+        lastName: newAdminLastName || undefined,
+      });
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="p-8">
@@ -287,9 +328,82 @@ export default function AdminUsers() {
 
   return (
     <div className="p-8 space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold mb-2">User Management</h1>
-        <p className="text-muted-foreground">Manage user access and subscriptions</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold mb-2">User Management</h1>
+          <p className="text-muted-foreground">Manage user access and subscriptions</p>
+        </div>
+        <Dialog open={createAdminDialogOpen} onOpenChange={setCreateAdminDialogOpen}>
+          <DialogTrigger asChild>
+            <Button data-testid="button-create-admin">
+              <UserPlus className="h-4 w-4 mr-2" />
+              Create Admin
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Create Admin User</DialogTitle>
+              <DialogDescription>
+                Create a new admin user with email and password
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="new-admin-email">Email *</Label>
+                <Input
+                  id="new-admin-email"
+                  type="email"
+                  value={newAdminEmail}
+                  onChange={(e) => setNewAdminEmail(e.target.value)}
+                  placeholder="admin@example.com"
+                  data-testid="input-new-admin-email"
+                />
+              </div>
+              <div>
+                <Label htmlFor="new-admin-password">Password *</Label>
+                <Input
+                  id="new-admin-password"
+                  type="password"
+                  value={newAdminPassword}
+                  onChange={(e) => setNewAdminPassword(e.target.value)}
+                  placeholder="Minimum 6 characters"
+                  data-testid="input-new-admin-password"
+                />
+              </div>
+              <div>
+                <Label htmlFor="new-admin-first-name">First Name</Label>
+                <Input
+                  id="new-admin-first-name"
+                  type="text"
+                  value={newAdminFirstName}
+                  onChange={(e) => setNewAdminFirstName(e.target.value)}
+                  placeholder="Optional"
+                  data-testid="input-new-admin-first-name"
+                />
+              </div>
+              <div>
+                <Label htmlFor="new-admin-last-name">Last Name</Label>
+                <Input
+                  id="new-admin-last-name"
+                  type="text"
+                  value={newAdminLastName}
+                  onChange={(e) => setNewAdminLastName(e.target.value)}
+                  placeholder="Optional"
+                  data-testid="input-new-admin-last-name"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                onClick={handleCreateAdmin}
+                disabled={createAdminMutation.isPending || !newAdminEmail || !newAdminPassword}
+                data-testid="button-confirm-create-admin"
+              >
+                {createAdminMutation.isPending ? "Creating..." : "Create Admin"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
