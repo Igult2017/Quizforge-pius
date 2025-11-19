@@ -1,240 +1,69 @@
 # NurseBrace - Nursing Exam Practice Platform
 
 ## Overview
-
-NurseBrace is an educational SaaS platform designed to help nursing students prepare for major nursing exams (NCLEX, ATI TEAS, and HESI A2). The platform provides practice questions with instant feedback, detailed explanations, and progress tracking. It features a quiz-taking interface, subscription-based access, and AI-generated question content using DeepSeek's API.
-
-The application follows a modern full-stack architecture with a React frontend, Express backend, and PostgreSQL database, all built with TypeScript for type safety.
+NurseBrace is an educational SaaS platform designed to help nursing students prepare for major nursing exams (NCLEX, ATI TEAS, HESI A2). It offers practice questions with instant feedback, detailed explanations, and progress tracking, accessible via a subscription model. The platform features a quiz-taking interface and leverages AI for generating question content. It is built with a React frontend, Express backend, and PostgreSQL database, all type-safe with TypeScript.
 
 ## User Preferences
-
 Preferred communication style: Simple, everyday language.
-
-## Recent Changes (November 2025)
-
-### Admin Authentication Refactor (November 19, 2025)
-- **Firebase-Based Admin System**: Completely removed hardcoded admin emails in favor of Firebase-first user authentication
-  - The first person who signed up to Firebase Auth (by creation time) is automatically the admin
-  - Created `system_settings` database table to persist the first Firebase user UID
-  - Implemented proper Firebase user pagination to handle projects with 1000+ users
-  - First user UID is saved to database on first detection, preventing admin privilege changes
-- **Removed All Hardcoded Admin Logic**:
-  - Deleted `HARDCODED_ADMIN_EMAILS` from `server/adminMiddleware.ts`
-  - Removed `ADMIN_ALLOWLIST` from `server/routes.ts`
-  - Updated client-side `useUserData.ts` to rely solely on backend admin status
-  - All admin detection centralized in backend `getFirstFirebaseUserUid()` function
-- **Production Deployment**:
-  - Created `FIREBASE_ADMIN_SETUP.md` with detailed deployment instructions
-  - Added comprehensive logging for debugging admin detection in production
-  - Visible error warnings when Firebase credentials are not configured
-  - Requires `FIREBASE_SERVICE_ACCOUNT_KEY` environment variable in production
-- **Security Improvements**:
-  - Admin status determined by Firebase creation time, not database insertion order
-  - Client cannot claim admin status via custom claims
-  - Persistent storage prevents admin reassignment if users are deleted
-  - Proper pagination ensures all Firebase users are checked, not just first 1,000
-
-## Recent Changes (November 2025)
-
-### UI and Feature Enhancements (November 17, 2025)
-- **Poppins font implementation in pricing section**: Modernized pricing page typography
-  - Imported Poppins Google Font globally in index.css
-  - Added poppins to Tailwind fontFamily configuration
-  - Applied font-poppins class to pricing page root
-  - Added scoped CSS override for all headings within pricing section (including nested PricingCard components)
-  - Pricing section now has clean, modern typography distinct from site-wide Merriweather headings
-- **Fixed question generation AI integration**: Migrated from Gemini to DeepSeek
-  - Changed environment variable from GEMINI_API_KEY to DEEPSEEK_API_KEY
-  - Updated API base URL to https://api.deepseek.com
-  - Changed model from gemini-pro to deepseek-chat
-  - Updated all error messages and logging references
-  - Documented DeepSeek API key requirement in replit.md with setup URL
-  - .env.example already configured with correct DEEPSEEK_API_KEY reference
-- **Verified admin detection logic**: Confirmed secure authentication implementation
-  - Firebase ID token verification with custom claims check
-  - Database admin flag lookup with email fallback for legacy users
-  - Proper 403 forbidden responses for non-admin access attempts
-  - Client-side admin status combines Firebase claims and database flags
-
-### Replit Environment Setup and Navigation Fix (November 17, 2025)
-- **Replit GitHub Import Setup**: Successfully configured the project for the Replit environment
-  - Installed all npm dependencies including tsx for TypeScript execution
-  - Updated .gitignore with comprehensive Node.js patterns
-  - Verified workflow configuration (port 5000, 0.0.0.0 binding, allowedHosts: true)
-  - Configured deployment settings for production (autoscale target)
-- **Fixed Pricing page navigation crash**: Added missing ThemeProvider to main.tsx
-  - ThemeProvider was missing from the provider hierarchy, causing ThemeToggle component to crash
-  - Wrapped App with ThemeProvider in main.tsx to provide theme context
-  - Pricing and Contact navigation now work correctly without errors
-  - Theme toggle functionality fully operational
-
-### Application Fixes and Security Improvements (November 14, 2025)
-- **Fixed blank screen issue**: Made Firebase optional - app now runs without Firebase configuration
-  - Firebase authentication is gracefully disabled when API keys are not provided
-  - App falls back to unauthenticated state when Firebase is not configured
-  - Signup page works correctly even without Firebase (graceful degradation)
-- **Fixed admin routing**: Properly secured admin panel with proper role-based access control
-  - Admins are automatically redirected to /admin panel on login
-  - Non-admin users cannot access admin routes (enforced on both client and server)
-  - Added missing middleware protection to `/api/admin/questions` and `/api/admin/questions/bulk` routes
-- **Coolify Deployment Configuration**:
-  - Updated Dockerfile to accept build-time environment variables using ARG and ENV with ${VAR} syntax
-  - Firebase VITE_* environment variables must be set as "Build" variables in Coolify (not just runtime)
-  - Created comprehensive COOLIFY.md deployment guide with two options:
-    - Option A: Coolify build environment variables (recommended)
-    - Option B: .env file in repository (alternative)
-  - Added .env.example showing all required environment variables
-  - Added local verification steps to test Firebase configuration before deployment
-  - Emphasized need for full rebuilds (not just restarts) when changing build variables
-- **Fixed main.tsx**: Added QueryClientProvider and other necessary providers to prevent runtime errors
-- All routing already uses wouter correctly (no changes needed)
-
-### Deployment Migration Preparation
-- Added `APP_URL` environment variable support for payment callbacks (replaces Replit-specific `REPLIT_DOMAINS`)
-- Created comprehensive DEPLOYMENT.md with deployment instructions for external platforms
-- Added runtime warnings for missing APP_URL in production environments
-- Suppressed harmless PostCSS warning from Tailwind CSS (cosmetic issue, doesn't affect functionality)
 
 ## System Architecture
 
 ### Frontend Architecture
-
-**Framework & Build Tool**
-- **React 18** with TypeScript for type-safe component development
-- **Vite** as the build tool and development server, configured for fast HMR and optimized production builds
-- **Wouter** for lightweight client-side routing (no React Router dependency)
-
-**UI Component System**
-- **shadcn/ui** components based on Radix UI primitives for accessible, unstyled base components
-- **Tailwind CSS** for utility-first styling with custom design tokens
-- Custom design system inspired by educational platforms (Duolingo, Khan Academy) with healthcare aesthetics
-- Theme system supporting light/dark modes via `ThemeProvider` context
-
-**State Management**
-- **TanStack Query (React Query)** for server state management, caching, and data synchronization
-- Local React state (`useState`) for UI-specific state
-- No global state management library (Redux, Zustand) - keeps architecture simple
-
-**Key Design Decisions**
-- Component co-location: UI components live in `client/src/components` with nested `ui/` folder for reusable primitives
-- Path aliases configured (`@/`, `@shared/`, `@assets/`) for clean imports
-- Form handling with `react-hook-form` and `@hookform/resolvers` for validation
-- Professional admin dashboard with sidebar navigation (shadcn sidebar components)
-- **Merriweather** serif font for all headings and titles (professional, academic aesthetic)
+The frontend uses **React 18** with **TypeScript** and **Vite**. **Wouter** handles routing. UI components are built with **shadcn/ui** (based on Radix UI) and styled using **Tailwind CSS**, following a custom design system with healthcare aesthetics and light/dark modes. **TanStack Query** manages server state, while local React state handles UI-specific state. Forms use `react-hook-form` with `zod` for validation. The design incorporates a professional admin dashboard and uses **Merriweather** font for headings.
 
 ### Backend Architecture
+The backend is an **Express.js** application with a RESTful API. It uses **Drizzle ORM** with **Neon Serverless PostgreSQL** for type-safe database operations. Data models include `users`, `subscriptions`, `questions`, `quizAttempts`, and `quizAnswers`. Key decisions include using Drizzle for its lightweight nature and Neon's serverless driver for efficiency. The admin panel at `/admin` is a protected section providing analytics, user management (grant/revoke access, end subscriptions), and broadcast email functionality.
 
-**Server Framework**
-- **Express.js** as the HTTP server framework
-- RESTful API design with routes defined in `server/routes.ts`
-- Middleware for JSON parsing, logging, and error handling
+### Admin Authentication
+Admin authentication is Firebase-first. The first user to sign up via Firebase Auth is automatically designated as the admin, with their UID stored in a `system_settings` database table. All hardcoded admin logic has been removed, centralizing admin detection in a backend function. Firebase ID token verification with custom claims check is used for secure access.
 
-**API Structure**
-- `/api/quiz/start` - Initiates a new quiz session with random questions
-- `/api/quiz/:attemptId/answer` - Submits answers during quiz attempts
-- `/api/quiz/:attemptId/results` - Retrieves completed quiz results
-- `/api/questions/generate` - Triggers AI question generation (admin/seed functionality)
-- `/api/admin/analytics` - Returns dashboard analytics (revenue, users, quiz stats, trends)
-- `/api/admin/users` - Lists all users with subscription/access status
-- `/api/admin/users/:userId/grant-access` - Grants manual access to users (can override subscriptions)
-- `/api/admin/users/:userId/revoke-access` - Revokes manual access
-- `/api/admin/users/:userId/end-subscription` - Cancels active subscriptions
-- `/api/admin/email/send` - Sends email to individual users
-- `/api/admin/email/broadcast` - Sends broadcast email to all users
+### UI/UX Decisions
+- Modern typography with Poppins font for the pricing section and Merriweather for headings.
+- Custom design system inspired by educational platforms like Duolingo and Khan Academy.
+- Light/dark theme support.
+- Professional admin dashboard with sidebar navigation.
 
-**Database Layer**
-- **Drizzle ORM** for type-safe database operations without heavy abstractions
-- **Neon Serverless PostgreSQL** as the database provider (WebSocket-based connection pooling)
-- Schema-first approach with migrations in `/migrations` directory
-- Storage abstraction layer (`server/storage.ts`) separating business logic from ORM implementation
+### Feature Specifications
+- Quiz initiation, answer submission, and result retrieval.
+- AI-driven question generation (admin/seed functionality).
+- Admin analytics dashboard for revenue, users, and quiz statistics.
+- User management, including subscription control and email capabilities.
+- Role-based access control for admin routes.
+- Secure payment processing with PesaPal.
 
-**Data Models**
-- `users` - User accounts (currently simplified, ready for auth integration)
-- `subscriptions` - Plan management (weekly, monthly, 3-month)
-- `questions` - Practice question bank with JSONB options array
-- `quizAttempts` - Quiz sessions tracking progress and scores
-- `quizAnswers` - Individual answer records linked to attempts
+## External Dependencies
 
-**Key Design Decisions**
-- Chose Drizzle over Prisma for lighter weight and better PostgreSQL-specific features
-- Used Neon's serverless driver with WebSocket support for connection efficiency
-- Implemented storage interface pattern for potential future database swapping
-- Quiz sessions use transactional-like patterns (creating attempt + answer records together)
-- Admin dashboard aggregates analytics in real-time from multiple tables
+### AI Content Generation
+- **DeepSeek API**: Used for generating practice questions, explanations, and options, adhering to NCLEX/TEAS/HESI standards.
 
-**Admin Panel**
-- **Route**: `/admin` - Protected admin-only section with authentication middleware
-- **Dashboard** (`/admin`): Analytics overview with revenue metrics, user stats, quiz performance, and trend charts
-- **Users** (`/admin/users`): User management table with grant/revoke access, end subscriptions, send emails
-- **Marketing** (`/admin/marketing`): Broadcast email functionality to all users
-- **Features**: 
-  - Analytics cards showing total revenue, active users, quiz attempts, conversion rate
-  - Chart visualizations using recharts for revenue and user growth trends  
-  - Manual access control that overrides subscription requirements
-  - Individual and broadcast email functionality (stubs - requires email service integration)
+### Database Services
+- **Neon Serverless PostgreSQL**: Primary database, utilizing WebSocket connection pooling.
 
-### External Dependencies
+### UI Component Libraries
+- **Radix UI**: Unstyled, accessible component primitives (Accordion, Alert Dialog, Dialog, etc.).
+- **cmdk**: Command palette component.
+- **Lucide React**: Icon library.
 
-**AI Content Generation**
-- **DeepSeek API** via OpenAI-compatible client for generating practice questions
-- Structured prompts ensure questions follow NCLEX/TEAS/HESI format standards
-- Generates questions with 4 options, correct answers, and detailed explanations
-- Configurable by category, subject, and difficulty level
+### Authentication
+- **Firebase Authentication**: Used for both frontend (client-side SDK for email/password, Google Sign-In) and backend (firebase-admin for ID token verification).
+- Environment variables: `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_PROJECT_ID`, `VITE_FIREBASE_APP_ID`.
 
-**Database Services**
-- **Neon Serverless PostgreSQL** - Primary database with WebSocket connection pooling
-- Environment variable `DATABASE_URL` required for connection
-- Uses `@neondatabase/serverless` package with custom WebSocket constructor (ws library)
+### Payment Processing
+- **PesaPal**: Integrated for subscription payments, supporting card payments with manual renewal, payment verification via callback, and secure email-validated linkages.
 
-**UI Component Libraries**
-- **Radix UI** - Comprehensive set of unstyled, accessible component primitives
-  - Accordion, Alert Dialog, Avatar, Checkbox, Dialog, Dropdown Menu, and 20+ more
-  - Chosen for accessibility compliance and flexibility in styling
-- **cmdk** - Command palette component (likely for future search/navigation features)
-- **Lucide React** - Icon library for consistent iconography
+### Utilities & Development Tools
+- **date-fns**: Date manipulation.
+- **zod**: Runtime schema validation.
+- **class-variance-authority**: Styling variants.
+- **tailwind-merge**: Tailwind class merging.
+- **tsx**: TypeScript execution for development.
+- **esbuild**: Fast bundling.
+- **drizzle-kit**: Database migration and schema management.
 
-**Utilities**
-- **date-fns** - Date manipulation and formatting
-- **zod** - Runtime schema validation (paired with Drizzle via `drizzle-zod`)
-- **class-variance-authority** - Styling variants for components
-- **tailwind-merge** - Intelligent Tailwind class merging
-
-**Development Tools**
-- **tsx** - TypeScript execution for development server
-- **esbuild** - Fast bundling for production server code
-- **drizzle-kit** - Database migration and schema management tool
-
-**Authentication**
-- **Frontend**: Firebase Auth (email/password and Google Sign-In)
-  - Custom branded UI with Firebase SDK
-  - `firebase` package for client-side authentication
-  - ID tokens sent with all API requests via Authorization header
-  - Configuration uses environment variables (VITE_FIREBASE_API_KEY, VITE_FIREBASE_PROJECT_ID, VITE_FIREBASE_APP_ID)
-- **Backend**: Firebase Authentication
-  - **firebase-admin** for verifying Firebase ID tokens
-  - Token-based authentication (no session management required)
-  - Server-side token verification ensures secure API access
-  - `isAuthenticated` middleware protects all authenticated routes
-  - Uses same VITE_FIREBASE_PROJECT_ID as frontend for consistency
-- **Admin Auto-Redirect**: Admins are automatically redirected to /admin panel on login and when accessing root path
-
-**Payment Processing**
-- **PesaPal** payment gateway integration for subscription payments
-  - Card payments only (no automatic recurring)
-  - Manual subscription renewal flow
-  - Payment verification via callback URL
-  - Secure payment linkage with email validation
-- Payment flow: Checkout → PesaPal payment → Account creation → Subscription activation
-
-**Environment Requirements**
-- `DATABASE_URL` - PostgreSQL connection string (required)
-- `DEEPSEEK_API_KEY` - DeepSeek AI API key for question generation (required for admin question generation feature)
-- `VITE_FIREBASE_API_KEY` - Firebase client API key (required for auth)
-- `VITE_FIREBASE_PROJECT_ID` - Firebase project ID (required for auth)
-- `VITE_FIREBASE_APP_ID` - Firebase app ID (required for auth)
-- `PESAPAL_CONSUMER_KEY` - PesaPal consumer key (required for payments)
-- `PESAPAL_CONSUMER_SECRET` - PesaPal consumer secret (required for payments)
-- `SESSION_SECRET` - Session encryption key (required)
-- `NODE_ENV` - Environment flag (development/production)
-
-**Note**: The question generation feature uses DeepSeek AI (not Gemini). Get your API key from https://platform.deepseek.com
+### Environment Requirements
+- `DATABASE_URL`
+- `DEEPSEEK_API_KEY`
+- `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_PROJECT_ID`, `VITE_FIREBASE_APP_ID`
+- `PESAPAL_CONSUMER_KEY`, `PESAPAL_CONSUMER_SECRET`
+- `SESSION_SECRET`
+- `NODE_ENV`
