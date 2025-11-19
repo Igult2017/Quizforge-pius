@@ -119,6 +119,7 @@ Then restart the server and log in with antiperotieno@zohomail.com.
 - `server/routes.ts` - Fixed Firebase Admin import in `/api/auth/user` endpoint
 - `server/db.ts` - Made SSL configurable for databases that don't support it
 - `.env.example` - Added `DATABASE_SSL` configuration documentation
+- `package.json` - Added automatic database migration on production startup
 
 ## Expected Behavior After Fix
 

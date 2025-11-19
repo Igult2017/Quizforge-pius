@@ -1,0 +1,100 @@
+  detail: undefined,
+  hint: undefined,
+  position: '23',
+  internalPosition: undefined,
+4:47:28 PM [express] GET /api/auth/user 500 in 25ms
+[AUTH USER] Request received
+[AUTH USER] Auth header present: true
+[AUTH USER] Token verified for: antiperotieno@zohomail.com
+4:47:29 PM [express] GET /api/auth/user 500 in 17ms
+[AUTH USER] Request received
+[AUTH USER] Auth header present: true
+[AUTH USER] Token verified for: antiperotieno@zohomail.com
+4:47:29 PM [express] GET /api/auth/user 500 in 21ms
+[AUTH USER] Request received
+[AUTH USER] Auth header present: true
+[AUTH USER] Token verified for: antiperotieno@zohomail.com
+4:47:30 PM [express] GET /api/auth/user 500 in 21ms
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '3665',
+  routine: 'errorMissingColumn'
+}
+Error fetching user: error: column "first_name" does not exist
+    at /app/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async file:///app/node_modules/drizzle-orm/node-postgres/session.js:83:22
+    at async PostgresStorage.getUser (file:///app/dist/index.js:206:24)
+    at async file:///app/dist/index.js:867:18 {
+  length: 110,
+  severity: 'ERROR',
+  code: '42703',
+  detail: undefined,
+  hint: undefined,
+  position: '23',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '3665',
+  routine: 'errorMissingColumn'
+}
+Error fetching user: error: column "first_name" does not exist
+    at /app/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async file:///app/node_modules/drizzle-orm/node-postgres/session.js:83:22
+    at async PostgresStorage.getUser (file:///app/dist/index.js:206:24)
+    at async file:///app/dist/index.js:867:18 {
+  length: 110,
+  severity: 'ERROR',
+  code: '42703',
+  detail: undefined,
+  hint: undefined,
+  position: '23',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '3665',
+  routine: 'errorMissingColumn'
+}
+Error fetching user: error: column "first_name" does not exist
+    at /app/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async file:///app/node_modules/drizzle-orm/node-postgres/session.js:83:22
+    at async PostgresStorage.getUser (file:///app/dist/index.js:206:24)
+    at async file:///app/dist/index.js:867:18 {
+  length: 110,
+  severity: 'ERROR',
+  code: '42703',
+  detail: undefined,
+  hint: undefined,
+  position: '23',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '3665',
+  routine: 'errorMissingColumn'
+}

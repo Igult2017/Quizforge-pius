@@ -20,6 +20,7 @@ Admin authentication is Firebase-first. The first user to sign up via Firebase A
 **Recent Bug Fixes (Nov 19, 2025)**: 
 1. Fixed critical Firebase Admin import error in `/api/auth/user` endpoint that was preventing all authentication. The import statement now correctly accesses `.default` export.
 2. Fixed SSL connection error for databases that don't support SSL. Database SSL is now configurable via `DATABASE_SSL` environment variable or auto-detected from connection string.
+3. Added automatic database migration on production startup to ensure schema is always up-to-date. The `start` script now runs `drizzle-kit push --force` before starting the server.
 
 ### UI/UX Decisions
 - Modern typography with Poppins font for the pricing section and Merriweather for headings.
