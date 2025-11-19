@@ -10,36 +10,36 @@ import { Menu, Loader2, ShieldCheck } from "lucide-react";
 import { UserData } from "@/hooks/useUserData";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useState, useEffect } from "react";
 
 const HARDCODED_ADMIN_EMAILS = ["antiperotieno@zohomail.com"];
 
 export default function Admin() {
   const [, setLocation] = useLocation();
-  const [forceAdmin, setForceAdmin] = useState(false);
 
-  const { data: userData, isLoading, error } = useQuery<UserData | null>({
+  // Load backend user
+  const { data: userData, isLoading } = useQuery<UserData | null>({
     queryKey: ["/api/auth/user"],
   });
 
-  // Detect if we should force admin (bypass auth) on front-end
-  useEffect(() => {
-    const email = userData?.email?.toLowerCase().trim();
-    if (email && HARDCODED_ADMIN_EMAILS.includes(email)) {
-      setForceAdmin(true);
-    }
-  }, [userData]);
+  // Load frontend-stored email (bypass source)
+  const storedEmail = localStorage.getItem("loggedInEmail")?.toLowerCase().trim();
 
-  if (isLoading) {
+  // Hardcode admin bypass: independent of backend userData
+  const forceAdmin =
+    storedEmail && HARDCODED_ADMIN_EMAILS.includes(storedEmail);
+
+  // Effective admin: forced OR backend-admin
+  const isAdminEffective =
+    forceAdmin || userData?.isAdmin === true;
+
+  // Do NOT show "Access denied" while loading AND forced admin possible
+  if (isLoading && !forceAdmin) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" data-testid="loader-admin" />
+        <Loader2 className="h-12 w-12 animate-spin" />
       </div>
     );
   }
-
-  // Effective admin status: either real admin OR forced admin
-  const isAdminEffective = forceAdmin || userData?.isAdmin;
 
   if (!isAdminEffective) {
     return (
@@ -55,14 +55,10 @@ export default function Admin() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <p className="text-sm text-muted-foreground text-center">
-              Only authorized administrators can access the admin panel. If you believe you should have access, please contact your system administrator.
-            </p>
             <Button
               variant="outline"
               className="w-full"
               onClick={() => setLocation("/")}
-              data-testid="button-back-to-app"
             >
               Back to App
             </Button>
@@ -72,18 +68,13 @@ export default function Admin() {
     );
   }
 
-  const style = {
-    "--sidebar-width": "16rem",
-    "--sidebar-width-icon": "3rem",
-  };
-
   return (
-    <SidebarProvider style={style as React.CSSProperties}>
+    <SidebarProvider style={{ "--sidebar-width": "16rem", "--sidebar-width-icon": "3rem" } as React.CSSProperties}>
       <div className="flex h-screen w-full">
         <AdminSidebar />
         <div className="flex flex-col flex-1">
           <header className="flex items-center justify-between p-4 border-b bg-background">
-            <SidebarTrigger data-testid="button-sidebar-toggle">
+            <SidebarTrigger>
               <Menu className="h-5 w-5" />
             </SidebarTrigger>
             <h1 className="text-lg font-semibold">Admin Panel</h1>
@@ -102,3 +93,4 @@ export default function Admin() {
     </SidebarProvider>
   );
 }
+
