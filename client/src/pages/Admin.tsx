@@ -27,7 +27,17 @@ export default function Admin() {
     );
   }
 
-  // Show access denied for non-admin users
+  // Redirect to login if not admin
+  if (!userData?.isAdmin) {
+    setLocation("/admin/login");
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" data-testid="loader-redirect" />
+      </div>
+    );
+  }
+
+  // If somehow we get here without admin status, show access denied
   if (!userData?.isAdmin) {
     return (
       <div className="flex items-center justify-center h-screen bg-background p-4">
@@ -43,15 +53,15 @@ export default function Admin() {
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-sm text-muted-foreground text-center">
-              Only authorized administrators can access the admin panel. If you believe you should have access, please contact your system administrator.
+              Only authorized administrators can access the admin panel.
             </p>
             <Button 
               variant="outline" 
               className="w-full" 
-              onClick={() => setLocation("/")}
-              data-testid="button-back-to-app"
+              onClick={() => setLocation("/admin/login")}
+              data-testid="button-to-login"
             >
-              Back to App
+              Go to Login
             </Button>
           </CardContent>
         </Card>

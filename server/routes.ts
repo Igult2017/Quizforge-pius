@@ -1,148 +1,76 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { isAuthenticated, isFirstFirebaseUser } from "./firebaseAuth";
+import { requireAdmin, createSession, validateSession, deleteSession } from "./simpleAuth";
 import { generateQuestions } from "./gemini";
 import { z } from "zod";
 import { insertQuestionSchema, insertQuizAttemptSchema, insertQuizAnswerSchema, insertPaymentSchema } from "@shared/schema";
 import { createOrder, getTransactionStatus } from "./pesapal";
 import { nanoid } from "nanoid";
-import { isAdmin } from "./adminMiddleware";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Firebase Auth is used for authentication (token-based, no session setup needed)
+  // Simple token-based admin authentication
 
-  // Auth routes - tries to authenticate, returns null if not logged in
-  app.get('/api/auth/user', async (req: any, res) => {
+  // Admin login endpoint
+  app.post('/api/admin/login', async (req, res) => {
     try {
-      console.log("[AUTH USER] Request received");
-      // Try to verify Firebase token
-      const authHeader = req.headers.authorization;
-      console.log("[AUTH USER] Auth header present:", !!authHeader);
+      const { token } = req.body;
       
-      if (authHeader && authHeader.startsWith("Bearer ")) {
-        const token = authHeader.split("Bearer ")[1];
-        try {
-          const admin = (await import("firebase-admin")).default;
-          const decodedToken = await admin.auth().verifyIdToken(token);
-          console.log("[AUTH USER] Token verified for:", decodedToken.email);
-          req.user = {
-            claims: {
-              sub: decodedToken.uid,
-              email: decodedToken.email,
-              first_name: decodedToken.name?.split(" ")[0] || "",
-              last_name: decodedToken.name?.split(" ").slice(1).join(" ") || "",
-            },
-          };
-        } catch (error) {
-          console.log("[AUTH USER] Token verification failed:", (error as Error).message);
-          // Token invalid, continue as unauthenticated
-        }
+      if (!token) {
+        return res.status(400).json({ error: "Token required" });
       }
       
-      // Check if user is authenticated
-      if (!req.user || !req.user.claims || !req.user.claims.sub) {
-        console.log("[AUTH USER] No authenticated user, returning null");
+      const sessionToken = createSession(token);
+      
+      // Set cookie
+      res.cookie('adminSession', sessionToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+      });
+      
+      return res.json({ 
+        success: true,
+        isAdmin: true
+      });
+    } catch (error: any) {
+      return res.status(401).json({ error: error.message });
+    }
+  });
+
+  // Admin logout endpoint
+  app.post('/api/admin/logout', async (req, res) => {
+    const sessionToken = req.cookies?.adminSession;
+    
+    if (sessionToken) {
+      deleteSession(sessionToken);
+    }
+    
+    res.clearCookie('adminSession');
+    return res.json({ success: true });
+  });
+
+  // Check admin status
+  app.get('/api/auth/user', async (req: any, res) => {
+    try {
+      const sessionToken = req.cookies?.adminSession;
+      
+      if (!sessionToken || !validateSession(sessionToken)) {
         return res.json(null);
       }
 
-      const userId = req.user.claims.sub;
-      const userEmail = req.user.claims.email;
-      
-      let user = await storage.getUser(userId);
-      
-      // If not found by UID, try finding by email (for legacy users)
-      if (!user && userEmail) {
-        user = await storage.getUserByEmail(userEmail);
-      }
-      
-      // Auto-create user if authenticated but not in database
-      if (!user) {
-        user = await storage.upsertUser({
-          id: userId,
-          email: req.user.claims.email || null,
-          firstName: req.user.claims.first_name || null,
-          lastName: req.user.claims.last_name || null,
-          profileImageUrl: null,
-        });
-      }
-      
-      // FIREBASE ADMIN DETECTION: Check if user is the first Firebase user
-      // The first user in Firebase Auth is automatically granted admin access
-      console.log(`[FIREBASE ADMIN] Checking if user is first Firebase user...`);
-      console.log(`[FIREBASE ADMIN] Current user: ${userEmail} (UID: ${userId})`);
-      const isFirstUser = await isFirstFirebaseUser(userId);
-      console.log(`[FIREBASE ADMIN] isFirstUser result:`, isFirstUser);
-      
-      if (isFirstUser === null) {
-        console.error("=".repeat(80));
-        console.error("WARNING: Firebase admin detection failed!");
-        console.error("Admin privileges cannot be granted without proper Firebase credentials.");
-        console.error("Please configure FIREBASE_SERVICE_ACCOUNT_KEY environment variable.");
-        console.error("See FIREBASE_ADMIN_SETUP.md for instructions.");
-        console.error("=".repeat(80));
-      } else if (isFirstUser) {
-        console.log(`[FIREBASE ADMIN] ✓ First Firebase user detected: ${userEmail} (UID: ${userId})`);
-        console.log(`[FIREBASE ADMIN] Current admin status in database: ${user.isAdmin}`);
-        if (!user.isAdmin) {
-          console.log(`[FIREBASE ADMIN] Granting admin status to first Firebase user: ${userEmail}`);
-          await storage.makeUserAdmin(user.id);
-          user.isAdmin = true;
-          console.log(`[FIREBASE ADMIN] ✓ Admin status granted successfully`);
-        } else {
-          console.log(`[FIREBASE ADMIN] Admin status already set for first user: ${userEmail}`);
-        }
-      } else {
-        console.log(`[FIREBASE ADMIN] User ${userEmail} is NOT the first Firebase user`);
-      }
-      
-      // Get active subscription
-      const subscription = await storage.getActiveSubscription(userId);
-      
-      const responseData = {
-        ...user,
-        subscription: subscription || null,
-        hasActiveSubscription: !!subscription,
-      };
-      
-      console.log(`[AUTH USER] Sending response for ${userEmail}:`, {
-        userId: user.id,
-        email: user.email,
-        isAdmin: user.isAdmin,
-        hasActiveSubscription: !!subscription,
+      // Admin is logged in
+      return res.json({
+        isAdmin: true,
+        email: "admin@nursebrace.com"
       });
-      
-      res.json(responseData);
-    } catch (error) {
-      console.error("Error fetching user:", error);
-      res.status(500).json({ message: "Failed to fetch user" });
+    } catch (error: any) {
+      console.error("[AUTH ERROR]", error);
+      return res.json(null);
     }
   });
 
-  // Get current user with admin status (used by admin panel)
-  app.get('/api/auth/me', async (req: any, res) => {
-    try {
-      if (!req.user || !req.user.claims || !req.user.claims.sub) {
-        return res.status(401).json({ message: "Not authenticated" });
-      }
-
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
-      
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
-      }
-      
-      res.json({
-        id: user.id,
-        email: user.email,
-        isAdmin: user.isAdmin || false,
-      });
-    } catch (error) {
-      console.error("Error fetching current user:", error);
-      res.status(500).json({ message: "Failed to fetch user" });
-    }
-  });
 
   const server = createServer(app);
   
@@ -457,69 +385,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // ============= QUIZ ROUTES =============
   
-  // Start a new quiz - protected route with free trial logic
-  app.post("/api/quiz/start", isAuthenticated, async (req: any, res) => {
+  // Start a new quiz - public route (no authentication required)
+  app.post("/api/quiz/start", async (req: any, res) => {
     try {
       const { category } = req.body;
-      const userId = req.user.claims.sub;
       
       if (!category) {
         return res.status(400).json({ error: "Category is required" });
       }
 
-      // Get or create user (auto-create if first time via Firebase Auth)
-      let user = await storage.getUser(userId);
-      const userEmail = req.user.claims.email;
-      
-      // Fallback to email lookup for legacy users
-      if (!user && userEmail) {
-        user = await storage.getUserByEmail(userEmail);
-      }
-      
-      if (!user) {
-        // User authenticated via Firebase but doesn't exist in DB yet
-        // Create them automatically with info from token
-        user = await storage.upsertUser({
-          id: userId,
-          email: req.user.claims.email || null,
-          firstName: req.user.claims.first_name || null,
-          lastName: req.user.claims.last_name || null,
-          profileImageUrl: null,
-        });
-      }
+      // Public quiz - always use 50 questions
+      const questionCount = 50;
 
-      // Admins get free unlimited access (bypass all checks)
-      const isAdmin = user.isAdmin === true;
-      
-      // Check admin-granted access (overrides subscription/trial)
-      const hasAdminAccess = user.adminGrantedAccess && 
-        (!user.adminAccessExpiresAt || new Date(user.adminAccessExpiresAt) > new Date());
-      
-      // Check subscription status and free trial
-      const subscription = await storage.getActiveSubscription(user.id);
-      const hasUsedFreeTrial = user.hasUsedFreeTrial;
-      
-      // Determine question count: 30 for free trial, 50 for subscribed, admin-granted, or admin users
-      let questionCount = 50;
-      let isFreeTrialAttempt = false;
-      
-      if (!subscription && !hasAdminAccess && !isAdmin) {
-        // No active subscription, admin access, or admin role
-        if (hasUsedFreeTrial) {
-          // User has used free trial and has no subscription or admin access
-          return res.status(403).json({ 
-            error: "Subscription required",
-            message: "Your free trial has been used. Please subscribe to continue practicing."
-          });
-        } else {
-          // First time user - give free trial with 30 questions
-          questionCount = 30;
-          isFreeTrialAttempt = true;
-        }
-      }
-
-      // Get random questions (up to the requested count)
-      console.log(`Quiz request - Category: "${category}", Count: ${questionCount}, User: ${userId}`);
+      // Get random questions
+      console.log(`Quiz request - Category: "${category}", Count: ${questionCount}`);
       const questions = await storage.getRandomQuestions(category, questionCount);
       console.log(`Questions found: ${questions.length} for category "${category}"`);
       
@@ -531,30 +410,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // If we don't have enough questions, use what's available
-      // This allows users to practice even if the database doesn't have the full set
+      // Use available questions
       const actualQuestionCount = Math.min(questions.length, questionCount);
       
       console.log(`Starting quiz: requested ${questionCount}, found ${questions.length}, using ${actualQuestionCount} questions for ${category}`);
 
-      // Create quiz attempt
+      // Create anonymous quiz attempt
       const attempt = await storage.createQuizAttemptWithAnswers({
-        userId: user.id,
+        userId: "anonymous",
         category,
         status: "in_progress",
         totalQuestions: actualQuestionCount,
-        isFreeTrialAttempt,
+        isFreeTrialAttempt: false,
       }, questions.map(q => q.id));
-
-      // Mark free trial as used (only if this is a free trial attempt)
-      if (isFreeTrialAttempt) {
-        await storage.markFreeTrialAsUsed(userId);
-        console.log(`Free trial marked as used for user: ${userId}`);
-      }
 
       res.json({
         attemptId: attempt.id,
-        isFreeTrialAttempt,
         questions: questions.map(q => ({
           id: q.id,
           question: q.question,
@@ -567,8 +438,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Save an answer - protected
-  app.post("/api/quiz/:attemptId/answer", isAuthenticated, async (req: any, res) => {
+  // Save an answer - public
+  app.post("/api/quiz/:attemptId/answer", async (req: any, res) => {
     try {
       const { attemptId } = req.params;
       const { questionId, userAnswer } = req.body;
@@ -608,11 +479,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Submit quiz and get results - protected
-  app.post("/api/quiz/:attemptId/submit", isAuthenticated, async (req: any, res) => {
+  // Submit quiz and get results - public
+  app.post("/api/quiz/:attemptId/submit", async (req: any, res) => {
     try {
       const { attemptId } = req.params;
-      const userId = req.user.claims.sub;
 
       // Get quiz attempt
       const attempt = await storage.getQuizAttempt(Number(attemptId));
@@ -633,11 +503,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         completedAt: new Date(),
       });
 
-      // If this was a free trial attempt, mark the free trial as used
-      if (attempt.isFreeTrialAttempt) {
-        await storage.markFreeTrialAsUsed(userId);
-      }
-
       res.json({
         success: true,
         score: correctCount,
@@ -649,8 +514,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get detailed quiz results - protected
-  app.get("/api/quiz/:attemptId/results", isAuthenticated, async (req: any, res) => {
+  // Get detailed quiz results - public
+  app.get("/api/quiz/:attemptId/results", async (req: any, res) => {
     try {
       const { attemptId } = req.params;
 
@@ -709,7 +574,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ============= ADMIN ROUTES =============
   
   // Create a single question (admin only)
-  app.post("/api/admin/questions", isAuthenticated, isAdmin, async (req, res) => {
+  app.post("/api/admin/questions", requireAdmin, async (req, res) => {
     try {
       const questionData = insertQuestionSchema.parse(req.body);
       const question = await storage.createQuestion(questionData);
@@ -724,7 +589,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Bulk create questions (admin only)
-  app.post("/api/admin/questions/bulk", isAuthenticated, isAdmin, async (req, res) => {
+  app.post("/api/admin/questions/bulk", requireAdmin, async (req, res) => {
     try {
       const { questions } = req.body;
       
@@ -753,7 +618,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get question counts by category (admin only)
-  app.get("/api/admin/questions/counts", isAuthenticated, isAdmin, async (req, res) => {
+  app.get("/api/admin/questions/counts", requireAdmin, async (req, res) => {
     try {
       const counts = await storage.getQuestionCountsByCategory();
       
@@ -773,7 +638,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/admin/questions/generate", isAuthenticated, isAdmin, async (req, res) => {
+  app.post("/api/admin/questions/generate", requireAdmin, async (req, res) => {
     try {
       const { category, count, subject, difficulty } = req.body;
 
@@ -816,7 +681,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ============= BACKGROUND GENERATION ROUTES =============
 
   // Get background generation status
-  app.get("/api/admin/generation/status", isAuthenticated, isAdmin, async (req, res) => {
+  app.get("/api/admin/generation/status", requireAdmin, async (req, res) => {
     try {
       const { db } = await import("./db.js");
       const { generationSubjectProgress, systemSettings } = await import("@shared/schema");
@@ -854,7 +719,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Pause background generation
-  app.post("/api/admin/generation/pause", isAuthenticated, isAdmin, async (req, res) => {
+  app.post("/api/admin/generation/pause", requireAdmin, async (req, res) => {
     try {
       const { db } = await import("./db.js");
       const { systemSettings } = await import("@shared/schema");
@@ -874,7 +739,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Resume background generation
-  app.post("/api/admin/generation/resume", isAuthenticated, isAdmin, async (req, res) => {
+  app.post("/api/admin/generation/resume", requireAdmin, async (req, res) => {
     try {
       const { db } = await import("./db.js");
       const { systemSettings } = await import("@shared/schema");
@@ -894,7 +759,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Trigger manual generation cycle
-  app.post("/api/admin/generation/trigger", isAuthenticated, isAdmin, async (req, res) => {
+  app.post("/api/admin/generation/trigger", requireAdmin, async (req, res) => {
     try {
       const { triggerManualGeneration } = await import("./backgroundGeneration.js");
       
@@ -913,7 +778,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ============= ADMIN ROUTES =============
   
   // Get all users (admin only)
-  app.get("/api/admin/users", isAuthenticated, isAdmin, async (req: any, res) => {
+  app.get("/api/admin/users", requireAdmin, async (req: any, res) => {
     try {
       const users = await storage.getAllUsers();
       
@@ -940,7 +805,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Grant/revoke admin access to user
-  app.post("/api/admin/users/:userId/grant-access", isAuthenticated, isAdmin, async (req: any, res) => {
+  app.post("/api/admin/users/:userId/grant-access", requireAdmin, async (req: any, res) => {
     try {
       const { userId } = req.params;
       const { durationDays } = req.body; // Optional: number of days or null for permanent
@@ -969,7 +834,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Revoke admin access
-  app.post("/api/admin/users/:userId/revoke-access", isAuthenticated, isAdmin, async (req: any, res) => {
+  app.post("/api/admin/users/:userId/revoke-access", requireAdmin, async (req: any, res) => {
     try {
       const { userId } = req.params;
 
@@ -993,7 +858,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize first admin endpoint - DISABLED
   // This feature has been disabled. Admin access is now managed through hardcoded admin emails
   // and existing admins can add new admins through the admin panel.
-  app.post("/api/admin/initialize-first-admin", isAuthenticated, isAdmin, async (req: any, res) => {
+  app.post("/api/admin/initialize-first-admin", requireAdmin, async (req: any, res) => {
     return res.status(403).json({ 
       error: "Feature disabled",
       message: "The 'Become First Admin' feature has been disabled. Admin access is managed through the admin panel. Contact your system administrator for access."
@@ -1003,7 +868,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Set admin by email (DEVELOPMENT ONLY - protected endpoint for initial setup)
   // SECURITY: This endpoint requires authentication AND a secure setup token from env vars
   // This endpoint is completely disabled in production for security
-  app.post("/api/admin/set-admin-by-email", isAuthenticated, isAdmin, async (req: any, res) => {
+  app.post("/api/admin/set-admin-by-email", requireAdmin, async (req: any, res) => {
     try {
       // SECURITY: Completely disabled in production
       if (process.env.NODE_ENV === 'production') {
@@ -1075,7 +940,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Make user an admin (permanent admin status)
-  app.post("/api/admin/users/:userId/make-admin", isAuthenticated, isAdmin, async (req: any, res) => {
+  app.post("/api/admin/users/:userId/make-admin", requireAdmin, async (req: any, res) => {
     try {
       const { userId } = req.params;
 
@@ -1101,15 +966,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Revoke admin status (remove permanent admin status)
-  app.post("/api/admin/users/:userId/revoke-admin", isAuthenticated, isAdmin, async (req: any, res) => {
+  app.post("/api/admin/users/:userId/revoke-admin", requireAdmin, async (req: any, res) => {
     try {
       const { userId } = req.params;
-      const currentAdminId = req.user.claims.sub;
-
-      // Prevent admins from revoking their own admin status
-      if (userId === currentAdminId) {
-        return res.status(400).json({ error: "Cannot revoke your own admin status. Ask another admin to do this." });
-      }
 
       const user = await storage.getUser(userId);
       if (!user) {
@@ -1140,7 +999,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // End user subscription
-  app.post("/api/admin/users/:userId/end-subscription", isAuthenticated, isAdmin, async (req: any, res) => {
+  app.post("/api/admin/users/:userId/end-subscription", requireAdmin, async (req: any, res) => {
     try {
       const { userId } = req.params;
 
@@ -1167,7 +1026,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Ban user
-  app.post("/api/admin/users/:userId/ban", isAuthenticated, isAdmin, async (req: any, res) => {
+  app.post("/api/admin/users/:userId/ban", requireAdmin, async (req: any, res) => {
     try {
       const { userId } = req.params;
 
@@ -1189,7 +1048,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Unban user
-  app.post("/api/admin/users/:userId/unban", isAuthenticated, isAdmin, async (req: any, res) => {
+  app.post("/api/admin/users/:userId/unban", requireAdmin, async (req: any, res) => {
     try {
       const { userId } = req.params;
 
@@ -1211,7 +1070,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Extend/reduce subscription duration
-  app.post("/api/admin/users/:userId/extend-subscription", isAuthenticated, isAdmin, async (req: any, res) => {
+  app.post("/api/admin/users/:userId/extend-subscription", requireAdmin, async (req: any, res) => {
     try {
       const { userId } = req.params;
       const { days } = req.body; // Can be positive (extend) or negative (reduce)
@@ -1244,7 +1103,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Send email to all users (marketing)
-  app.post("/api/admin/email/broadcast", isAuthenticated, isAdmin, async (req: any, res) => {
+  app.post("/api/admin/email/broadcast", requireAdmin, async (req: any, res) => {
     try {
       const { subject, message } = req.body;
 
@@ -1272,7 +1131,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Send email to specific user
-  app.post("/api/admin/email/send", isAuthenticated, isAdmin, async (req: any, res) => {
+  app.post("/api/admin/email/send", requireAdmin, async (req: any, res) => {
     try {
       const { userId, subject, message } = req.body;
 
@@ -1299,7 +1158,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin analytics dashboard
-  app.get("/api/admin/analytics", isAuthenticated, isAdmin, async (req: any, res) => {
+  app.get("/api/admin/analytics", requireAdmin, async (req: any, res) => {
     try {
       const users = await storage.getAllUsers();
       const allSubscriptions = await storage.getAllSubscriptions();
