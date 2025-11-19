@@ -1,7 +1,8 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { requireAdmin, createSession, validateSession, deleteSession } from "./simpleAuth";
+import { isAuthenticated } from "./firebaseAuth";
+import { isAdmin } from "./adminMiddleware";
 import { generateQuestions } from "./gemini";
 import { z } from "zod";
 import { insertQuestionSchema, insertQuizAttemptSchema, insertQuizAnswerSchema, insertPaymentSchema } from "@shared/schema";
@@ -9,61 +10,26 @@ import { createOrder, getTransactionStatus } from "./pesapal";
 import { nanoid } from "nanoid";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Simple token-based admin authentication
-
-  // Admin login endpoint
-  app.post('/api/admin/login', async (req, res) => {
+  // Get current user endpoint (Firebase/Replit Auth)
+  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
     try {
-      const { token } = req.body;
-      
-      if (!token) {
-        return res.status(400).json({ error: "Token required" });
-      }
-      
-      const sessionToken = createSession(token);
-      
-      // Set cookie
-      res.cookie('adminSession', sessionToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
-      });
-      
-      return res.json({ 
-        success: true,
-        isAdmin: true
-      });
-    } catch (error: any) {
-      return res.status(401).json({ error: error.message });
-    }
-  });
-
-  // Admin logout endpoint
-  app.post('/api/admin/logout', async (req, res) => {
-    const sessionToken = req.cookies?.adminSession;
-    
-    if (sessionToken) {
-      deleteSession(sessionToken);
-    }
-    
-    res.clearCookie('adminSession');
-    return res.json({ success: true });
-  });
-
-  // Check admin status
-  app.get('/api/auth/user', async (req: any, res) => {
-    try {
-      const sessionToken = req.cookies?.adminSession;
-      
-      if (!sessionToken || !validateSession(sessionToken)) {
+      if (!req.user || !req.user.claims) {
         return res.json(null);
       }
 
-      // Admin is logged in
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+
+      if (!user) {
+        return res.json(null);
+      }
+
       return res.json({
-        isAdmin: true,
-        email: "admin@nursebrace.com"
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        isAdmin: user.isAdmin || false,
       });
     } catch (error: any) {
       console.error("[AUTH ERROR]", error);
@@ -574,7 +540,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ============= ADMIN ROUTES =============
   
   // Create a single question (admin only)
-  app.post("/api/admin/questions", requireAdmin, async (req, res) => {
+  app.post("/api/admin/questions", isAdmin, async (req, res) => {
     try {
       const questionData = insertQuestionSchema.parse(req.body);
       const question = await storage.createQuestion(questionData);
@@ -589,7 +555,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Bulk create questions (admin only)
-  app.post("/api/admin/questions/bulk", requireAdmin, async (req, res) => {
+  app.post("/api/admin/questions/bulk", isAdmin, async (req, res) => {
     try {
       const { questions } = req.body;
       
@@ -618,7 +584,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get question counts by category (admin only)
-  app.get("/api/admin/questions/counts", requireAdmin, async (req, res) => {
+  app.get("/api/admin/questions/counts", isAdmin, async (req, res) => {
     try {
       const counts = await storage.getQuestionCountsByCategory();
       
@@ -638,7 +604,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/admin/questions/generate", requireAdmin, async (req, res) => {
+  app.post("/api/admin/questions/generate", isAdmin, async (req, res) => {
     try {
       const { category, count, subject, difficulty } = req.body;
 
@@ -681,7 +647,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ============= BACKGROUND GENERATION ROUTES =============
 
   // Get background generation status
-  app.get("/api/admin/generation/status", requireAdmin, async (req, res) => {
+  app.get("/api/admin/generation/status", isAdmin, async (req, res) => {
     try {
       const { db } = await import("./db.js");
       const { generationSubjectProgress, systemSettings } = await import("@shared/schema");
@@ -719,7 +685,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Pause background generation
-  app.post("/api/admin/generation/pause", requireAdmin, async (req, res) => {
+  app.post("/api/admin/generation/pause", isAdmin, async (req, res) => {
     try {
       const { db } = await import("./db.js");
       const { systemSettings } = await import("@shared/schema");
@@ -739,7 +705,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Resume background generation
-  app.post("/api/admin/generation/resume", requireAdmin, async (req, res) => {
+  app.post("/api/admin/generation/resume", isAdmin, async (req, res) => {
     try {
       const { db } = await import("./db.js");
       const { systemSettings } = await import("@shared/schema");
@@ -759,7 +725,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Trigger manual generation cycle
-  app.post("/api/admin/generation/trigger", requireAdmin, async (req, res) => {
+  app.post("/api/admin/generation/trigger", isAdmin, async (req, res) => {
     try {
       const { triggerManualGeneration } = await import("./backgroundGeneration.js");
       
@@ -778,7 +744,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ============= ADMIN ROUTES =============
   
   // Get all users (admin only)
-  app.get("/api/admin/users", requireAdmin, async (req: any, res) => {
+  app.get("/api/admin/users", isAdmin, async (req: any, res) => {
     try {
       const users = await storage.getAllUsers();
       
@@ -805,7 +771,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Grant/revoke admin access to user
-  app.post("/api/admin/users/:userId/grant-access", requireAdmin, async (req: any, res) => {
+  app.post("/api/admin/users/:userId/grant-access", isAdmin, async (req: any, res) => {
     try {
       const { userId } = req.params;
       const { durationDays } = req.body; // Optional: number of days or null for permanent
@@ -834,7 +800,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Revoke admin access
-  app.post("/api/admin/users/:userId/revoke-access", requireAdmin, async (req: any, res) => {
+  app.post("/api/admin/users/:userId/revoke-access", isAdmin, async (req: any, res) => {
     try {
       const { userId } = req.params;
 
@@ -858,7 +824,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize first admin endpoint - DISABLED
   // This feature has been disabled. Admin access is now managed through hardcoded admin emails
   // and existing admins can add new admins through the admin panel.
-  app.post("/api/admin/initialize-first-admin", requireAdmin, async (req: any, res) => {
+  app.post("/api/admin/initialize-first-admin", isAdmin, async (req: any, res) => {
     return res.status(403).json({ 
       error: "Feature disabled",
       message: "The 'Become First Admin' feature has been disabled. Admin access is managed through the admin panel. Contact your system administrator for access."
@@ -868,7 +834,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Set admin by email (DEVELOPMENT ONLY - protected endpoint for initial setup)
   // SECURITY: This endpoint requires authentication AND a secure setup token from env vars
   // This endpoint is completely disabled in production for security
-  app.post("/api/admin/set-admin-by-email", requireAdmin, async (req: any, res) => {
+  app.post("/api/admin/set-admin-by-email", isAdmin, async (req: any, res) => {
     try {
       // SECURITY: Completely disabled in production
       if (process.env.NODE_ENV === 'production') {
@@ -940,7 +906,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Make user an admin (permanent admin status)
-  app.post("/api/admin/users/:userId/make-admin", requireAdmin, async (req: any, res) => {
+  app.post("/api/admin/users/:userId/make-admin", isAdmin, async (req: any, res) => {
     try {
       const { userId } = req.params;
 
@@ -966,7 +932,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Revoke admin status (remove permanent admin status)
-  app.post("/api/admin/users/:userId/revoke-admin", requireAdmin, async (req: any, res) => {
+  app.post("/api/admin/users/:userId/revoke-admin", isAdmin, async (req: any, res) => {
     try {
       const { userId } = req.params;
 
@@ -999,7 +965,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // End user subscription
-  app.post("/api/admin/users/:userId/end-subscription", requireAdmin, async (req: any, res) => {
+  app.post("/api/admin/users/:userId/end-subscription", isAdmin, async (req: any, res) => {
     try {
       const { userId } = req.params;
 
@@ -1026,7 +992,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Ban user
-  app.post("/api/admin/users/:userId/ban", requireAdmin, async (req: any, res) => {
+  app.post("/api/admin/users/:userId/ban", isAdmin, async (req: any, res) => {
     try {
       const { userId } = req.params;
 
@@ -1048,7 +1014,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Unban user
-  app.post("/api/admin/users/:userId/unban", requireAdmin, async (req: any, res) => {
+  app.post("/api/admin/users/:userId/unban", isAdmin, async (req: any, res) => {
     try {
       const { userId } = req.params;
 
@@ -1070,7 +1036,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Extend/reduce subscription duration
-  app.post("/api/admin/users/:userId/extend-subscription", requireAdmin, async (req: any, res) => {
+  app.post("/api/admin/users/:userId/extend-subscription", isAdmin, async (req: any, res) => {
     try {
       const { userId } = req.params;
       const { days } = req.body; // Can be positive (extend) or negative (reduce)
@@ -1103,7 +1069,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Send email to all users (marketing)
-  app.post("/api/admin/email/broadcast", requireAdmin, async (req: any, res) => {
+  app.post("/api/admin/email/broadcast", isAdmin, async (req: any, res) => {
     try {
       const { subject, message } = req.body;
 
@@ -1131,7 +1097,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Send email to specific user
-  app.post("/api/admin/email/send", requireAdmin, async (req: any, res) => {
+  app.post("/api/admin/email/send", isAdmin, async (req: any, res) => {
     try {
       const { userId, subject, message } = req.body;
 
@@ -1158,7 +1124,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin analytics dashboard
-  app.get("/api/admin/analytics", requireAdmin, async (req: any, res) => {
+  app.get("/api/admin/analytics", isAdmin, async (req: any, res) => {
     try {
       const users = await storage.getAllUsers();
       const allSubscriptions = await storage.getAllSubscriptions();
