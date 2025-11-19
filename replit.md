@@ -12,6 +12,25 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes (November 2025)
 
+### Admin Authentication Refactor (November 19, 2025)
+- **Firebase-Based Admin System**: Completely removed hardcoded admin emails in favor of Firebase-first user authentication
+  - The first person who signed up to Firebase Auth (by creation time) is automatically the admin
+  - Created `system_settings` database table to persist the first Firebase user UID
+  - Implemented proper Firebase user pagination to handle projects with 1000+ users
+  - First user UID is saved to database on first detection, preventing admin privilege changes
+- **Removed All Hardcoded Admin Logic**:
+  - Deleted `HARDCODED_ADMIN_EMAILS` from `server/adminMiddleware.ts`
+  - Removed `ADMIN_ALLOWLIST` from `server/routes.ts`
+  - Updated client-side `useUserData.ts` to rely solely on backend admin status
+  - All admin detection centralized in backend `getFirstFirebaseUserUid()` function
+- **Security Improvements**:
+  - Admin status determined by Firebase creation time, not database insertion order
+  - Client cannot claim admin status via custom claims
+  - Persistent storage prevents admin reassignment if users are deleted
+  - Proper pagination ensures all Firebase users are checked, not just first 1,000
+
+## Recent Changes (November 2025)
+
 ### UI and Feature Enhancements (November 17, 2025)
 - **Poppins font implementation in pricing section**: Modernized pricing page typography
   - Imported Poppins Google Font globally in index.css
