@@ -276,16 +276,19 @@ export default function AdminQuestions() {
         </CardHeader>
         <CardContent className="space-y-2 text-sm text-muted-foreground">
           <p>
-            • Questions are generated using DeepSeek AI with nursing exam-specific prompts
+            • Questions are generated using Google Gemini AI (gemini-1.5-flash) with nursing exam-specific prompts
           </p>
           <p>
             • Each question includes 4 options, correct answer, and detailed explanation
           </p>
           <p>
-            • Generation typically takes 10-30 seconds depending on the batch size
+            • Generation typically takes 5-20 seconds depending on the batch size
           </p>
           <p>
             • Questions are automatically saved to the database after generation
+          </p>
+          <p>
+            • Optional: Generate for specific subjects when needed, or use comprehensive generation for full coverage
           </p>
         </CardContent>
       </Card>

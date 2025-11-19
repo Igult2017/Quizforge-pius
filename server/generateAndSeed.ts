@@ -1,9 +1,9 @@
 import { storage } from "./storage";
-import { generateQuestions } from "./deepseek";
+import { generateQuestions } from "./gemini";
 
 async function generateAndSeedQuestions() {
   try {
-    console.log("Generating questions using DeepSeek API...\n");
+    console.log("Generating questions using Gemini API...\n");
 
     // Generate 35 questions for each category
     const categories = ["NCLEX", "TEAS", "HESI"] as const;
