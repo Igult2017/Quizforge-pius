@@ -21,14 +21,40 @@ To make the admin detection work in production, you **MUST** configure Firebase 
 2. Select your project: **quizeforge-44a83**
 3. Go to **Project Settings** (gear icon) → **Service Accounts** tab
 4. Click **Generate New Private Key**
-5. Download the JSON file
-6. Copy the **entire JSON contents** and set it as an environment variable:
+5. Download the JSON file (e.g., `quizeforge-service-account.json`)
+6. Set it as an environment variable - **choose your platform method**:
+
+#### For most hosting platforms (Heroku, Render, Railway, etc.):
+
+Open the JSON file and copy the **entire contents** as a single line:
 
 ```bash
-FIREBASE_SERVICE_ACCOUNT_KEY='{"type":"service_account","project_id":"quizeforge-44a83",...}'
+FIREBASE_SERVICE_ACCOUNT_KEY={"type":"service_account","project_id":"quizeforge-44a83","private_key_id":"...","private_key":"-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n","client_email":"...","client_id":"...","auth_uri":"...","token_uri":"...","auth_provider_x509_cert_url":"...","client_x509_cert_url":"..."}
 ```
 
-**Important**: The value must be the complete JSON string, including all quotes and braces.
+**Important**: 
+- The value must be the **complete JSON** on a single line
+- Do **NOT** wrap it in extra quotes unless your platform requires it
+- The `\n` characters in the private_key are correct - keep them as-is
+
+#### For Docker/Coolify:
+
+If your platform supports multi-line environment variables, you can paste the JSON directly:
+
+```bash
+FIREBASE_SERVICE_ACCOUNT_KEY={
+  "type": "service_account",
+  "project_id": "quizeforge-44a83",
+  ...
+}
+```
+
+#### Testing the configuration:
+
+After setting the variable:
+1. **Restart your server** (environment variables only load on startup)
+2. Check logs for: `Firebase Admin initialized with service account`
+3. If you see `initialized with Application Default Credentials`, the env var wasn't loaded
 
 ### Option 2: Application Default Credentials
 

@@ -71,7 +71,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // The first user in Firebase Auth is automatically granted admin access
       const isFirstUser = await isFirstFirebaseUser(userId);
       
-      if (isFirstUser) {
+      if (isFirstUser === null) {
+        console.error("=".repeat(80));
+        console.error("WARNING: Firebase admin detection failed!");
+        console.error("Admin privileges cannot be granted without proper Firebase credentials.");
+        console.error("Please configure FIREBASE_SERVICE_ACCOUNT_KEY environment variable.");
+        console.error("See FIREBASE_ADMIN_SETUP.md for instructions.");
+        console.error("=".repeat(80));
+      } else if (isFirstUser) {
         console.log(`[FIREBASE ADMIN] First Firebase user detected: ${userEmail} (UID: ${userId})`);
         if (!user.isAdmin) {
           console.log(`[FIREBASE ADMIN] Granting admin status to first Firebase user: ${userEmail}`);

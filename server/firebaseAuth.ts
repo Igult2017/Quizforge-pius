@@ -188,8 +188,12 @@ export async function getFirstFirebaseUserUid(): Promise<string | null> {
 
 /**
  * Check if a user ID is the first Firebase user (admin)
+ * Returns true if user is the first Firebase user, false if not, null if detection failed
  */
-export async function isFirstFirebaseUser(userId: string): Promise<boolean> {
+export async function isFirstFirebaseUser(userId: string): Promise<boolean | null> {
   const firstUserUid = await getFirstFirebaseUserUid();
+  if (firstUserUid === null) {
+    return null; // Detection failed - credentials not configured
+  }
   return firstUserUid === userId;
 }

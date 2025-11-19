@@ -23,6 +23,11 @@ Preferred communication style: Simple, everyday language.
   - Removed `ADMIN_ALLOWLIST` from `server/routes.ts`
   - Updated client-side `useUserData.ts` to rely solely on backend admin status
   - All admin detection centralized in backend `getFirstFirebaseUserUid()` function
+- **Production Deployment**:
+  - Created `FIREBASE_ADMIN_SETUP.md` with detailed deployment instructions
+  - Added comprehensive logging for debugging admin detection in production
+  - Visible error warnings when Firebase credentials are not configured
+  - Requires `FIREBASE_SERVICE_ACCOUNT_KEY` environment variable in production
 - **Security Improvements**:
   - Admin status determined by Firebase creation time, not database insertion order
   - Client cannot claim admin status via custom claims
