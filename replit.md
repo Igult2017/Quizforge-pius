@@ -15,13 +15,13 @@ The frontend uses **React 18** with **TypeScript** and **Vite**. **Wouter** hand
 The backend is an **Express.js** application with a RESTful API. It uses **Drizzle ORM** with **Neon Serverless PostgreSQL** for type-safe database operations. Data models include `users`, `subscriptions`, `questions`, `quizAttempts`, and `quizAnswers`. Key decisions include using Drizzle for its lightweight nature and Neon's serverless driver for efficiency. The admin panel at `/admin` is a protected section providing analytics, user management (grant/revoke access, end subscriptions), and broadcast email functionality.
 
 ### Admin Authentication
-Admin authentication is Firebase-first. The first user to sign up via Firebase Auth is automatically designated as the admin, with their UID stored in a `system_settings` database table. All hardcoded admin logic has been removed, centralizing admin detection in a backend function. Firebase ID token verification with custom claims check is used for secure access.
+Admin authentication uses a simple token-based system. Set the `ADMIN_ACCESS_TOKEN` environment variable to your chosen admin password/token. Admins log in at `/admin/login` by entering this token, which creates a secure session cookie. No Firebase or external authentication service is required.
 
 **Recent Updates (Nov 19, 2025)**: 
-1. **NEW: Automatic Background Question Generation** - System now automatically generates all 12,500 questions in the background without user interaction. Runs every 5 minutes, rotating through all subjects until complete. Fully monitored via Admin Panel → Generation.
-2. Fixed critical Firebase Admin import error in `/api/auth/user` endpoint that was preventing all authentication. The import statement now correctly accesses `.default` export.
-3. Fixed SSL connection error for databases that don't support SSL. Database SSL is now configurable via `DATABASE_SSL` environment variable or auto-detected from connection string.
-4. Added automatic database migration on production startup to ensure schema is always up-to-date. The `start` script now runs `drizzle-kit push --force` before starting the server.
+1. **NEW: Simple Admin Token Authentication** - Removed all Firebase dependencies and replaced with simple token-based auth. Set `ADMIN_ACCESS_TOKEN` environment variable and log in at `/admin/login`. Much easier to configure and maintain!
+2. **NEW: Automatic Background Question Generation** - System now automatically generates all 12,500 questions in the background without user interaction. Runs every 5 minutes, rotating through all subjects until complete. Fully monitored via Admin Panel → Generation.
+3. **NEW: Flexible Gemini Model Support** - System automatically detects which Gemini model works with your API key. Set `GEMINI_MODEL` to specify a particular model, or let it auto-detect.
+4. Quiz routes are now public (no authentication required) to simplify testing and development.
 
 ### UI/UX Decisions
 - Modern typography with Poppins font for the pricing section and Merriweather for headings.
@@ -70,10 +70,10 @@ Admin authentication is Firebase-first. The first user to sign up via Firebase A
 - **drizzle-kit**: Database migration and schema management.
 
 ### Environment Requirements
-- `DATABASE_URL`
-- `GEMINI_API_KEY` (Google Gemini API for question generation - **required**)
-- `GEMINI_MODEL` (Optional - specify which Gemini model to use, defaults to `gemini-2.0-flash-exp`. Set this if you get 404 errors)
-- `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_PROJECT_ID`, `VITE_FIREBASE_APP_ID`
-- `PESAPAL_CONSUMER_KEY`, `PESAPAL_CONSUMER_SECRET`
-- `SESSION_SECRET`
-- `NODE_ENV`
+- `DATABASE_URL` - PostgreSQL connection string
+- `ADMIN_ACCESS_TOKEN` - Admin password/token for accessing admin panel (**required**)
+- `GEMINI_API_KEY` - Google Gemini API for question generation (**required**)
+- `GEMINI_MODEL` - Optional: specify which Gemini model to use (auto-detects if not set)
+- `PESAPAL_CONSUMER_KEY`, `PESAPAL_CONSUMER_SECRET` - For payment processing
+- `SESSION_SECRET` - Session encryption secret
+- `NODE_ENV` - Set to 'production' in deployment
