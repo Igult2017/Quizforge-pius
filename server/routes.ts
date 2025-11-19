@@ -69,7 +69,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // FIREBASE ADMIN DETECTION: Check if user is the first Firebase user
       // The first user in Firebase Auth is automatically granted admin access
+      console.log(`[FIREBASE ADMIN] Checking if user is first Firebase user...`);
+      console.log(`[FIREBASE ADMIN] Current user: ${userEmail} (UID: ${userId})`);
       const isFirstUser = await isFirstFirebaseUser(userId);
+      console.log(`[FIREBASE ADMIN] isFirstUser result:`, isFirstUser);
       
       if (isFirstUser === null) {
         console.error("=".repeat(80));
@@ -79,14 +82,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.error("See FIREBASE_ADMIN_SETUP.md for instructions.");
         console.error("=".repeat(80));
       } else if (isFirstUser) {
-        console.log(`[FIREBASE ADMIN] First Firebase user detected: ${userEmail} (UID: ${userId})`);
+        console.log(`[FIREBASE ADMIN] ✓ First Firebase user detected: ${userEmail} (UID: ${userId})`);
+        console.log(`[FIREBASE ADMIN] Current admin status in database: ${user.isAdmin}`);
         if (!user.isAdmin) {
           console.log(`[FIREBASE ADMIN] Granting admin status to first Firebase user: ${userEmail}`);
           await storage.makeUserAdmin(user.id);
           user.isAdmin = true;
+          console.log(`[FIREBASE ADMIN] ✓ Admin status granted successfully`);
         } else {
           console.log(`[FIREBASE ADMIN] Admin status already set for first user: ${userEmail}`);
         }
+      } else {
+        console.log(`[FIREBASE ADMIN] User ${userEmail} is NOT the first Firebase user`);
       }
       
       // Get active subscription

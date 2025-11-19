@@ -97,7 +97,7 @@ After deployment, check your server logs for:
 **Check server logs for:**
 
 1. **Token verification**: Should see `[AUTH USER] Token verified for: your-email`
-2. **Admin detection**: Should see `[FIREBASE ADMIN] First Firebase user detected`
+2. **Admin detection**: Should see the detailed user list and first user identification
 3. **Database update**: Should see `[FIREBASE ADMIN] Granting admin status to first Firebase user`
 
 ### Error: "Failed to list Firebase users"
@@ -108,12 +108,37 @@ This means Firebase Admin credentials are not configured. You need to set `FIREB
 
 The service account JSON is invalid or malformed. Make sure you copied the complete JSON.
 
+### Wrong user is admin?
+
+If the wrong person was designated as admin, you need to **reset the persisted UID**:
+
+1. **Check who is currently stored as admin:**
+   ```sql
+   SELECT * FROM system_settings WHERE key = 'first_firebase_user_uid';
+   ```
+
+2. **Delete the persisted UID** to force re-detection:
+   ```sql
+   DELETE FROM system_settings WHERE key = 'first_firebase_user_uid';
+   ```
+
+3. **Restart your server**
+
+4. **The next person who logs in** will trigger Firebase user detection, and the system will:
+   - Query all Firebase users
+   - Log ALL users with their creation dates
+   - Identify the earliest user by creation time
+   - Persist that UID to the database
+
+5. **Check logs** to see who was identified as the first Firebase user
+
 ### Still not working?
 
 1. Check that `FIREBASE_SERVICE_ACCOUNT_KEY` is set correctly in production
 2. Restart your production server after setting environment variables
-3. Clear browser cache and cookies, then log in again
-4. Check server logs for any Firebase errors
+3. Delete the persisted UID from system_settings table
+4. Clear browser cache and cookies, then log in again
+5. Check server logs for the detailed Firebase user list
 
 ## Database Table
 

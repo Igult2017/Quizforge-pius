@@ -165,6 +165,12 @@ export async function getFirstFirebaseUserUid(): Promise<string | null> {
       return null;
     }
 
+    // Log all users with their creation times for debugging
+    console.log("[FIREBASE ADMIN] All Firebase users by creation time:");
+    allUsers.forEach((user, index) => {
+      console.log(`  ${index + 1}. ${user.email} - Created: ${user.metadata.creationTime} (UID: ${user.uid})`);
+    });
+
     // Sort users by creation time to find the first one
     const sortedUsers = allUsers.sort((a, b) => {
       const timeA = new Date(a.metadata.creationTime).getTime();
@@ -173,12 +179,17 @@ export async function getFirstFirebaseUserUid(): Promise<string | null> {
     });
 
     const firstUser = sortedUsers[0];
-    console.log(`[FIREBASE ADMIN] First user by creation time: ${firstUser.email} (Created: ${firstUser.metadata.creationTime})`);
+    console.log(`[FIREBASE ADMIN] ═══════════════════════════════════════════════════════`);
+    console.log(`[FIREBASE ADMIN] FIRST FIREBASE USER (by creation time):`);
+    console.log(`[FIREBASE ADMIN]   Email: ${firstUser.email}`);
+    console.log(`[FIREBASE ADMIN]   UID: ${firstUser.uid}`);
+    console.log(`[FIREBASE ADMIN]   Created: ${firstUser.metadata.creationTime}`);
+    console.log(`[FIREBASE ADMIN] ═══════════════════════════════════════════════════════`);
     
     // Persist the first user UID to prevent it from changing
     await storage.setSystemSetting("first_firebase_user_uid", firstUser.uid);
+    console.log(`[FIREBASE ADMIN] First Firebase user UID persisted to database`);
     
-    console.log(`[FIREBASE ADMIN] First Firebase user identified and persisted: ${firstUser.email} (UID: ${firstUser.uid})`);
     return firstUser.uid;
   } catch (error) {
     console.error("[FIREBASE ADMIN] Error getting first user:", error);
