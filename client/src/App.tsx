@@ -70,34 +70,23 @@ function App() {
   }
 
   // -------------------------------------
-  // Authenticated user
+  // Authenticated user (Admin or Regular)
   // -------------------------------------
   const isAdmin = userData?.isAdmin || false;
 
-  // Redirect admins to admin panel
-  if (isAdmin) {
-    return (
-      <Switch>
-        <Route path="/admin">
-          <Admin />
-        </Route>
-        <Route path="/admin/:rest*">
-          <Admin />
-        </Route>
-        <Route>
-          <Redirect to="/admin" />
-        </Route>
-      </Switch>
-    );
-  }
-
-  // -------------------------------------
-  // Normal user routes
-  // -------------------------------------
   return (
     <Switch>
+      {/* Admin routes - accessible by admins */}
+      <Route path="/admin">
+        <Admin />
+      </Route>
+      <Route path="/admin/:rest*">
+        <Admin />
+      </Route>
+
+      {/* Normal user routes - accessible by all authenticated users (including admins) */}
       <Route path="/">
-        <Categories />
+        {isAdmin ? <Redirect to="/admin" /> : <Categories />}
       </Route>
       <Route path="/categories">
         <Categories />
@@ -117,13 +106,15 @@ function App() {
       <Route path="/checkout">
         <Checkout />
       </Route>
+
       {/* Redirect login/signup routes for authenticated users */}
       <Route path="/login">
-        <Redirect to="/categories" />
+        <Redirect to={isAdmin ? "/admin" : "/categories"} />
       </Route>
       <Route path="/signup">
-        <Redirect to="/categories" />
+        <Redirect to={isAdmin ? "/admin" : "/categories"} />
       </Route>
+
       {/* Catch-all - show 404 for truly missing routes */}
       <Route>
         <NotFound />
