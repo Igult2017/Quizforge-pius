@@ -1,0 +1,46 @@
+> rest-express@1.0.0 start
+> npm run db:migrate && NODE_ENV=production node dist/index.js
+
+
+> rest-express@1.0.0 db:migrate
+> drizzle-kit push --force
+
+No config path provided, using default 'drizzle.config.ts'
+Reading config file '/app/drizzle.config.ts'
+Using 'pg' driver for database querying
+[⣷] Pulling schema from database...
+KG[⣯] Pulling schema from database...
+KG[⣟] Pulling schema from database...
+KG[⡿] Pulling schema from database...
+KG[⢿] Pulling schema from database...
+KG[⣻] Pulling schema from database...
+KG[⣽] Pulling schema from database...
+KG[✓] Pulling schema from database...
+[✓] Changes applied
+Firebase Admin initialized with Application Default Credentials for project: quizeforge-44a83
+11:53:55 PM [express] Serving on port 3000
+
+🚀 Starting background question generation service
+   Schedule: */5 * * * * (every 5 minutes)
+   Batch size: 25 questions per run
+🔧 Initializing background generation progress...
+✓ Generation progress already initialized
+✓ Background generation service started
+
+
+🎓 Generating questions for NCLEX - Management of Care
+   Progress: 0/850
+🔍 Auto-detecting working Gemini model...
+   Testing: gemini-2.0-flash-exp...
+✓ Found working model: gemini-2.0-flash-exp
+🔧 Attempting to parse cleaned JSON...
+❌ JSON parse error at position Expected ',' or ']' after array element in JSON at position 4175
+Failed to parse even after cleanup. Sample around error position:
+client's signature and verifying the client signed voluntarily and is competent.",
+    "explanation": "The nurse's primary responsibility regarding informed consent is to witness the client's signatur
+Error generating questions with Gemini AI: Error: Invalid JSON response from Gemini AI: Expected ',' or ']' after array element in JSON at position 4175
+    at generateQuestions (file:///app/dist/index.js:587:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async generateForSubject (file:///app/dist/index.js:730:24)
+    at async runGenerationCycle (file:///app/dist/index.js:801:5)
+   ✗ Error generating questions: Failed to generate questions: Invalid JSON response from Gemini AI: Expected ',' or ']' after array element in JSON at position 4175

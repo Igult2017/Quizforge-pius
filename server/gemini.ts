@@ -117,7 +117,12 @@ Requirements:
 - Use proper medical terminology
 - Follow NCLEX/TEAS/HESI question format standards
 
-CRITICAL: Return ONLY valid JSON. No extra text before or after. Use double quotes for all strings. Escape any quotes inside strings with backslash.
+CRITICAL JSON FORMATTING RULES:
+1. Return ONLY valid JSON - no extra text before or after
+2. Use double quotes for all property names and string values
+3. If text contains quotes, use ONLY apostrophes (') instead of double quotes (")
+4. Keep all text concise to ensure complete response
+5. Never truncate or cut off any question object
 
 Return a JSON array with this exact structure:
 [
@@ -169,35 +174,55 @@ Make questions realistic and clinically relevant. Ensure proper formatting with 
       cleanContent = cleanContent.replace(/^```\n?/, "").replace(/\n?```$/, "");
     }
 
-    // Parse JSON with cleanup
+    // Parse JSON with aggressive cleanup
     let questions;
     try {
       questions = JSON.parse(cleanContent);
     } catch (parseError: any) {
-      console.error("❌ JSON parse error at position", parseError.message);
+      console.error("❌ JSON parse error:", parseError.message);
       
-      // Try to fix common JSON issues
+      // Try aggressive JSON cleanup
       let fixedContent = cleanContent
         // Remove trailing commas before closing brackets/braces
         .replace(/,(\s*[}\]])/g, '$1')
-        // Fix single quotes to double quotes (but be careful with apostrophes in text)
-        // .replace(/'/g, '"')
-        // Remove any text before the first [ or {
-        .replace(/^[^[{]*/, '')
-        // Remove any text after the last ] or }
-        .replace(/[^\]}]*$/, '');
+        // Remove any text before the first [
+        .replace(/^[^[]*/, '')
+        // Remove any text after the last ]
+        .replace(/[^\]]*$/, '')
+        // Try to fix truncated strings by closing them
+        .replace(/("[^"]*$)/, '$1"');
       
       try {
-        console.log("🔧 Attempting to parse cleaned JSON...");
+        console.log("🔧 Attempting to parse cleaned JSON (attempt 1)...");
         questions = JSON.parse(fixedContent);
         console.log("✅ Successfully parsed after cleanup");
       } catch (secondError: any) {
-        // If still fails, log a sample and throw
-        const errorPosition = parseInt(secondError.message.match(/\d+/)?.[0] || '0');
-        const sample = cleanContent.substring(Math.max(0, errorPosition - 100), errorPosition + 100);
-        console.error("Failed to parse even after cleanup. Sample around error position:");
-        console.error(sample);
-        throw new Error(`Invalid JSON response from Gemini AI: ${parseError.message}`);
+        // Try more aggressive cleanup - extract only complete question objects
+        try {
+          console.log("🔧 Attempting manual question extraction (attempt 2)...");
+          
+          // Find all complete question objects using regex
+          const questionPattern = /\{[^}]*"question"[^}]*"options"[^}]*"correctAnswer"[^}]*"explanation"[^}]*\}/g;
+          const matches = cleanContent.match(questionPattern);
+          
+          if (matches && matches.length > 0) {
+            // Wrap in array and try to parse
+            fixedContent = '[' + matches.join(',') + ']';
+            questions = JSON.parse(fixedContent);
+            console.log(`✅ Extracted ${questions.length} complete questions via pattern matching`);
+          } else {
+            throw new Error("Could not extract any complete questions");
+          }
+        } catch (thirdError: any) {
+          // If all fails, log details and throw
+          const errorPosition = parseInt(secondError.message.match(/\d+/)?.[0] || '0');
+          const sample = cleanContent.substring(Math.max(0, errorPosition - 100), errorPosition + 100);
+          console.error("Failed all cleanup attempts. Sample around error position:");
+          console.error(sample);
+          console.error("\nFirst 500 chars of response:", cleanContent.substring(0, 500));
+          console.error("\nLast 500 chars of response:", cleanContent.substring(cleanContent.length - 500));
+          throw new Error(`Invalid JSON response from Gemini AI: ${parseError.message}`);
+        }
       }
     }
 
