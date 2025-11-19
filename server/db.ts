@@ -8,9 +8,14 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
+// Configure SSL based on environment variable or connection string
+// Set DATABASE_SSL=true in environment to enable SSL
+const shouldUseSSL = process.env.DATABASE_SSL === 'true' || 
+                     process.env.DATABASE_URL.includes('sslmode=require');
+
 export const pool = new Pool({ 
   connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+  ssl: shouldUseSSL ? { rejectUnauthorized: false } : false
 });
 
 export const db = drizzle(pool, { schema });

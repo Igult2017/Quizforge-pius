@@ -1,0 +1,100 @@
+[AUTH USER] Request received
+[AUTH USER] Auth header present: true
+[AUTH USER] Token verified for: antiperotieno@zohomail.com
+Error fetching user: Error: The server does not support SSL connections
+    at /app/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async file:///app/node_modules/drizzle-orm/node-postgres/session.js:83:22
+    at async PostgresStorage.getUser (file:///app/dist/index.js:205:24)
+4:39:07 PM [express] GET /api/auth/user 500 in 5ms
+    at async file:///app/dist/index.js:866:18
+[AUTH USER] Request received
+[AUTH USER] Auth header present: true
+[AUTH USER] Token verified for: antiperotieno@zohomail.com
+Error fetching user: Error: The server does not support SSL connections
+    at /app/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async file:///app/node_modules/drizzle-orm/node-postgres/session.js:83:22
+    at async PostgresStorage.getUser (file:///app/dist/index.js:205:24)
+    at async file:///app/dist/index.js:866:18
+4:39:07 PM [express] GET /api/auth/user 500 in 9ms
+[AUTH USER] Request received
+[AUTH USER] Auth header present: true
+[AUTH USER] Token verified for: antiperotieno@zohomail.com
+Error fetching user: Error: The server does not support SSL connections
+    at /app/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async file:///app/node_modules/drizzle-orm/node-postgres/session.js:83:22
+    at async PostgresStorage.getUser (file:///app/dist/index.js:205:24)
+    at async file:///app/dist/index.js:866:18
+4:39:08 PM [express] GET /api/auth/user 500 in 5ms
+[AUTH USER] Request received
+[AUTH USER] Auth header present: true
+[AUTH USER] Token verified for: antiperotieno@zohomail.com
+Error fetching user: Error: The server does not support SSL connections
+    at /app/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async file:///app/node_modules/drizzle-orm/node-postgres/session.js:83:22
+    at async PostgresStorage.getUser (file:///app/dist/index.js:205:24)
+    at async file:///app/dist/index.js:866:18
+4:39:08 PM [express] GET /api/auth/user 500 in 6ms
+[AUTH USER] Request received
+[AUTH USER] Auth header present: true
+[AUTH USER] Token verified for: antiperotieno@zohomail.com
+4:39:09 PM [express] GET /api/auth/user 500 in 6ms
+[AUTH USER] Request received
+[AUTH USER] Auth header present: true
+[AUTH USER] Token verified for: antiperotieno@zohomail.com
+Error fetching user: Error: The server does not support SSL connections
+    at /app/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async file:///app/node_modules/drizzle-orm/node-postgres/session.js:83:22
+    at async PostgresStorage.getUser (file:///app/dist/index.js:205:24)
+    at async file:///app/dist/index.js:866:18
+Error fetching user: Error: The server does not support SSL connections
+    at /app/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async file:///app/node_modules/drizzle-orm/node-postgres/session.js:83:22
+4:39:09 PM [express] GET /api/auth/user 500 in 4ms
+[AUTH USER] Request received
+[AUTH USER] Auth header present: true
+[AUTH USER] Token verified for: antiperotieno@zohomail.com
+4:39:10 PM [express] GET /api/auth/user 500 in 4ms
+[AUTH USER] Request received
+[AUTH USER] Auth header present: true
+[AUTH USER] Token verified for: antiperotieno@zohomail.com
+4:39:10 PM [express] GET /api/auth/user 500 in 5ms
+[AUTH USER] Request received
+[AUTH USER] Auth header present: true
+[AUTH USER] Token verified for: antiperotieno@zohomail.com
+4:39:11 PM [express] GET /api/auth/user 500 in 6ms
+[AUTH USER] Request received
+[AUTH USER] Auth header present: true
+[AUTH USER] Token verified for: antiperotieno@zohomail.com
+4:39:12 PM [express] GET /api/auth/user 500 in 4ms
+    at async PostgresStorage.getUser (file:///app/dist/index.js:205:24)
+    at async file:///app/dist/index.js:866:18
+Error fetching user: Error: The server does not support SSL connections
+    at /app/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async file:///app/node_modules/drizzle-orm/node-postgres/session.js:83:22
+    at async PostgresStorage.getUser (file:///app/dist/index.js:205:24)
+    at async file:///app/dist/index.js:866:18
+Error fetching user: Error: The server does not support SSL connections
+    at /app/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async file:///app/node_modules/drizzle-orm/node-postgres/session.js:83:22
+    at async PostgresStorage.getUser (file:///app/dist/index.js:205:24)
+    at async file:///app/dist/index.js:866:18
+Error fetching user: Error: The server does not support SSL connections
+    at /app/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async file:///app/node_modules/drizzle-orm/node-postgres/session.js:83:22
+    at async PostgresStorage.getUser (file:///app/dist/index.js:205:24)
+    at async file:///app/dist/index.js:866:18
+Error fetching user: Error: The server does not support SSL connections
+    at /app/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async file:///app/node_modules/drizzle-orm/node-postgres/session.js:83:22
+    at async PostgresStorage.getUser (file:///app/dist/index.js:205:24)
+    at async file:///app/dist/index.js:866:18

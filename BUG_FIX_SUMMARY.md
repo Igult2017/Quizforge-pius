@@ -1,7 +1,8 @@
-# Bug Fix Summary - Admin Redirect Issue
+# Bug Fix Summary - Admin Redirect Issues
 
-## The Problem
+## Problems Fixed
 
+### Problem 1: Firebase Import Error
 Your production logs showed:
 ```
 [AUTH USER] Token verification failed: admin2.auth is not a function
@@ -9,8 +10,17 @@ Your production logs showed:
 
 This was preventing **ALL users** from logging in, not just admins.
 
-## Root Cause
+### Problem 2: SSL Connection Error
+After fixing the import, a new error appeared:
+```
+Error: The server does not support SSL connections
+```
 
+Your database (likely Coolify PostgreSQL) doesn't support SSL, but the code was forcing it.
+
+## Root Causes
+
+### Issue 1: Firebase Admin Import
 In `server/routes.ts`, the `/api/auth/user` endpoint was incorrectly importing Firebase Admin:
 
 **BROKEN CODE:**
@@ -27,9 +37,32 @@ const admin = (await import("firebase-admin")).default;
 const decodedToken = await admin.auth().verifyIdToken(token);
 ```
 
-## What This Fix Does
+**FIXED CODE:**
+```typescript
+const admin = (await import("firebase-admin")).default;
+const decodedToken = await admin.auth().verifyIdToken(token);
+```
+
+### Issue 2: SSL Configuration
+In `server/db.ts`, SSL was always enabled in production:
+
+**BROKEN CODE:**
+```typescript
+ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+```
+
+**FIXED CODE:**
+```typescript
+const shouldUseSSL = process.env.DATABASE_SSL === 'true' || 
+                     process.env.DATABASE_URL.includes('sslmode=require');
+
+ssl: shouldUseSSL ? { rejectUnauthorized: false } : false
+```
+
+## What These Fixes Do
 
 ✅ **Token verification now works** - Users can successfully log in
+✅ **Database connection works** - SSL is now optional/auto-detected
 ✅ **Admin detection can run** - Once tokens are verified, the system can check if the user is the first Firebase user
 ✅ **Auto-redirect will work** - When antiperotieno@zohomail.com logs in, they'll be redirected to `/admin`
 
@@ -84,6 +117,8 @@ Then restart the server and log in with antiperotieno@zohomail.com.
 ## Files Changed
 
 - `server/routes.ts` - Fixed Firebase Admin import in `/api/auth/user` endpoint
+- `server/db.ts` - Made SSL configurable for databases that don't support it
+- `.env.example` - Added `DATABASE_SSL` configuration documentation
 
 ## Expected Behavior After Fix
 
