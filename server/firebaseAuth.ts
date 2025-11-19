@@ -144,11 +144,21 @@ export async function getFirstFirebaseUserUid(): Promise<string | null> {
     let allUsers: admin.auth.UserRecord[] = [];
     let pageToken: string | undefined;
     
-    do {
-      const listUsersResult = await admin.auth().listUsers(1000, pageToken);
-      allUsers = allUsers.concat(listUsersResult.users);
-      pageToken = listUsersResult.pageToken;
-    } while (pageToken);
+    try {
+      do {
+        console.log(`[FIREBASE ADMIN] Fetching users page... (current total: ${allUsers.length})`);
+        const listUsersResult = await admin.auth().listUsers(1000, pageToken);
+        allUsers = allUsers.concat(listUsersResult.users);
+        pageToken = listUsersResult.pageToken;
+      } while (pageToken);
+      
+      console.log(`[FIREBASE ADMIN] Total Firebase users found: ${allUsers.length}`);
+    } catch (listError: any) {
+      console.error("[FIREBASE ADMIN] Failed to list Firebase users:", listError.message);
+      console.error("[FIREBASE ADMIN] This likely means Firebase Admin credentials are not properly configured");
+      console.error("[FIREBASE ADMIN] Please set FIREBASE_SERVICE_ACCOUNT_KEY environment variable");
+      return null;
+    }
     
     if (allUsers.length === 0) {
       console.log("[FIREBASE ADMIN] No users found in Firebase Auth");
@@ -163,6 +173,7 @@ export async function getFirstFirebaseUserUid(): Promise<string | null> {
     });
 
     const firstUser = sortedUsers[0];
+    console.log(`[FIREBASE ADMIN] First user by creation time: ${firstUser.email} (Created: ${firstUser.metadata.creationTime})`);
     
     // Persist the first user UID to prevent it from changing
     await storage.setSystemSetting("first_firebase_user_uid", firstUser.uid);
