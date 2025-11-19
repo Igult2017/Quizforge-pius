@@ -1,0 +1,100 @@
+3:12:04 PM [express] GET /api/auth/user 500 in 5009ms
+[AUTH USER] Request received
+[AUTH USER] Auth header present: true
+[AUTH USER] Token verified for: antiperotieno@zohomail.com
+    at async file:///app/dist/index.js:866:18 {
+  errno: -3001,
+  code: 'EAI_AGAIN',
+  syscall: 'getaddrinfo',
+  hostname: 'base'
+}
+Error fetching user: Error: getaddrinfo EAI_AGAIN base
+    at /app/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async file:///app/node_modules/drizzle-orm/node-postgres/session.js:83:22
+    at async PostgresStorage.getUser (file:///app/dist/index.js:205:24)
+    at async file:///app/dist/index.js:866:18 {
+  errno: -3001,
+  code: 'EAI_AGAIN',
+  syscall: 'getaddrinfo',
+  hostname: 'base'
+}
+3:12:10 PM [express] GET /api/auth/user 500 in 5008ms
+[AUTH USER] Request received
+[AUTH USER] Auth header present: true
+[AUTH USER] Token verified for: antiperotieno@zohomail.com
+Error fetching user: Error: getaddrinfo EAI_AGAIN base
+    at /app/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async file:///app/node_modules/drizzle-orm/node-postgres/session.js:83:22
+    at async PostgresStorage.getUser (file:///app/dist/index.js:205:24)
+    at async file:///app/dist/index.js:866:18 {
+  errno: -3001,
+  code: 'EAI_AGAIN',
+  syscall: 'getaddrinfo',
+  hostname: 'base'
+3:12:15 PM [express] GET /api/auth/user 500 in 5009ms
+[AUTH USER] Request received
+[AUTH USER] Auth header present: true
+}
+[AUTH USER] Token verified for: antiperotieno@zohomail.com
+Error fetching user: Error: getaddrinfo EAI_AGAIN base
+    at /app/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async file:///app/node_modules/drizzle-orm/node-postgres/session.js:83:22
+    at async PostgresStorage.getUser (file:///app/dist/index.js:205:24)
+3:12:21 PM [express] GET /api/auth/user 500 in 5007ms
+[AUTH USER] Request received
+[AUTH USER] Auth header present: true
+[AUTH USER] Token verified for: antiperotieno@zohomail.com
+3:12:26 PM [express] GET /api/auth/user 500 in 5010ms
+[AUTH USER] Request received
+[AUTH USER] Auth header present: true
+[AUTH USER] Token verified for: antiperotieno@zohomail.com
+3:12:32 PM [express] GET /api/auth/user 500 in 5006ms
+[AUTH USER] Request received
+[AUTH USER] Auth header present: true
+[AUTH USER] Token verified for: antiperotieno@zohomail.com
+3:12:37 PM [express] GET /api/auth/user 500 in 5006ms
+[AUTH USER] Request received
+[AUTH USER] Auth header present: true
+[AUTH USER] Token verified for: antiperotieno@zohomail.com
+    at async file:///app/dist/index.js:866:18 {
+  errno: -3001,
+  code: 'EAI_AGAIN',
+  syscall: 'getaddrinfo',
+  hostname: 'base'
+}
+Error fetching user: Error: getaddrinfo EAI_AGAIN base
+    at /app/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async file:///app/node_modules/drizzle-orm/node-postgres/session.js:83:22
+    at async PostgresStorage.getUser (file:///app/dist/index.js:205:24)
+    at async file:///app/dist/index.js:866:18 {
+  errno: -3001,
+  code: 'EAI_AGAIN',
+  syscall: 'getaddrinfo',
+  hostname: 'base'
+}
+Error fetching user: Error: getaddrinfo EAI_AGAIN base
+    at /app/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async file:///app/node_modules/drizzle-orm/node-postgres/session.js:83:22
+    at async PostgresStorage.getUser (file:///app/dist/index.js:205:24)
+    at async file:///app/dist/index.js:866:18 {
+  errno: -3001,
+  code: 'EAI_AGAIN',
+  syscall: 'getaddrinfo',
+  hostname: 'base'
+}
+Error fetching user: Error: getaddrinfo EAI_AGAIN base
+    at /app/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async file:///app/node_modules/drizzle-orm/node-postgres/session.js:83:22
+    at async PostgresStorage.getUser (file:///app/dist/index.js:205:24)
+    at async file:///app/dist/index.js:866:18 {
+  errno: -3001,
+  code: 'EAI_AGAIN',
+  syscall: 'getaddrinfo',
+  hostname: 'base'
+}
