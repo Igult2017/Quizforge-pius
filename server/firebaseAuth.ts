@@ -119,3 +119,66 @@ export const isAuthenticated: RequestHandler = async (req: any, res, next) => {
   // Try Firebase token authentication
   return verifyFirebaseToken(req, res, next);
 };
+
+/**
+ * Get the first Firebase user (the admin)
+ * Returns the UID of the first user created in Firebase Auth
+ * 
+ * This function first checks the database for a persisted first user UID.
+ * If not found, it queries Firebase Auth to find the first user and persists it.
+ */
+export async function getFirstFirebaseUserUid(): Promise<string | null> {
+  try {
+    const { storage } = await import("./storage");
+    
+    // Check if we have a persisted first user UID
+    const persistedUid = await storage.getSystemSetting("first_firebase_user_uid");
+    if (persistedUid) {
+      console.log(`[FIREBASE ADMIN] Using persisted first user UID: ${persistedUid}`);
+      return persistedUid;
+    }
+
+    console.log("[FIREBASE ADMIN] No persisted first user UID found, querying Firebase Auth...");
+
+    // List all users with pagination to find the first one
+    let allUsers: admin.auth.UserRecord[] = [];
+    let pageToken: string | undefined;
+    
+    do {
+      const listUsersResult = await admin.auth().listUsers(1000, pageToken);
+      allUsers = allUsers.concat(listUsersResult.users);
+      pageToken = listUsersResult.pageToken;
+    } while (pageToken);
+    
+    if (allUsers.length === 0) {
+      console.log("[FIREBASE ADMIN] No users found in Firebase Auth");
+      return null;
+    }
+
+    // Sort users by creation time to find the first one
+    const sortedUsers = allUsers.sort((a, b) => {
+      const timeA = new Date(a.metadata.creationTime).getTime();
+      const timeB = new Date(b.metadata.creationTime).getTime();
+      return timeA - timeB;
+    });
+
+    const firstUser = sortedUsers[0];
+    
+    // Persist the first user UID to prevent it from changing
+    await storage.setSystemSetting("first_firebase_user_uid", firstUser.uid);
+    
+    console.log(`[FIREBASE ADMIN] First Firebase user identified and persisted: ${firstUser.email} (UID: ${firstUser.uid})`);
+    return firstUser.uid;
+  } catch (error) {
+    console.error("[FIREBASE ADMIN] Error getting first user:", error);
+    return null;
+  }
+}
+
+/**
+ * Check if a user ID is the first Firebase user (admin)
+ */
+export async function isFirstFirebaseUser(userId: string): Promise<boolean> {
+  const firstUserUid = await getFirstFirebaseUserUid();
+  return firstUserUid === userId;
+}

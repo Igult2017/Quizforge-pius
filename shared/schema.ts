@@ -14,6 +14,13 @@ export const sessions = pgTable(
   (table) => [index("IDX_session_expire").on(table.expire)],
 );
 
+// System settings table (for storing app-wide configuration)
+export const systemSettings = pgTable("system_settings", {
+  key: varchar("key").primaryKey(),
+  value: text("value").notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 // User storage table (updated for Replit Auth)
 export const users = pgTable("users", {
   id: varchar("id").primaryKey(),

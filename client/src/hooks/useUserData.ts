@@ -2,11 +2,6 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "./useAuth";
 import { queryClient, getQueryFn } from "@/lib/queryClient";
 
-// Hardcoded admin emails - these users ALWAYS have admin access
-const HARDCODED_ADMIN_EMAILS = [
-  "antiperotieno@zohomail.com"
-];
-
 export interface UserData {
   id: string;
   email: string | null;
@@ -34,43 +29,30 @@ export function useUserData() {
     enabled: isAuthenticated,
   });
 
-  // HARDCODED ADMIN CHECK: Check if email is in hardcoded admin list
-  const rawEmail = (user as any)?.email || userData?.email;
-  const userEmail = rawEmail?.toLowerCase().trim();
-  const isHardcodedAdmin = userEmail && HARDCODED_ADMIN_EMAILS.includes(userEmail);
-  
-  // Immediate admin detection from Firebase claims (if available)
-  const isAdminFromClaims = (user as any)?.claims?.isAdmin || false;
+  // Admin status is determined entirely by the backend
+  // The first Firebase user is automatically granted admin access
+  // Client-side simply displays the admin status returned from the backend
 
-  // DEBUG: Log all admin detection info
+  // DEBUG: Log admin detection info
   console.log("[ADMIN DETECTION]", {
-    rawEmail,
-    userEmail,
-    isHardcodedAdmin,
-    isAdminFromClaims,
+    rawEmail: (user as any)?.email || userData?.email,
+    userEmail: ((user as any)?.email || userData?.email)?.toLowerCase().trim(),
+    isAdminFromClaims: false, // Claims are not set by backend, always false
     userDataIsAdmin: userData?.isAdmin,
-    isAuthenticated,
-    hasUserData: !!userData,
-    HARDCODED_ADMIN_EMAILS,
   });
 
-  // Priority order: Hardcoded admin > Claims > Database
-  // Guard against undefined userData to prevent runtime crash
+  // The backend determines admin status - we just use what it returns
   const resolvedUserData: UserData | null = isAuthenticated 
     ? {
         ...(userData || {}),
-        isAdmin: isHardcodedAdmin || isAdminFromClaims || userData?.isAdmin || false,
+        isAdmin: userData?.isAdmin || false,
       } as UserData
     : null;
 
-  if (isHardcodedAdmin) {
-    console.log(`[HARDCODED ADMIN] Frontend detected admin: ${userEmail}`);
-  }
-
-  if (resolvedUserData) {
+  if (resolvedUserData && resolvedUserData.isAdmin) {
     console.log("[RESOLVED USER DATA]", {
       email: resolvedUserData.email,
-      isAdmin: resolvedUserData.isAdmin,
+      isAdmin: true,
     });
   }
 

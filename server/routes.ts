@@ -1,18 +1,13 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { isAuthenticated } from "./firebaseAuth";
+import { isAuthenticated, isFirstFirebaseUser } from "./firebaseAuth";
 import { generateQuestions } from "./gemini";
 import { z } from "zod";
 import { insertQuestionSchema, insertQuizAttemptSchema, insertQuizAnswerSchema, insertPaymentSchema } from "@shared/schema";
 import { createOrder, getTransactionStatus } from "./pesapal";
 import { nanoid } from "nanoid";
 import { isAdmin } from "./adminMiddleware";
-
-// Hardcoded admin emails - these users are automatically granted admin status on login
-const ADMIN_ALLOWLIST = [
-  "antiperotieno@zohomail.com"
-];
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Firebase Auth is used for authentication (token-based, no session setup needed)
@@ -66,27 +61,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // HARDCODED ADMIN DETECTION: Check if user email is in admin allowlist
-      // If yes, ALWAYS ensure they have admin status (this is hardcoded for reliability)
-      const normalizedUserEmail = userEmail?.toLowerCase().trim();
-      const isHardcodedAdmin = normalizedUserEmail && ADMIN_ALLOWLIST.includes(normalizedUserEmail);
+      // FIREBASE ADMIN DETECTION: Check if user is the first Firebase user
+      // The first user in Firebase Auth is automatically granted admin access
+      const isFirstUser = await isFirstFirebaseUser(userId);
       
-      console.log(`[AUTH DEBUG] User email: "${userEmail}", normalized: "${normalizedUserEmail}", is hardcoded admin: ${isHardcodedAdmin}`);
-      
-      if (isHardcodedAdmin) {
-        console.log(`[HARDCODED ADMIN] Detected admin email: ${userEmail}`);
+      if (isFirstUser) {
+        console.log(`[FIREBASE ADMIN] First Firebase user detected: ${userEmail} (UID: ${userId})`);
         if (!user.isAdmin) {
-          console.log(`[HARDCODED ADMIN] Granting admin status to allowlisted email: ${userEmail}`);
+          console.log(`[FIREBASE ADMIN] Granting admin status to first Firebase user: ${userEmail}`);
           await storage.makeUserAdmin(user.id);
           user.isAdmin = true;
         } else {
-          console.log(`[HARDCODED ADMIN] Admin status already set for: ${userEmail}`);
+          console.log(`[FIREBASE ADMIN] Admin status already set for first user: ${userEmail}`);
         }
-        // Force admin status to true for hardcoded admins
-        user.isAdmin = true;
-        console.log(`[HARDCODED ADMIN] Admin status forced to true for: ${userEmail}`);
-      } else {
-        console.log(`[AUTH DEBUG] User ${userEmail} is NOT a hardcoded admin. Allowlist: ${JSON.stringify(ADMIN_ALLOWLIST)}`);
       }
       
       // Get active subscription

@@ -7,6 +7,7 @@ import {
   quizAttempts,
   quizAnswers,
   payments,
+  systemSettings,
   type User,
   type UpsertUser,
   type InsertUser,
@@ -23,6 +24,10 @@ import {
 } from "@shared/schema";
 
 export interface IStorage {
+  // System Settings
+  getSystemSetting(key: string): Promise<string | null>;
+  setSystemSetting(key: string, value: string): Promise<void>;
+  
   // Users (Replit Auth required methods)
   getUser(id: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
@@ -80,6 +85,25 @@ export interface IStorage {
 }
 
 export class PostgresStorage implements IStorage {
+  // System Settings
+  async getSystemSetting(key: string): Promise<string | null> {
+    const [setting] = await db
+      .select()
+      .from(systemSettings)
+      .where(eq(systemSettings.key, key));
+    return setting?.value || null;
+  }
+
+  async setSystemSetting(key: string, value: string): Promise<void> {
+    await db
+      .insert(systemSettings)
+      .values({ key, value, updatedAt: new Date() })
+      .onConflictDoUpdate({
+        target: systemSettings.key,
+        set: { value, updatedAt: new Date() },
+      });
+  }
+
   // Users (Replit Auth required methods)
   async getUser(id: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
