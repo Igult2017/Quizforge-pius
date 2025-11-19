@@ -17,10 +17,11 @@ The backend is an **Express.js** application with a RESTful API. It uses **Drizz
 ### Admin Authentication
 Admin authentication is Firebase-first. The first user to sign up via Firebase Auth is automatically designated as the admin, with their UID stored in a `system_settings` database table. All hardcoded admin logic has been removed, centralizing admin detection in a backend function. Firebase ID token verification with custom claims check is used for secure access.
 
-**Recent Bug Fixes (Nov 19, 2025)**: 
-1. Fixed critical Firebase Admin import error in `/api/auth/user` endpoint that was preventing all authentication. The import statement now correctly accesses `.default` export.
-2. Fixed SSL connection error for databases that don't support SSL. Database SSL is now configurable via `DATABASE_SSL` environment variable or auto-detected from connection string.
-3. Added automatic database migration on production startup to ensure schema is always up-to-date. The `start` script now runs `drizzle-kit push --force` before starting the server.
+**Recent Updates (Nov 19, 2025)**: 
+1. **NEW: Automatic Background Question Generation** - System now automatically generates all 12,500 questions in the background without user interaction. Runs every 5 minutes, rotating through all subjects until complete. Fully monitored via Admin Panel → Generation.
+2. Fixed critical Firebase Admin import error in `/api/auth/user` endpoint that was preventing all authentication. The import statement now correctly accesses `.default` export.
+3. Fixed SSL connection error for databases that don't support SSL. Database SSL is now configurable via `DATABASE_SSL` environment variable or auto-detected from connection string.
+4. Added automatic database migration on production startup to ensure schema is always up-to-date. The `start` script now runs `drizzle-kit push --force` before starting the server.
 
 ### UI/UX Decisions
 - Modern typography with Poppins font for the pricing section and Merriweather for headings.

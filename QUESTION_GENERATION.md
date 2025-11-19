@@ -4,6 +4,19 @@
 
 NurseBrace uses Google Gemini AI (gemini-1.5-flash) to generate high-quality nursing exam practice questions for NCLEX, ATI TEAS, and HESI A2 exams.
 
+## ✨ NEW: Automatic Background Generation
+
+The system now includes **automatic background generation** that runs without any user interaction! Once deployed with the Gemini API key configured, the system will:
+
+- ⚡ **Start automatically** after server startup
+- 🔄 **Generate 100 questions every 5 minutes** in rotation across all subjects
+- 📊 **Track progress** for each subject area
+- ⏸️ **Pause automatically** when all 12,500 questions are generated
+- 🔧 **Resume after restarts** - remembers where it left off
+- 📈 **Fully monitored** through the Admin Panel → Generation page
+
+**No manual intervention needed!** Just deploy with the API key and the questions will be generated automatically.
+
 ## Total Question Target
 
 - **NCLEX**: 7,000 questions across 8 subject areas
@@ -21,25 +34,47 @@ Using Gemini 1.5 Flash pricing (as of 2025):
 
 ## Generation Methods
 
-### 1. Comprehensive Generation (Recommended for Initial Setup)
+### 1. **Automatic Background Generation** (Recommended - Default Behavior)
 
-Generates all questions across all subject areas with comprehensive topic coverage.
+**This is now the primary method!** The system automatically generates questions in the background without any user interaction.
+
+**How it works:**
+- Runs every 5 minutes via cron scheduler
+- Generates 100 questions per cycle
+- Rotates through all 19 subject areas in order
+- Continues until all 12,500 questions are generated
+- Pauses automatically when complete
+- Resumes where it left off after server restarts
+
+**Features:**
+- ✅ Zero user interaction required
+- ✅ Persistent progress tracking in database
+- ✅ Error handling with automatic retries
+- ✅ Detailed logging for monitoring
+- ✅ Pause/resume controls via Admin Panel → Generation
+- ✅ Real-time progress monitoring
+- ⏱️ Duration: Runs in background over ~10 hours (non-blocking)
+- 💰 Cost: $1-2 USD total
+
+**Monitoring:**
+- Log in as admin
+- Navigate to Admin Panel → Generation
+- View real-time progress, pause/resume, or trigger manual runs
+
+### 2. Manual Comprehensive Generation (Alternative - One-Time Run)
+
+If you prefer to generate all questions in one session instead of background generation:
 
 ```bash
 npm run generate:comprehensive
 ```
 
 **Features:**
-- ✅ Generates questions for all exam categories (NCLEX, TEAS, HESI)
-- ✅ Covers all subject areas with proper topic distribution
-- ✅ Includes multiple difficulty levels (easy, medium, hard)
-- ✅ Batch processing with rate limiting (20 questions per batch)
-- ✅ Modular approach - failures in one subject don't stop others
-- ✅ Detailed progress logging
-- ⏱️ Duration: 30-60 minutes
+- Generates all questions in a single blocking run
+- ⏱️ Duration: 30-60 minutes (blocking)
 - 💰 Cost: $1-2 USD
 
-### 2. Sample Generation (Quick Testing)
+### 3. Sample Generation (Quick Testing)
 
 Generates a small sample for testing (35 questions per category).
 
@@ -53,11 +88,10 @@ npm run generate:sample
 - ⏱️ Duration: ~2 minutes
 - 💰 Cost: <$0.10 USD
 
-### 3. Admin Panel Generation (Optional - Specific Subjects)
+### 4. Admin Panel Generation (Optional - Specific Subjects)
 
 Use the Admin Panel → Questions section for:
-- Generating questions for specific subjects when needed
-- Adding more questions to underrepresented topics
+- Adding more questions to specific subjects after automatic generation completes
 - Custom difficulty distributions
 - Testing new prompts
 
@@ -162,9 +196,23 @@ GEMINI_API_KEY=your_google_gemini_api_key
 
 The API key should already be configured in your Coolify environment.
 
-## Monitoring Generation
+## Admin Panel - Generation Monitoring
 
-The comprehensive generation script provides detailed logging:
+Access real-time generation monitoring at **Admin Panel → Generation**:
+
+### Features:
+- **Overall Progress**: Visual progress bar showing total questions generated
+- **Subject-by-Subject Breakdown**: See progress for each of the 19 subject areas
+- **Status Indicators**: Active, paused, completed, or error states
+- **Controls**:
+  - Pause/Resume automatic generation
+  - Trigger manual generation cycle
+  - View error messages and retry counts
+- **Auto-refresh**: Status updates every 10 seconds
+
+### Server Logs
+
+The background generation service also provides detailed server logging:
 
 ```
 =================================================
