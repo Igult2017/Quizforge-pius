@@ -2,6 +2,10 @@ import React from "react";
 import { Switch, Route } from "wouter";
 
 import Landing from "./pages/Landing";
+import Login from "./pages/Login";
+import Signup from "./pages/Signup";
+import Checkout from "./pages/Checkout";
+import PostPaymentSignup from "./pages/PostPaymentSignup";
 import Pricing from "./pages/Pricing";
 import Contact from "./pages/Contact";
 import Categories from "./pages/Categories";
@@ -15,6 +19,10 @@ function App() {
     <Switch>
       {/* Public routes */}
       <Route path="/" component={Landing} />
+      <Route path="/login" component={Login} />
+      <Route path="/signup" component={Signup} />
+      <Route path="/checkout" component={Checkout} />
+      <Route path="/post-payment-signup" component={PostPaymentSignup} />
       <Route path="/pricing" component={Pricing} />
       <Route path="/contact" component={Contact} />
       
