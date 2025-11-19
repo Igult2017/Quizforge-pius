@@ -48,6 +48,10 @@ export default function AdminUsers() {
   const [emailMessage, setEmailMessage] = useState("");
   const [activeTab, setActiveTab] = useState("all");
 
+  const { data: currentUser } = useQuery<User>({
+    queryKey: ["/api/auth/user"],
+  });
+
   const { data: users, isLoading } = useQuery<User[]>({
     queryKey: ["/api/admin/users"],
   });
@@ -436,27 +440,95 @@ export default function AdminUsers() {
                       )}
 
                       {!user.isAdmin ? (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => makeAdminMutation.mutate(user.id)}
-                          disabled={makeAdminMutation.isPending}
-                          data-testid={`button-make-admin-${user.id}`}
-                          title="Make this user an admin"
-                        >
-                          <Shield className="h-4 w-4 text-green-600" />
-                        </Button>
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => setSelectedUser(user)}
+                              data-testid={`button-make-admin-${user.id}`}
+                              title="Make this user an admin"
+                            >
+                              <Shield className="h-4 w-4 text-green-600" />
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent onCloseAutoFocus={() => setSelectedUser(null)}>
+                            <DialogHeader>
+                              <DialogTitle>Make User Admin</DialogTitle>
+                              <DialogDescription>
+                                Are you sure you want to grant admin privileges to {selectedUser?.email}? 
+                                This will give them full access to the admin panel and all administrative functions.
+                              </DialogDescription>
+                            </DialogHeader>
+                            <DialogFooter>
+                              <Button
+                                variant="outline"
+                                onClick={() => setSelectedUser(null)}
+                                data-testid="button-cancel-make-admin"
+                              >
+                                Cancel
+                              </Button>
+                              <Button
+                                onClick={() => {
+                                  if (selectedUser?.id) {
+                                    makeAdminMutation.mutate(selectedUser.id);
+                                  }
+                                  setSelectedUser(null);
+                                }}
+                                disabled={makeAdminMutation.isPending || !selectedUser}
+                                data-testid="button-confirm-make-admin"
+                              >
+                                {makeAdminMutation.isPending ? "Processing..." : "Make Admin"}
+                              </Button>
+                            </DialogFooter>
+                          </DialogContent>
+                        </Dialog>
                       ) : (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => revokeAdminMutation.mutate(user.id)}
-                          disabled={revokeAdminMutation.isPending}
-                          data-testid={`button-revoke-admin-${user.id}`}
-                          title="Revoke admin status"
-                        >
-                          <ShieldOff className="h-4 w-4 text-orange-600" />
-                        </Button>
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => setSelectedUser(user)}
+                              disabled={!currentUser || currentUser.id === user.id}
+                              data-testid={`button-revoke-admin-${user.id}`}
+                              title={!currentUser ? "Loading..." : currentUser.id === user.id ? "You cannot revoke your own admin status" : "Revoke admin status"}
+                            >
+                              <ShieldOff className="h-4 w-4 text-orange-600" />
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent onCloseAutoFocus={() => setSelectedUser(null)}>
+                            <DialogHeader>
+                              <DialogTitle>Revoke Admin Status</DialogTitle>
+                              <DialogDescription>
+                                Are you sure you want to revoke admin privileges from {selectedUser?.email}?
+                                They will lose access to the admin panel and all administrative functions.
+                              </DialogDescription>
+                            </DialogHeader>
+                            <DialogFooter>
+                              <Button
+                                variant="outline"
+                                onClick={() => setSelectedUser(null)}
+                                data-testid="button-cancel-revoke-admin"
+                              >
+                                Cancel
+                              </Button>
+                              <Button
+                                variant="destructive"
+                                onClick={() => {
+                                  if (selectedUser?.id) {
+                                    revokeAdminMutation.mutate(selectedUser.id);
+                                  }
+                                  setSelectedUser(null);
+                                }}
+                                disabled={revokeAdminMutation.isPending || !selectedUser}
+                                data-testid="button-confirm-revoke-admin"
+                              >
+                                {revokeAdminMutation.isPending ? "Processing..." : "Revoke Admin"}
+                              </Button>
+                            </DialogFooter>
+                          </DialogContent>
+                        </Dialog>
                       )}
 
                       {user.hasActiveSubscription && (
