@@ -4,6 +4,7 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import path from "path";
 import { fileURLToPath } from "url";
+import { startBackgroundGeneration } from "./backgroundGeneration";
 
 // ES-module-safe __dirname (optional, in case you need it later)
 const __filename = fileURLToPath(import.meta.url);
@@ -65,7 +66,14 @@ app.get("/favicon.ico", (_req, res) => {
     const port = parseInt(process.env.PORT || "5000", 10);
     server.listen(
       { port, host: "0.0.0.0", reusePort: true },
-      () => log(`Serving on port ${port}`)
+      () => {
+        log(`Serving on port ${port}`);
+        
+        // Start background question generation
+        startBackgroundGeneration().catch((error) => {
+          console.error("Failed to start background generation:", error);
+        });
+      }
     );
   } catch (err) {
     console.error("Server initialization failed:", err);

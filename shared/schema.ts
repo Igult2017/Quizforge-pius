@@ -99,6 +99,38 @@ export const quizAnswers = pgTable("quiz_answers", {
   answeredAt: timestamp("answered_at"),
 });
 
+// Background generation progress tracking
+export const generationSubjectProgress = pgTable("generation_subject_progress", {
+  id: serial("id").primaryKey(),
+  category: text("category").notNull(), // "NCLEX", "TEAS", "HESI"
+  subject: text("subject").notNull(), // e.g., "Management of Care"
+  targetCount: integer("target_count").notNull(), // How many questions we want for this subject
+  generatedCount: integer("generated_count").default(0).notNull(), // How many we've generated so far
+  status: text("status").default("pending").notNull(), // "pending", "running", "completed", "error"
+  sortOrder: integer("sort_order").notNull(), // For rotation order
+  lastRunAt: timestamp("last_run_at"),
+  nextRunAt: timestamp("next_run_at"),
+  errorCount: integer("error_count").default(0).notNull(),
+  lastError: text("last_error"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Generation logs for audit trail
+export const generationLogs = pgTable("generation_logs", {
+  id: serial("id").primaryKey(),
+  subjectProgressId: integer("subject_progress_id").notNull().references(() => generationSubjectProgress.id),
+  category: text("category").notNull(),
+  subject: text("subject").notNull(),
+  questionsRequested: integer("questions_requested").notNull(),
+  questionsGenerated: integer("questions_generated").notNull(),
+  questionsSaved: integer("questions_saved").notNull(),
+  status: text("status").notNull(), // "success", "partial", "failed"
+  errorMessage: text("error_message"),
+  durationMs: integer("duration_ms"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 // Upsert user type (for Replit Auth)
 export type UpsertUser = {
   id: string;
@@ -140,6 +172,17 @@ export const insertPaymentSchema = createInsertSchema(payments).omit({
   updatedAt: true,
 });
 
+export const insertGenerationSubjectProgressSchema = createInsertSchema(generationSubjectProgress).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertGenerationLogSchema = createInsertSchema(generationLogs).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -158,3 +201,9 @@ export type InsertQuizAnswer = z.infer<typeof insertQuizAnswerSchema>;
 
 export type Payment = typeof payments.$inferSelect;
 export type InsertPayment = z.infer<typeof insertPaymentSchema>;
+
+export type GenerationSubjectProgress = typeof generationSubjectProgress.$inferSelect;
+export type InsertGenerationSubjectProgress = z.infer<typeof insertGenerationSubjectProgressSchema>;
+
+export type GenerationLog = typeof generationLogs.$inferSelect;
+export type InsertGenerationLog = z.infer<typeof insertGenerationLogSchema>;
