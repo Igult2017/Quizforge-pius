@@ -813,6 +813,103 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ============= BACKGROUND GENERATION ROUTES =============
+
+  // Get background generation status
+  app.get("/api/admin/generation/status", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const { db } = await import("./db.js");
+      const { generationSubjectProgress, systemSettings } = await import("@shared/schema");
+      const { eq, sql } = await import("drizzle-orm");
+
+      // Get auto-generation enabled status
+      const setting = await db
+        .select()
+        .from(systemSettings)
+        .where(eq(systemSettings.key, "autoGenerationEnabled"))
+        .limit(1);
+      
+      const isEnabled = setting.length > 0 ? setting[0].value === "true" : true;
+
+      // Get all subject progress
+      const subjects = await db
+        .select()
+        .from(generationSubjectProgress)
+        .orderBy(generationSubjectProgress.sortOrder);
+
+      // Calculate totals
+      const totalTarget = subjects.reduce((sum, s) => sum + s.targetCount, 0);
+      const totalGenerated = subjects.reduce((sum, s) => sum + s.generatedCount, 0);
+
+      res.json({
+        isEnabled,
+        totalTarget,
+        totalGenerated,
+        subjects,
+      });
+    } catch (error) {
+      console.error("Error getting generation status:", error);
+      res.status(500).json({ error: "Failed to get generation status" });
+    }
+  });
+
+  // Pause background generation
+  app.post("/api/admin/generation/pause", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const { db } = await import("./db.js");
+      const { systemSettings } = await import("@shared/schema");
+      const { eq } = await import("drizzle-orm");
+
+      await db
+        .update(systemSettings)
+        .set({ value: "false", updatedAt: new Date() })
+        .where(eq(systemSettings.key, "autoGenerationEnabled"));
+
+      console.log("Background generation paused by admin");
+      res.json({ success: true, message: "Background generation paused" });
+    } catch (error) {
+      console.error("Error pausing generation:", error);
+      res.status(500).json({ error: "Failed to pause generation" });
+    }
+  });
+
+  // Resume background generation
+  app.post("/api/admin/generation/resume", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const { db } = await import("./db.js");
+      const { systemSettings } = await import("@shared/schema");
+      const { eq } = await import("drizzle-orm");
+
+      await db
+        .update(systemSettings)
+        .set({ value: "true", updatedAt: new Date() })
+        .where(eq(systemSettings.key, "autoGenerationEnabled"));
+
+      console.log("Background generation resumed by admin");
+      res.json({ success: true, message: "Background generation resumed" });
+    } catch (error) {
+      console.error("Error resuming generation:", error);
+      res.status(500).json({ error: "Failed to resume generation" });
+    }
+  });
+
+  // Trigger manual generation cycle
+  app.post("/api/admin/generation/trigger", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const { triggerManualGeneration } = await import("./backgroundGeneration.js");
+      
+      // Trigger generation in background (don't wait for it)
+      triggerManualGeneration().catch((error) => {
+        console.error("Manual generation error:", error);
+      });
+
+      res.json({ success: true, message: "Generation cycle triggered" });
+    } catch (error) {
+      console.error("Error triggering generation:", error);
+      res.status(500).json({ error: "Failed to trigger generation" });
+    }
+  });
+
   // ============= ADMIN ROUTES =============
   
   // Get all users (admin only)

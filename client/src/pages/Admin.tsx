@@ -5,6 +5,7 @@ import { AdminSidebar } from "@/components/AdminSidebar";
 import AdminDashboard from "./AdminDashboard";
 import AdminUsers from "./AdminUsers";
 import AdminQuestions from "./AdminQuestions";
+import AdminGeneration from "./AdminGeneration";
 import AdminMarketing from "./AdminMarketing";
 import { Menu, Loader2, ShieldCheck } from "lucide-react";
 import { UserData } from "@/hooks/useUserData";
@@ -80,6 +81,7 @@ export default function Admin() {
               <Route path="/admin" component={AdminDashboard} />
               <Route path="/admin/users" component={AdminUsers} />
               <Route path="/admin/questions" component={AdminQuestions} />
+              <Route path="/admin/generation" component={AdminGeneration} />
               <Route path="/admin/marketing" component={AdminMarketing} />
             </Switch>
           </main>

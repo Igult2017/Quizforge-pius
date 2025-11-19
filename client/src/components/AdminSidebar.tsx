@@ -5,6 +5,7 @@ import {
   Settings,
   LogOut,
   Brain,
+  Activity,
 } from "lucide-react";
 import {
   Sidebar,
@@ -35,6 +36,11 @@ const menuItems = [
     title: "Questions",
     url: "/admin/questions",
     icon: Brain,
+  },
+  {
+    title: "Generation",
+    url: "/admin/generation",
+    icon: Activity,
   },
   {
     title: "Marketing",
