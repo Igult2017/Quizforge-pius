@@ -6,7 +6,7 @@ import { generateQuestions } from "./gemini";
 import { storage } from "./storage";
 
 // Configuration
-const BATCH_SIZE = 100; // Questions per batch
+const BATCH_SIZE = 25; // Questions per batch (reduced to avoid JSON parsing errors)
 const CRON_SCHEDULE = "*/5 * * * *"; // Every 5 minutes
 const GENERATION_TIMEOUT_MS = 300000; // 5 minutes timeout
 

@@ -117,7 +117,9 @@ Requirements:
 - Use proper medical terminology
 - Follow NCLEX/TEAS/HESI question format standards
 
-Return ONLY a valid JSON array of questions with this exact structure:
+CRITICAL: Return ONLY valid JSON. No extra text before or after. Use double quotes for all strings. Escape any quotes inside strings with backslash.
+
+Return a JSON array with this exact structure:
 [
   {
     "question": "The complete question text",
@@ -167,13 +169,36 @@ Make questions realistic and clinically relevant. Ensure proper formatting with 
       cleanContent = cleanContent.replace(/^```\n?/, "").replace(/\n?```$/, "");
     }
 
-    // Parse JSON
+    // Parse JSON with cleanup
     let questions;
     try {
       questions = JSON.parse(cleanContent);
     } catch (parseError: any) {
-      console.error("Failed to parse Gemini AI response:", cleanContent);
-      throw new Error(`Invalid JSON response from Gemini AI: ${parseError.message}`);
+      console.error("❌ JSON parse error at position", parseError.message);
+      
+      // Try to fix common JSON issues
+      let fixedContent = cleanContent
+        // Remove trailing commas before closing brackets/braces
+        .replace(/,(\s*[}\]])/g, '$1')
+        // Fix single quotes to double quotes (but be careful with apostrophes in text)
+        // .replace(/'/g, '"')
+        // Remove any text before the first [ or {
+        .replace(/^[^[{]*/, '')
+        // Remove any text after the last ] or }
+        .replace(/[^\]}]*$/, '');
+      
+      try {
+        console.log("🔧 Attempting to parse cleaned JSON...");
+        questions = JSON.parse(fixedContent);
+        console.log("✅ Successfully parsed after cleanup");
+      } catch (secondError: any) {
+        // If still fails, log a sample and throw
+        const errorPosition = parseInt(secondError.message.match(/\d+/)?.[0] || '0');
+        const sample = cleanContent.substring(Math.max(0, errorPosition - 100), errorPosition + 100);
+        console.error("Failed to parse even after cleanup. Sample around error position:");
+        console.error(sample);
+        throw new Error(`Invalid JSON response from Gemini AI: ${parseError.message}`);
+      }
     }
 
     if (!Array.isArray(questions)) {
