@@ -189,12 +189,38 @@ The system is designed to be fault-tolerant:
 
 ## Environment Requirements
 
-Required environment variable:
+### Required: API Key
 ```bash
 GEMINI_API_KEY=your_google_gemini_api_key
 ```
 
-The API key should already be configured in your Coolify environment.
+### Optional: Specify Model
+By default, the system **automatically detects** which Gemini model works with your API key by trying models in this order:
+1. `gemini-2.0-flash-exp` (preferred - latest experimental)
+2. `gemini-1.5-flash-latest` (stable flash)
+3. `gemini-1.5-flash` (standard flash)
+4. `gemini-1.5-pro-latest` (latest pro)
+5. `gemini-1.5-pro` (standard pro)
+6. `gemini-pro` (original pro)
+
+The system tests each model and uses the first one that works. Once found, it caches the working model for all subsequent requests.
+
+**To manually specify a model** (skips auto-detection):
+```bash
+GEMINI_MODEL=gemini-1.5-flash-latest
+# or
+GEMINI_MODEL=gemini-1.5-pro
+# or
+GEMINI_MODEL=gemini-pro
+```
+
+**When to set GEMINI_MODEL:**
+- ✅ If you know your API key only supports a specific model
+- ✅ If you want to use a specific model for cost/performance reasons
+- ✅ To skip the auto-detection process (saves a few seconds on first run)
+- ❌ If unsure - auto-detection will find the right model automatically!
+
+The API key and model should be configured in your Coolify environment variables.
 
 ## Admin Panel - Generation Monitoring
 

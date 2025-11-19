@@ -4,6 +4,7 @@ import type { InsertQuestion } from "@shared/schema";
 import { insertQuestionSchema } from "@shared/schema";
 
 let genAI: GoogleGenerativeAI | null = null;
+let detectedModel: string | null = null;
 
 // Initialize Gemini AI safely
 function getGeminiClient(): GoogleGenerativeAI {
@@ -16,6 +17,82 @@ function getGeminiClient(): GoogleGenerativeAI {
     genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
   }
   return genAI;
+}
+
+// Common Gemini models in order of preference
+const FALLBACK_MODELS = [
+  'gemini-2.0-flash-exp',
+  'gemini-1.5-flash-latest',
+  'gemini-1.5-flash',
+  'gemini-1.5-pro-latest',
+  'gemini-1.5-pro',
+  'gemini-pro'
+];
+
+// Try to generate with a specific model to test if it works
+async function testModel(client: GoogleGenerativeAI, modelName: string): Promise<boolean> {
+  try {
+    const model = client.getGenerativeModel({ 
+      model: modelName,
+      generationConfig: {
+        temperature: 0.9,
+        topP: 1,
+        topK: 40,
+        maxOutputTokens: 100, // Small token limit for test
+      },
+    });
+    
+    // Simple test prompt
+    const result = await model.generateContent("Say 'OK' if you can generate content.");
+    const response = result.response.text();
+    
+    return response.length > 0;
+  } catch (error: any) {
+    // If we get a 404, the model doesn't exist
+    if (error.status === 404) {
+      return false;
+    }
+    // Other errors might be temporary, so we'll consider the model valid
+    console.warn(`⚠️  Warning testing model ${modelName}: ${error.message}`);
+    return true;
+  }
+}
+
+// Get the model name to use (from env var or auto-detect with fallback)
+async function getModelName(): Promise<string> {
+  // If model is specified in environment, use it (no fallback)
+  if (process.env.GEMINI_MODEL) {
+    console.log(`📌 Using Gemini model from environment: ${process.env.GEMINI_MODEL}`);
+    return process.env.GEMINI_MODEL;
+  }
+
+  // If we've already detected a working model, use it
+  if (detectedModel) {
+    return detectedModel;
+  }
+
+  // Try models in order until we find one that works
+  const client = getGeminiClient();
+  console.log(`🔍 Auto-detecting working Gemini model...`);
+  
+  for (const modelName of FALLBACK_MODELS) {
+    console.log(`   Testing: ${modelName}...`);
+    const works = await testModel(client, modelName);
+    
+    if (works) {
+      detectedModel = modelName;
+      console.log(`✓ Found working model: ${detectedModel}`);
+      return detectedModel;
+    } else {
+      console.log(`   ✗ Model ${modelName} not available (404)`);
+    }
+  }
+
+  // If no models work, throw error with helpful message
+  throw new Error(
+    `No working Gemini models found. Tried: ${FALLBACK_MODELS.join(', ')}. ` +
+    `Set GEMINI_MODEL environment variable to a model supported by your API key.`
+  );
 }
 
 interface GenerateQuestionsParams {
@@ -61,9 +138,11 @@ Make questions realistic and clinically relevant. Ensure proper formatting with 
   try {
     const client = getGeminiClient();
     
-    // Use gemini-1.5-flash for fast and efficient question generation
+    // Get the model name (from env var or auto-detect with fallback)
+    const modelName = await getModelName();
+    
     const model = client.getGenerativeModel({ 
-      model: "gemini-1.5-flash",
+      model: modelName,
       generationConfig: {
         temperature: 0.9,
         topP: 1,

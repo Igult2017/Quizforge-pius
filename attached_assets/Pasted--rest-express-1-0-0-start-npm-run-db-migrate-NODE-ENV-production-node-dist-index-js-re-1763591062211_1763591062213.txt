@@ -1,0 +1,43 @@
+> rest-express@1.0.0 start
+> npm run db:migrate && NODE_ENV=production node dist/index.js
+
+
+> rest-express@1.0.0 db:migrate
+> drizzle-kit push --force
+
+No config path provided, using default 'drizzle.config.ts'
+Reading config file '/app/drizzle.config.ts'
+Using 'pg' driver for database querying
+[⣷] Pulling schema from database...
+KG[⣯] Pulling schema from database...
+KG[⣟] Pulling schema from database...
+KG[⡿] Pulling schema from database...
+KG[⢿] Pulling schema from database...
+KG[✓] Pulling schema from database...
+[✓] Changes applied
+Firebase Admin initialized with Application Default Credentials for project: quizeforge-44a83
+10:22:50 PM [express] Serving on port 3000
+
+🚀 Starting background question generation service
+   Schedule: */5 * * * * (every 5 minutes)
+   Batch size: 100 questions per run
+🔧 Initializing background generation progress...
+✓ Generation progress already initialized
+✓ Background generation service started
+
+
+🎓 Generating questions for NCLEX - Management of Care
+   Progress: 0/850
+Error generating questions with Gemini AI: GoogleGenerativeAIFetchError: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (file:///app/node_modules/@google/generative-ai/dist/index.mjs:432:11)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async makeRequest (file:///app/node_modules/@google/generative-ai/dist/index.mjs:401:9)
+    at async generateContent (file:///app/node_modules/@google/generative-ai/dist/index.mjs:865:22)
+    at async generateQuestions (file:///app/dist/index.js:507:20)
+    at async generateForSubject (file:///app/dist/index.js:659:24)
+    at async runGenerationCycle (file:///app/dist/index.js:730:5) {
+  status: 404,
+  statusText: 'Not Found',
+  errorDetails: undefined
+}
+   ✗ Error generating questions: Failed to generate questions: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent: [404 Not Found] models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.

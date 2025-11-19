@@ -71,7 +71,8 @@ Admin authentication is Firebase-first. The first user to sign up via Firebase A
 
 ### Environment Requirements
 - `DATABASE_URL`
-- `GEMINI_API_KEY` (Google Gemini API for question generation)
+- `GEMINI_API_KEY` (Google Gemini API for question generation - **required**)
+- `GEMINI_MODEL` (Optional - specify which Gemini model to use, defaults to `gemini-2.0-flash-exp`. Set this if you get 404 errors)
 - `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_PROJECT_ID`, `VITE_FIREBASE_APP_ID`
 - `PESAPAL_CONSUMER_KEY`, `PESAPAL_CONSUMER_SECRET`
 - `SESSION_SECRET`
