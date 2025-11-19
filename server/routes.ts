@@ -18,7 +18,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
+      const userEmail = req.user.claims.email;
+      const normalizedEmail = userEmail?.toLowerCase().trim();
+      
+      let user = await storage.getUser(userId);
+
+      // Auto-create user if they don't exist (first-time Firebase login)
+      if (!user && normalizedEmail) {
+        console.log(`[AUTH] Creating new user for Firebase login: ${normalizedEmail}`);
+        user = await storage.upsertUser({
+          id: userId,
+          email: normalizedEmail,
+          firstName: req.user.claims.first_name || null,
+          lastName: req.user.claims.last_name || null,
+          profileImageUrl: null,
+        });
+      }
 
       if (!user) {
         return res.json(null);
@@ -30,6 +45,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         firstName: user.firstName,
         lastName: user.lastName,
         isAdmin: user.isAdmin || false,
+        hasUsedFreeTrial: user.hasUsedFreeTrial || false,
+        hasActiveSubscription: false,
+        subscription: null,
       });
     } catch (error: any) {
       console.error("[AUTH ERROR]", error);
