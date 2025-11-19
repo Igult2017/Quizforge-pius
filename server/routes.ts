@@ -15,13 +15,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Auth routes - tries to authenticate, returns null if not logged in
   app.get('/api/auth/user', async (req: any, res) => {
     try {
+      console.log("[AUTH USER] Request received");
       // Try to verify Firebase token
       const authHeader = req.headers.authorization;
+      console.log("[AUTH USER] Auth header present:", !!authHeader);
+      
       if (authHeader && authHeader.startsWith("Bearer ")) {
         const token = authHeader.split("Bearer ")[1];
         try {
           const admin = await import("firebase-admin");
           const decodedToken = await admin.auth().verifyIdToken(token);
+          console.log("[AUTH USER] Token verified for:", decodedToken.email);
           req.user = {
             claims: {
               sub: decodedToken.uid,
@@ -31,12 +35,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
             },
           };
         } catch (error) {
+          console.log("[AUTH USER] Token verification failed:", (error as Error).message);
           // Token invalid, continue as unauthenticated
         }
       }
       
       // Check if user is authenticated
       if (!req.user || !req.user.claims || !req.user.claims.sub) {
+        console.log("[AUTH USER] No authenticated user, returning null");
         return res.json(null);
       }
 
