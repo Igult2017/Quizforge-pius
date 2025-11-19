@@ -39,7 +39,10 @@ Admin authentication is Firebase-first. The first user to sign up via Firebase A
 ## External Dependencies
 
 ### AI Content Generation
-- **DeepSeek API**: Used for generating practice questions, explanations, and options, adhering to NCLEX/TEAS/HESI standards.
+- **Google Gemini API (gemini-1.5-flash)**: Used for generating practice questions, explanations, and options, adhering to NCLEX/TEAS/HESI standards.
+- **Comprehensive Generation System**: Generates 12,500+ questions across all subject areas with proper topic coverage.
+- **Cost**: ~$1-2 USD for complete question database (12,500 questions).
+- **Modular Approach**: Failures in one subject don't affect others; batch processing with error handling.
 
 ### Database Services
 - **Neon Serverless PostgreSQL**: Primary database, utilizing WebSocket connection pooling.
@@ -67,7 +70,7 @@ Admin authentication is Firebase-first. The first user to sign up via Firebase A
 
 ### Environment Requirements
 - `DATABASE_URL`
-- `DEEPSEEK_API_KEY`
+- `GEMINI_API_KEY` (Google Gemini API for question generation)
 - `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_PROJECT_ID`, `VITE_FIREBASE_APP_ID`
 - `PESAPAL_CONSUMER_KEY`, `PESAPAL_CONSUMER_SECRET`
 - `SESSION_SECRET`
