@@ -99,11 +99,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get active subscription
       const subscription = await storage.getActiveSubscription(userId);
       
-      res.json({
+      const responseData = {
         ...user,
         subscription: subscription || null,
         hasActiveSubscription: !!subscription,
+      };
+      
+      console.log(`[AUTH USER] Sending response for ${userEmail}:`, {
+        userId: user.id,
+        email: user.email,
+        isAdmin: user.isAdmin,
+        hasActiveSubscription: !!subscription,
       });
+      
+      res.json(responseData);
     } catch (error) {
       console.error("Error fetching user:", error);
       res.status(500).json({ message: "Failed to fetch user" });
