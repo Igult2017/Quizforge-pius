@@ -1,0 +1,100 @@
+[AUTH USER] Auth header present: true
+[AUTH USER] Token verification failed: admin2.auth is not a function
+[AUTH USER] No authenticated user, returning null
+2:49:15 PM [express] GET /api/auth/user 304 in 2ms
+2:49:20 PM [express] POST /api/quiz/start 500 in 5189ms
+[AUTH USER] Request received
+[AUTH USER] Auth header present: true
+[AUTH USER] Token verification failed: admin2.auth is not a function
+[AUTH USER] No authenticated user, returning null
+2:49:22 PM [express] GET /api/auth/user 304 in 1ms
+[AUTH USER] Request received
+[AUTH USER] Auth header present: false
+[AUTH USER] No authenticated user, returning null
+2:49:24 PM [express] GET /api/auth/user 304 in 1ms
+[AUTH USER] Request received
+Error starting quiz: Error: getaddrinfo EAI_AGAIN base
+    at /app/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async file:///app/node_modules/drizzle-orm/node-postgres/session.js:83:22
+    at async PostgresStorage.getUser (file:///app/dist/index.js:205:24)
+    at async file:///app/dist/index.js:1178:18 {
+  errno: -3001,
+  code: 'EAI_AGAIN',
+  syscall: 'getaddrinfo',
+  hostname: 'base'
+}
+[AUTH USER] Auth header present: false
+[AUTH USER] No authenticated user, returning null
+2:49:24 PM [express] GET /api/auth/user 304 in 1ms
+[AUTH USER] Request received
+[AUTH USER] Auth header present: false
+[AUTH USER] No authenticated user, returning null
+2:49:24 PM [express] GET /api/auth/user 304 in 1ms
+[AUTH USER] Request received
+[AUTH USER] Auth header present: true
+[AUTH USER] Token verification failed: admin2.auth is not a function
+[AUTH USER] No authenticated user, returning null
+2:49:29 PM [express] GET /api/auth/user 304 in 1ms
+[AUTH USER] Request received
+[AUTH USER] Auth header present: true
+[AUTH USER] Token verification failed: admin2.auth is not a function
+[AUTH USER] No authenticated user, returning null
+2:49:29 PM [express] GET /api/auth/user 304 in 1ms
+[AUTH USER] Request received
+[AUTH USER] Auth header present: true
+[AUTH USER] Token verification failed: admin2.auth is not a function
+[AUTH USER] No authenticated user, returning null
+2:49:29 PM [express] GET /api/auth/user 304 in 2ms
+[AUTH USER] Request received
+[AUTH USER] Auth header present: true
+[AUTH USER] Token verification failed: admin2.auth is not a function
+[AUTH USER] No authenticated user, returning null
+2:49:29 PM [express] GET /api/auth/user 304 in 2ms
+[AUTH USER] Request received
+[AUTH USER] Auth header present: true
+[AUTH USER] Token verification failed: admin2.auth is not a function
+[AUTH USER] No authenticated user, returning null
+2:51:05 PM [express] GET /api/auth/user 304 in 2ms
+[AUTH USER] Request received
+[AUTH USER] Auth header present: true
+[AUTH USER] Token verification failed: admin2.auth is not a function
+[AUTH USER] No authenticated user, returning null
+2:51:05 PM [express] GET /api/auth/user 304 in 2ms
+[AUTH USER] Request received
+[AUTH USER] Auth header present: true
+[AUTH USER] Token verification failed: admin2.auth is not a function
+[AUTH USER] No authenticated user, returning null
+2:56:52 PM [express] GET /api/auth/user 304 in 1ms
+[AUTH USER] Request received
+[AUTH USER] Auth header present: true
+[AUTH USER] Token verification failed: admin2.auth is not a function
+[AUTH USER] No authenticated user, returning null
+2:56:53 PM [express] GET /api/auth/user 304 in 1ms
+[AUTH USER] Request received
+[AUTH USER] Auth header present: false
+[AUTH USER] No authenticated user, returning null
+2:56:56 PM [express] GET /api/auth/user 304 in 1ms
+[AUTH USER] Request received
+[AUTH USER] Auth header present: false
+[AUTH USER] No authenticated user, returning null
+2:56:56 PM [express] GET /api/auth/user 304 in 2ms
+[AUTH USER] Request received
+[AUTH USER] Auth header present: false
+[AUTH USER] No authenticated user, returning null
+2:56:56 PM [express] GET /api/auth/user 304 in 0ms
+[AUTH USER] Request received
+[AUTH USER] Auth header present: true
+[AUTH USER] Token verification failed: admin2.auth is not a function
+[AUTH USER] No authenticated user, returning null
+2:57:01 PM [express] GET /api/auth/user 304 in 2ms
+[AUTH USER] Request received
+[AUTH USER] Auth header present: true
+[AUTH USER] Token verification failed: admin2.auth is not a function
+[AUTH USER] No authenticated user, returning null
+2:57:02 PM [express] GET /api/auth/user 304 in 2ms
+[AUTH USER] Request received
+[AUTH USER] Auth header present: true
+[AUTH USER] Token verification failed: admin2.auth is not a function
+[AUTH USER] No authenticated user, returning null
+2:57:02 PM [express] GET /api/auth/user 304 in 5ms

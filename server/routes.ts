@@ -23,7 +23,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (authHeader && authHeader.startsWith("Bearer ")) {
         const token = authHeader.split("Bearer ")[1];
         try {
-          const admin = await import("firebase-admin");
+          const admin = (await import("firebase-admin")).default;
           const decodedToken = await admin.auth().verifyIdToken(token);
           console.log("[AUTH USER] Token verified for:", decodedToken.email);
           req.user = {
