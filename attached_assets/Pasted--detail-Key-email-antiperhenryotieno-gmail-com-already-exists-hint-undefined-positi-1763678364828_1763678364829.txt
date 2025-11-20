@@ -1,0 +1,100 @@
+ detail: 'Key (email)=(antiperhenryotieno@gmail.com) already exists.',
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: 'public',
+  table: 'users',
+  column: undefined,
+  dataType: undefined,
+10:34:34 PM [express] GET /api/auth/user 304 in 28ms
+[AUTH] Creating new user for Firebase login: antiperhenryotieno@gmail.com
+  constraint: 'users_email_unique',
+  file: 'nbtinsert.c',
+  line: '666',
+  routine: '_bt_check_unique'
+}
+[AUTH ERROR] error: duplicate key value violates unique constraint "users_email_unique"
+    at /app/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async file:///app/node_modules/drizzle-orm/node-postgres/session.js:83:22
+    at async PostgresStorage.upsertUser (file:///app/dist/index.js:637:24)
+    at async file:///app/dist/index.js:1749:16 {
+  length: 226,
+  severity: 'ERROR',
+  code: '23505',
+  detail: 'Key (email)=(antiperhenryotieno@gmail.com) already exists.',
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: 'public',
+  table: 'users',
+  column: undefined,
+  dataType: undefined,
+  constraint: 'users_email_unique',
+  file: 'nbtinsert.c',
+  line: '666',
+  routine: '_bt_check_unique'
+10:34:34 PM [express] GET /api/auth/user 304 in 17ms
+}
+10:34:37 PM [express] POST /api/quiz/start 404 in 12ms
+[AUTH] Creating new user for Firebase login: antiperhenryotieno@gmail.com
+10:34:37 PM [express] GET /api/auth/user 304 in 6ms
+[AUTH ERROR] error: duplicate key value violates unique constraint "users_email_unique"
+    at /app/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async file:///app/node_modules/drizzle-orm/node-postgres/session.js:83:22
+    at async PostgresStorage.upsertUser (file:///app/dist/index.js:637:24)
+    at async file:///app/dist/index.js:1749:16 {
+  length: 226,
+  severity: 'ERROR',
+  code: '23505',
+[AUTH] Creating new user for Firebase login: antiperhenryotieno@gmail.com
+10:34:37 PM [express] GET /api/auth/user 304 in 17ms
+
+🎓 Generating questions for NCLEX - Psychosocial Integrity
+   Progress: 470/850
+   ✓ Generated and saved 10 questions in 13.6s
+   📊 New progress: 480/850 
+  detail: 'Key (email)=(antiperhenryotieno@gmail.com) already exists.',
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: 'public',
+  table: 'users',
+  column: undefined,
+  dataType: undefined,
+  constraint: 'users_email_unique',
+  file: 'nbtinsert.c',
+  line: '666',
+  routine: '_bt_check_unique'
+}
+[AUTH ERROR] error: duplicate key value violates unique constraint "users_email_unique"
+    at /app/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async file:///app/node_modules/drizzle-orm/node-postgres/session.js:83:22
+    at async PostgresStorage.upsertUser (file:///app/dist/index.js:637:24)
+    at async file:///app/dist/index.js:1749:16 {
+  length: 226,
+  severity: 'ERROR',
+  code: '23505',
+  detail: 'Key (email)=(antiperhenryotieno@gmail.com) already exists.',
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: 'public',
+  table: 'users',
+  column: undefined,
+  dataType: undefined,
+  constraint: 'users_email_unique',
+  file: 'nbtinsert.c',
+  line: '666',
+  routine: '_bt_check_unique'
+}

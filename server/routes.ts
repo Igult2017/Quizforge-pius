@@ -27,28 +27,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!user && normalizedEmail) {
         console.log(`[AUTH] Creating new user for Firebase login: ${normalizedEmail}`);
         
-        // Check if this is the first real user (excluding 'anonymous')
-        const allUsers = await storage.getAllUsers();
-        const realUsers = allUsers.filter(u => u.id !== 'anonymous');
-        const isFirstUser = realUsers.length === 0;
+        // Check if user already exists by email (e.g., signed up with email/password, now signing in with Google)
+        const existingUserByEmail = await storage.getUserByEmail(normalizedEmail);
         
-        if (isFirstUser) {
-          console.log(`[AUTH] ⭐ First user detected! Granting admin access to: ${normalizedEmail}`);
-        }
-        
-        user = await storage.upsertUser({
-          id: userId,
-          email: normalizedEmail,
-          firstName: req.user.claims.first_name || null,
-          lastName: req.user.claims.last_name || null,
-          profileImageUrl: null,
-        });
-        
-        // Grant admin to first user
-        if (isFirstUser) {
-          await storage.makeUserAdmin(user.id);
-          user = await storage.getUser(user.id); // Refresh to get updated admin status
-          console.log(`[AUTH] ✅ Admin access granted to first user: ${normalizedEmail}`);
+        if (existingUserByEmail) {
+          console.log(`[AUTH] ℹ️ User already exists by email: ${normalizedEmail}. Updating Firebase ID from ${existingUserByEmail.id} to ${userId}`);
+          
+          // Update existing user with new Firebase ID if different
+          if (existingUserByEmail.id !== userId) {
+            await storage.updateUserId(existingUserByEmail.id, userId);
+          }
+          
+          user = await storage.getUser(userId);
+        } else {
+          // New user - create them
+          // Check if this is the first real user (excluding 'anonymous')
+          const allUsers = await storage.getAllUsers();
+          const realUsers = allUsers.filter(u => u.id !== 'anonymous');
+          const isFirstUser = realUsers.length === 0;
+          
+          if (isFirstUser) {
+            console.log(`[AUTH] ⭐ First user detected! Granting admin access to: ${normalizedEmail}`);
+          }
+          
+          user = await storage.upsertUser({
+            id: userId,
+            email: normalizedEmail,
+            firstName: req.user.claims.first_name || null,
+            lastName: req.user.claims.last_name || null,
+            profileImageUrl: null,
+          });
+          
+          // Grant admin to first user
+          if (isFirstUser) {
+            await storage.makeUserAdmin(user.id);
+            user = await storage.getUser(user.id); // Refresh to get updated admin status
+            console.log(`[AUTH] ✅ Admin access granted to first user: ${normalizedEmail}`);
+          }
         }
       }
 
