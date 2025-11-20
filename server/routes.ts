@@ -807,7 +807,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ============= ADMIN ROUTES =============
   
   // Get all users (admin only)
-  app.get("/api/admin/users", isAdmin, async (req: any, res) => {
+  app.get("/api/admin/users", isAuthenticated, isAdmin, async (req: any, res) => {
     try {
       const users = await storage.getAllUsers();
       
@@ -834,7 +834,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Grant/revoke admin access to user
-  app.post("/api/admin/users/:userId/grant-access", isAdmin, async (req: any, res) => {
+  app.post("/api/admin/users/:userId/grant-access", isAuthenticated, isAdmin, async (req: any, res) => {
     try {
       const { userId } = req.params;
       const { durationDays } = req.body; // Optional: number of days or null for permanent
@@ -863,7 +863,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Revoke admin access
-  app.post("/api/admin/users/:userId/revoke-access", isAdmin, async (req: any, res) => {
+  app.post("/api/admin/users/:userId/revoke-access", isAuthenticated, isAdmin, async (req: any, res) => {
     try {
       const { userId } = req.params;
 
@@ -969,7 +969,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Make user an admin (permanent admin status)
-  app.post("/api/admin/users/:userId/make-admin", isAdmin, async (req: any, res) => {
+  app.post("/api/admin/users/:userId/make-admin", isAuthenticated, isAdmin, async (req: any, res) => {
     try {
       const { userId } = req.params;
 
@@ -995,7 +995,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Revoke admin status (remove permanent admin status)
-  app.post("/api/admin/users/:userId/revoke-admin", isAdmin, async (req: any, res) => {
+  app.post("/api/admin/users/:userId/revoke-admin", isAuthenticated, isAdmin, async (req: any, res) => {
     try {
       const { userId } = req.params;
 
@@ -1028,7 +1028,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // End user subscription
-  app.post("/api/admin/users/:userId/end-subscription", isAdmin, async (req: any, res) => {
+  app.post("/api/admin/users/:userId/end-subscription", isAuthenticated, isAdmin, async (req: any, res) => {
     try {
       const { userId } = req.params;
 
@@ -1055,7 +1055,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Ban user
-  app.post("/api/admin/users/:userId/ban", isAdmin, async (req: any, res) => {
+  app.post("/api/admin/users/:userId/ban", isAuthenticated, isAdmin, async (req: any, res) => {
     try {
       const { userId } = req.params;
 
@@ -1077,7 +1077,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Unban user
-  app.post("/api/admin/users/:userId/unban", isAdmin, async (req: any, res) => {
+  app.post("/api/admin/users/:userId/unban", isAuthenticated, isAdmin, async (req: any, res) => {
     try {
       const { userId } = req.params;
 
@@ -1099,7 +1099,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Extend/reduce subscription duration
-  app.post("/api/admin/users/:userId/extend-subscription", isAdmin, async (req: any, res) => {
+  app.post("/api/admin/users/:userId/extend-subscription", isAuthenticated, isAdmin, async (req: any, res) => {
     try {
       const { userId } = req.params;
       const { days } = req.body; // Can be positive (extend) or negative (reduce)

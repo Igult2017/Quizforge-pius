@@ -1,0 +1,53 @@
+[FIREBASE DEBUG] Config loaded: Object
+index-Cg6-u5PS.js:1539 [FIREBASE DEBUG] isFirebaseConfigured: true
+index-Cg6-u5PS.js:1842 [ADMIN DETECTION] Object
+index-Cg6-u5PS.js:1842 [AuthChange] Triggered: Object
+index-Cg6-u5PS.js:1842 [AuthChange] Triggered: Object
+index-Cg6-u5PS.js:1842 [Auth] Token refreshed successfully: ✅
+index-Cg6-u5PS.js:1842 [ADMIN DETECTION] Object
+index-Cg6-u5PS.js:1842 [Auth] Token refreshed successfully: ✅
+index-Cg6-u5PS.js:1842 [ADMIN DETECTION] Object
+index-Cg6-u5PS.js:1842 [ADMIN DETECTION] Object
+index-Cg6-u5PS.js:1842 [RESOLVED USER DATA] Object
+/api/admin/users:1  Failed to load resource: the server responded with a status of 401 ()Understand this error
+/api/admin/users:1  Failed to load resource: the server responded with a status of 401 ()Understand this error
+/api/admin/users:1  Failed to load resource: the server responded with a status of 401 ()Understand this error
+/api/admin/users:1  Failed to load resource: the server responded with a status of 401 ()Understand this error
+/api/admin/users:1  Failed to load resource: the server responded with a status of 401 ()Understand this error
+/api/admin/users:1  Failed to load resource: the server responded with a status of 401 ()Understand this error
+/api/admin/users:1  Failed to load resource: the server responded with a status of 401 ()Understand this error
+frame_ant.js:2  GET https://www.nursebrace.com/api/admin/users 401 (Unauthorized)
+window.fetch @ frame_ant.js:2
+(anonymous) @ index-Cg6-u5PS.js:1539
+await in (anonymous)
+o @ index-Cg6-u5PS.js:40
+b @ index-Cg6-u5PS.js:40
+start @ index-Cg6-u5PS.js:40
+fetch @ index-Cg6-u5PS.js:40
+Gc @ index-Cg6-u5PS.js:40
+(anonymous) @ index-Cg6-u5PS.js:40Understand this error
+frame_ant.js:2  GET https://www.nursebrace.com/api/admin/users 401 (Unauthorized)
+window.fetch @ frame_ant.js:2
+(anonymous) @ index-Cg6-u5PS.js:1539
+await in (anonymous)
+o @ index-Cg6-u5PS.js:40
+b @ index-Cg6-u5PS.js:40
+start @ index-Cg6-u5PS.js:40
+fetch @ index-Cg6-u5PS.js:40
+Gc @ index-Cg6-u5PS.js:40
+(anonymous) @ index-Cg6-u5PS.js:40
+setInterval
+setInterval @ index-Cg6-u5PS.js:40
+setInterval @ index-Cg6-u5PS.js:40
+Ix @ index-Cg6-u5PS.js:40
+Mx @ index-Cg6-u5PS.js:40
+onQueryUpdate @ index-Cg6-u5PS.js:40
+(anonymous) @ index-Cg6-u5PS.js:40
+(anonymous) @ index-Cg6-u5PS.js:40
+batch @ index-Cg6-u5PS.js:40
+Gr @ index-Cg6-u5PS.js:40
+fetch @ index-Cg6-u5PS.js:40
+await in fetch
+Gc @ index-Cg6-u5PS.js:40
+(anonymous) @ index-Cg6-u5PS.js:40Understand this error
+frame_ant.js:2  GET https://www.nursebrace.com/api/admin/users 401 (Unauthorized)
