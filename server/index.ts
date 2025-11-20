@@ -5,10 +5,40 @@ import { setupVite, serveStatic, log } from "./vite";
 import path from "path";
 import { fileURLToPath } from "url";
 import { startBackgroundGeneration } from "./backgroundGeneration";
+import { storage } from "./storage";
 
 // ES-module-safe __dirname (optional, in case you need it later)
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+/**
+ * Initialize required system users (like 'anonymous' for public quizzes)
+ */
+async function initializeSystemUsers() {
+  try {
+    console.log("[INIT] Checking system users...");
+    
+    // Check if anonymous user exists
+    const anonymousUser = await storage.getUser("anonymous");
+    
+    if (!anonymousUser) {
+      console.log("[INIT] Creating 'anonymous' user for public quizzes...");
+      await storage.upsertUser({
+        id: "anonymous",
+        email: null,
+        firstName: null,
+        lastName: null,
+        profileImageUrl: null,
+      });
+      console.log("[INIT] ✓ Anonymous user created");
+    } else {
+      console.log("[INIT] ✓ Anonymous user already exists");
+    }
+  } catch (error) {
+    console.error("[INIT] Error initializing system users:", error);
+    throw error;
+  }
+}
 
 const app = express();
 
@@ -39,6 +69,9 @@ app.get("/favicon.ico", (_req, res) => {
 
 (async () => {
   try {
+    // Initialize system users (anonymous, etc.)
+    await initializeSystemUsers();
+    
     // Register all routes
     const server = await registerRoutes(app);
 
