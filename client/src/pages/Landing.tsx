@@ -259,7 +259,7 @@ const Footer = ({ isAuthenticated, handleFreeTrial }) => {
           <div>
             <h4 className={headerClasses}>Resources</h4>
             <ul className="space-y-3 text-sm">
-              <li><Link href="/faq" className="text-blue-600 hover:text-blue-800 transition duration-150 font-poppins">FAQ</Link></li>
+              <li><span className="text-blue-600 font-poppins">FAQ</span></li>
             </ul>
           </div>
 
@@ -267,8 +267,8 @@ const Footer = ({ isAuthenticated, handleFreeTrial }) => {
           <div>
             <h4 className={headerClasses}>Legal</h4>
             <ul className="space-y-3 text-sm">
-              <li><Link href="/privacy" className="text-blue-600 hover:text-blue-800 transition duration-150 font-poppins">Privacy Policy</Link></li>
-              <li><Link href="/terms" className="text-blue-600 hover:text-blue-800 transition duration-150 font-poppins">Terms of Service</Link></li>
+              <li><span className="text-blue-600 font-poppins">Privacy Policy</span></li>
+              <li><span className="text-blue-600 font-poppins">Terms of Service</span></li>
             </ul>
           </div>
         </div>
