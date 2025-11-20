@@ -17,9 +17,12 @@ The backend is an **Express.js** application with a RESTful API. It uses **Drizz
 ### Admin Authentication
 Admin authentication is Firebase-based. The first user to sign up via Firebase Auth is automatically designated as the admin, with their UID stored in database. Firebase ID token verification with custom claims check is used for secure access.
 
-**Recent Updates (Nov 20, 2025)**: 
-1. **NEW: Strict Email Verification** - Users who sign up via email/password **must verify their email before they can log in**. Login is blocked until verification is complete. A "Resend Verification Email" option appears on the login page if verification is needed. **Existing users are grandfathered in** - only NEW signups (not yet in database) are required to verify. Google Sign-In users are automatically verified and can log in immediately.
-2. **NEW: Base64 Service Account Support** - Firebase Admin now supports base64-encoded service account keys via `FIREBASE_SERVICE_ACCOUNT_KEY_BASE64` environment variable, solving Coolify JSON parsing issues.
+**Recent Updates (Nov 20, 2025)**:
+1. **NEW: Paystack Payment Integration** - Replaced PesaPal with Paystack for card payments. Supports USA, European countries, Australia, Canada, and New Zealand. Automatically rejects African countries. Single endpoint for payment initialization with country validation.
+2. **NEW: Google Sign-In Account Merging** - Fixed duplicate email issue when users sign up with email/password then sign in with Google using same email. System now automatically merges accounts by updating Firebase ID.
+3. **Fixed Free Trial Lockout** - Separated loading state from locked state. Users now correctly see free trial availability without false "locked" states during authentication.
+4. **Strict Email Verification** - Users who sign up via email/password **must verify their email before they can log in**. Existing users grandfathered in. Google Sign-In users automatically verified.
+5. **Base64 Service Account Support** - Firebase Admin supports base64-encoded credentials via `FIREBASE_SERVICE_ACCOUNT_KEY_BASE64` for Coolify.
 
 **Previous Updates (Nov 19, 2025)**: 
 1. **Automatic Background Question Generation** - System automatically generates all 12,500 questions in the background without user interaction. Runs every 5 minutes, rotating through all subjects until complete. Fully monitored via Admin Panel → Generation.
@@ -62,7 +65,7 @@ Admin authentication is Firebase-based. The first user to sign up via Firebase A
 - Environment variables: `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_PROJECT_ID`, `VITE_FIREBASE_APP_ID`.
 
 ### Payment Processing
-- **PesaPal**: Integrated for subscription payments, supporting card payments with manual renewal, payment verification via callback, and secure email-validated linkages.
+- **Paystack**: Integrated for subscription card payments (USA, Europe, Australia, Canada, NZ only). Supports payment initialization with country validation, automatic webhook verification, and secure email-validated linkages. Rejects African countries per requirements.
 
 ### Utilities & Development Tools
 - **date-fns**: Date manipulation.
@@ -80,6 +83,7 @@ Admin authentication is Firebase-based. The first user to sign up via Firebase A
 - `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_PROJECT_ID`, `VITE_FIREBASE_APP_ID` - Firebase configuration
 - `FIREBASE_SERVICE_ACCOUNT_KEY` - Firebase Admin SDK credentials (JSON) **OR**
 - `FIREBASE_SERVICE_ACCOUNT_KEY_BASE64` - Base64-encoded Firebase Admin SDK credentials (recommended for Coolify)
-- `PESAPAL_CONSUMER_KEY`, `PESAPAL_CONSUMER_SECRET` - For payment processing
+- `PAYSTACK_SECRET_KEY` - Paystack API secret key for payment processing (**required**)
 - `SESSION_SECRET` - Session encryption secret
 - `NODE_ENV` - Set to 'production' in deployment
+- `APP_URL` - Your application's public URL (for payment callbacks)

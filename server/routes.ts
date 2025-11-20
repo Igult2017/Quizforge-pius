@@ -6,7 +6,7 @@ import { isAdmin } from "./adminMiddleware";
 import { generateQuestions } from "./gemini";
 import { z } from "zod";
 import { insertQuestionSchema, insertQuizAttemptSchema, insertQuizAnswerSchema, insertPaymentSchema } from "@shared/schema";
-import { createOrder, getTransactionStatus } from "./pesapal";
+import { initializePayment, verifyPayment, isCountryAllowed } from "./paystack";
 import { nanoid } from "nanoid";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -168,10 +168,19 @@ ${urls.map(url => `  <url>
   // Create payment order
   app.post("/api/payments/create-order", async (req, res) => {
     try {
-      const { plan, email, firstName, lastName, phone } = req.body;
+      const { plan, email, firstName, lastName, phone, countryCode } = req.body;
       
       if (!plan || !email || !firstName || !lastName) {
         return res.status(400).json({ error: "Missing required fields" });
+      }
+
+      // Validate country code (defaults to US if not provided)
+      const country = (countryCode || "US").toUpperCase();
+      if (!isCountryAllowed(country)) {
+        return res.status(400).json({ 
+          error: "Country not supported",
+          message: "Payment is only available for USA, European countries, Australia, Canada, and New Zealand."
+        });
       }
 
       // Plan pricing in US Dollars (USD)
@@ -188,20 +197,7 @@ ${urls.map(url => `  <url>
       // Generate unique merchant reference
       const merchantReference = `NB-${plan.toUpperCase()}-${nanoid(12)}`;
       
-      // Determine callback URL with fallback chain: APP_URL -> REPLIT_DOMAINS -> localhost
-      const baseUrl = process.env.APP_URL || 
-                      (process.env.REPLIT_DOMAINS ? `https://${process.env.REPLIT_DOMAINS.split(',')[0]}` : '') ||
-                      'http://localhost:5000';
-      
-      // Warn if APP_URL is not set in production (outside Replit)
-      if (process.env.NODE_ENV === 'production' && !process.env.APP_URL && !process.env.REPLIT_DOMAINS) {
-        console.warn('WARNING: APP_URL environment variable is not set. Payment callbacks may fail. Please set APP_URL to your application\'s public URL.');
-      }
-      
-      const callbackUrl = `${baseUrl}/payment/callback`;
-      
-      console.log(`[Payment] Creating order for ${plan} plan ($${amount} USD)`);
-      console.log(`[Payment] Callback URL: ${callbackUrl}`);
+      console.log(`[Payment] Creating order for ${plan} plan ($${amount} USD) from ${country}`);
 
       // Create payment record in database
       const payment = await storage.createPayment({
@@ -219,65 +215,62 @@ ${urls.map(url => `  <url>
         paymentMethod: null,
       });
 
-      // Create order with PesaPal
-      const orderResponse = await createOrder({
-        id: merchantReference,
-        amount,
+      // Initialize payment with Paystack
+      const paystackResponse = await initializePayment({
         email,
+        amount: amount * 100, // convert to cents
         firstName,
         lastName,
         phone: phone || "",
-        description: `NurseBrace ${plan} subscription`,
-        callbackUrl,
-        currency: "USD",
-        countryCode: "US",
+        merchantReference,
+        countryCode: country,
       });
 
-      // Update payment with order tracking ID
+      // Update payment with Paystack reference
       await storage.updatePayment(payment.id, {
-        orderTrackingId: orderResponse.order_tracking_id,
+        orderTrackingId: paystackResponse.data.reference,
       });
 
       res.json({
         success: true,
         paymentId: payment.id,
-        redirectUrl: orderResponse.redirect_url,
-        orderTrackingId: orderResponse.order_tracking_id,
+        redirectUrl: paystackResponse.data.authorization_url,
+        reference: paystackResponse.data.reference,
       });
     } catch (error: any) {
       console.error("Payment creation error:", error);
-      res.status(500).json({ error: "Failed to create payment order" });
+      res.status(500).json({ error: error.message || "Failed to create payment order" });
     }
   });
 
-  // Payment callback - handle return from PesaPal
+  // Payment callback - handle return from Paystack
   app.get("/payment/callback", async (req, res) => {
-    const { OrderTrackingId, OrderMerchantReference } = req.query;
+    const { reference } = req.query;
 
-    if (!OrderTrackingId) {
+    if (!reference) {
       return res.redirect("/?payment=error");
     }
 
     try {
-      // Get transaction status from PesaPal
-      const status = await getTransactionStatus(OrderTrackingId as string);
+      // Verify transaction status with Paystack
+      const verificationResult = await verifyPayment(reference as string);
 
       // Find payment in database
-      const payment = await storage.getPaymentByOrderTrackingId(OrderTrackingId as string);
+      const payment = await storage.getPaymentByOrderTrackingId(reference as string);
       
       if (!payment) {
         return res.redirect("/?payment=not_found");
       }
 
-      // Update payment status
-      if (status.payment_status_description === "Completed") {
+      // Update payment status based on Paystack response
+      if (verificationResult.data.status === "success") {
         await storage.updatePayment(payment.id, {
           status: "completed",
-          paymentMethod: status.payment_method,
+          paymentMethod: "card",
         });
         
         // Redirect to post-payment signup page
-        return res.redirect(`/post-payment-signup?merchantReference=${payment.merchantReference}&OrderTrackingId=${OrderTrackingId}`);
+        return res.redirect(`/post-payment-signup?merchantReference=${payment.merchantReference}&reference=${reference}`);
       } else {
         await storage.updatePayment(payment.id, {
           status: "failed",
@@ -315,7 +308,7 @@ ${urls.map(url => `  <url>
   // Verify payment by merchant reference (for post-payment signup)
   app.post("/api/payments/verify", async (req, res) => {
     try {
-      const { merchantReference, orderTrackingId } = req.body;
+      const { merchantReference, reference } = req.body;
       
       if (!merchantReference) {
         return res.status(400).json({ error: "Merchant reference is required" });
@@ -331,15 +324,15 @@ ${urls.map(url => `  <url>
         });
       }
 
-      // If payment is pending and we have orderTrackingId, check status with PesaPal
-      if (payment.status === "pending" && orderTrackingId) {
+      // If payment is pending and we have reference, check status with Paystack
+      if (payment.status === "pending" && reference) {
         try {
-          const status = await getTransactionStatus(orderTrackingId);
+          const verificationResult = await verifyPayment(reference);
           
-          if (status.payment_status_description === "Completed") {
+          if (verificationResult.data.status === "success") {
             await storage.updatePayment(payment.id, {
               status: "completed",
-              paymentMethod: status.payment_method,
+              paymentMethod: "card",
             });
             payment.status = "completed";
           }
