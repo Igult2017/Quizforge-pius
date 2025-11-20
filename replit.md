@@ -18,7 +18,7 @@ The backend is an **Express.js** application with a RESTful API. It uses **Drizz
 Admin authentication is Firebase-based. The first user to sign up via Firebase Auth is automatically designated as the admin, with their UID stored in database. Firebase ID token verification with custom claims check is used for secure access.
 
 **Recent Updates (Nov 20, 2025)**: 
-1. **NEW: Strict Email Verification** - Users who sign up via email/password **must verify their email before they can log in**. Login is blocked until verification is complete. A "Resend Verification Email" option appears on the login page if verification is needed. Google Sign-In users are automatically verified and can log in immediately.
+1. **NEW: Strict Email Verification** - Users who sign up via email/password **must verify their email before they can log in**. Login is blocked until verification is complete. A "Resend Verification Email" option appears on the login page if verification is needed. **Existing users are grandfathered in** - only NEW signups (not yet in database) are required to verify. Google Sign-In users are automatically verified and can log in immediately.
 2. **NEW: Base64 Service Account Support** - Firebase Admin now supports base64-encoded service account keys via `FIREBASE_SERVICE_ACCOUNT_KEY_BASE64` environment variable, solving Coolify JSON parsing issues.
 
 **Previous Updates (Nov 19, 2025)**: 
@@ -58,7 +58,7 @@ Admin authentication is Firebase-based. The first user to sign up via Firebase A
 
 ### Authentication
 - **Firebase Authentication**: Used for both frontend (client-side SDK for email/password, Google Sign-In) and backend (firebase-admin for ID token verification).
-- **Email Verification (Strict Mode)**: Users who sign up via email/password **cannot log in until they verify their email address**. Verification emails are sent automatically upon signup. Users who attempt to log in without verifying are blocked and shown a "Resend Verification Email" button on the login page. Google Sign-In users are automatically verified and bypass this requirement.
+- **Email Verification (Strict Mode)**: Users who sign up via email/password **cannot log in until they verify their email address**. Verification emails are sent automatically upon signup. Users who attempt to log in without verifying are blocked and shown a "Resend Verification Email" button on the login page. **Existing users in the database are grandfathered in** and can log in regardless of verification status. Only new signups (not yet in database) must verify. Google Sign-In users are automatically verified and bypass this requirement.
 - Environment variables: `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_PROJECT_ID`, `VITE_FIREBASE_APP_ID`.
 
 ### Payment Processing

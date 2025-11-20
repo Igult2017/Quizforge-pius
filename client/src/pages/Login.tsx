@@ -50,8 +50,33 @@ export default function Login() {
       const user = credential.user;
       if (!user) throw new Error("Firebase login failed: user not returned.");
 
-      // Check if email is verified
-      if (!user.emailVerified) {
+      // Get ID token first
+      const idToken = await user.getIdToken(true);
+
+      // Check if user exists in our database (existing user check)
+      let isExistingUser = false;
+      try {
+        const response = await fetch("/api/auth/user", {
+          headers: {
+            "Authorization": `Bearer ${idToken}`,
+          },
+        });
+        
+        if (response.ok) {
+          const userData = await response.json();
+          // If we get a valid user response, they're an existing user
+          isExistingUser = !!userData?.id;
+          console.log("[Login] Existing user check:", { isExistingUser, userId: userData?.id });
+        }
+      } catch (dbError) {
+        console.log("[Login] Could not check existing user, treating as new user");
+        isExistingUser = false;
+      }
+
+      // Only enforce email verification for NEW users (not in database yet)
+      if (!user.emailVerified && !isExistingUser) {
+        console.log("[Login] New user without email verification - blocking login");
+        
         // Show resend verification option
         setUnverifiedEmail(email);
         setShowResendVerification(true);
@@ -69,7 +94,9 @@ export default function Login() {
         return;
       }
 
-      await user.getIdToken(true);
+      if (!user.emailVerified && isExistingUser) {
+        console.log("[Login] Existing user without email verification - allowing login (grandfathered)");
+      }
 
       // Update React Query with fresh user data
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
