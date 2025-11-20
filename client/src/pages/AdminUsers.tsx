@@ -54,6 +54,7 @@ export default function AdminUsers() {
 
   const { data: users, isLoading } = useQuery<User[]>({
     queryKey: ["/api/admin/users"],
+    refetchInterval: 5000, // Refresh every 5 seconds for real-time updates
   });
 
   const filteredUsers = useMemo(() => {
