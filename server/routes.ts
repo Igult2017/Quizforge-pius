@@ -86,10 +86,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Missing required fields" });
       }
 
-      // Plan pricing
+      // Plan pricing in Kenyan Shillings (KES)
       const planPricing: Record<string, number> = {
-        weekly: 5,
-        monthly: 15,
+        weekly: 500,   // ~$5 USD = 500 KES
+        monthly: 1500, // ~$15 USD = 1500 KES
       };
 
       const amount = planPricing[plan];
@@ -101,7 +101,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const merchantReference = `NB-${plan.toUpperCase()}-${nanoid(12)}`;
       
       // Determine callback URL with fallback chain: APP_URL -> REPLIT_DOMAINS -> localhost
-      const baseUrl = process.env.APP_URL || process.env.REPLIT_DOMAINS?.split(',')[0] || 'http://localhost:5000';
+      const baseUrl = process.env.APP_URL || 
+                      (process.env.REPLIT_DOMAINS ? `https://${process.env.REPLIT_DOMAINS.split(',')[0]}` : '') ||
+                      'http://localhost:5000';
       
       // Warn if APP_URL is not set in production (outside Replit)
       if (process.env.NODE_ENV === 'production' && !process.env.APP_URL && !process.env.REPLIT_DOMAINS) {
@@ -109,13 +111,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const callbackUrl = `${baseUrl}/payment/callback`;
+      
+      console.log(`[Payment] Creating order for ${plan} plan (${amount} KES)`);
+      console.log(`[Payment] Callback URL: ${callbackUrl}`);
 
       // Create payment record in database
       const payment = await storage.createPayment({
         merchantReference,
         plan,
-        amount: amount * 100, // store in cents
-        currency: "USD",
+        amount: amount * 100, // store in cents (50000 for 500 KES)
+        currency: "KES",
         status: "pending",
         email,
         firstName,
@@ -136,6 +141,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         phone: phone || "",
         description: `NurseBrace ${plan} subscription`,
         callbackUrl,
+        currency: "KES",
+        countryCode: "KE",
       });
 
       // Update payment with order tracking ID

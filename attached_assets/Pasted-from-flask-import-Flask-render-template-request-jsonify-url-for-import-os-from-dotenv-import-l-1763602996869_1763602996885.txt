@@ -1,0 +1,179 @@
+from flask import Flask, render_template, request, jsonify, url_for
+import os
+from dotenv import load_dotenv
+import requests
+import uuid
+
+# Load environment variables
+load_dotenv()
+
+app = Flask(__name__)
+
+# Pesapal Configuration
+PESAPAL_CONSUMER_KEY = os.getenv('PESAPAL_CONSUMER_KEY')
+PESAPAL_CONSUMER_SECRET = os.getenv('PESAPAL_CONSUMER_SECRET')
+PESAPAL_BASE_URL = 'https://pay.pesapal.com/v3'
+
+
+# -----------------------------
+#   GET ACCESS TOKEN
+# -----------------------------
+def get_access_token():
+    response = requests.post(
+        f'{PESAPAL_BASE_URL}/api/Auth/RequestToken',
+        json={
+            'consumer_key': PESAPAL_CONSUMER_KEY,
+            'consumer_secret': PESAPAL_CONSUMER_SECRET
+        }
+    )
+
+    if response.status_code != 200:
+        raise Exception("Failed to authenticate with Pesapal")
+
+    return response.json().get('token')
+
+
+# -----------------------------
+#   REGISTER IPN
+# -----------------------------
+def register_ipn():
+    token = get_access_token()
+    callback_url = url_for('payment_callback', _external=True)
+
+    headers = {
+        'Authorization': f'Bearer {token}',
+        'Content-Type': 'application/json'
+    }
+
+    # Check existing IPNs
+    existing = requests.get(
+        f'{PESAPAL_BASE_URL}/api/URLSetup/GetIpnList',
+        headers=headers
+    )
+
+    if existing.status_code == 200:
+        for ipn in existing.json():
+            if ipn.get('url') == callback_url:
+                return ipn.get('ipn_id')
+
+    # Register a new IPN
+    payload = {
+        "url": callback_url,
+        "ipn_notification_type": "GET"
+    }
+
+    register_ipn_response = requests.post(
+        f'{PESAPAL_BASE_URL}/api/URLSetup/RegisterIPN',
+        json=payload,
+        headers=headers
+    )
+
+    if register_ipn_response.status_code != 200:
+        raise Exception("Failed to register IPN")
+
+    return register_ipn_response.json().get('ipn_id')
+
+
+# -----------------------------
+#     INITIATE CARD PAYMENT
+# -----------------------------
+@app.route('/initiate-payment', methods=['POST'])
+def initiate_payment():
+    try:
+        amount = request.form.get('amount')
+        email = request.form.get('email')
+        first_name = request.form.get('firstName')
+        last_name = request.form.get('lastName')
+        phone = request.form.get('phone')
+
+        if not all([amount, email, first_name, last_name, phone]):
+            return jsonify({'error': 'Missing required fields'}), 400
+
+        ipn_id = register_ipn()
+        token = get_access_token()
+
+        order_id = str(uuid.uuid4())
+        callback_url = url_for('payment_callback', _external=True)
+
+        order_request = {
+            "id": order_id,
+            "currency": "KES",
+            "amount": float(amount),
+            "description": "Card Payment",
+            "callback_url": callback_url,
+            "notification_id": ipn_id,
+            "cancellation_url": url_for('index', _external=True),
+            "payment_method": "CARD",
+            "billing_address": {
+                "email_address": email,
+                "phone_number": phone,
+                "country_code": "KE",
+                "first_name": first_name,
+                "last_name": last_name
+            }
+        }
+
+        headers = {
+            'Authorization': f'Bearer {token}',
+            'Content-Type': 'application/json'
+        }
+
+        response = requests.post(
+            f'{PESAPAL_BASE_URL}/api/Transactions/SubmitOrderRequest',
+            json=order_request,
+            headers=headers
+        )
+
+        if response.status_code != 200:
+            return jsonify({'error': 'Payment initiation failed'}), 500
+
+        data = response.json()
+        redirect_url = data.get('redirect_url')
+
+        return jsonify({
+            "redirect_url": redirect_url,
+            "order_id": order_id
+        })
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+# -----------------------------
+#     PAYMENT CALLBACK
+# -----------------------------
+@app.route('/payment-callback')
+def payment_callback():
+    try:
+        order_tracking_id = request.args.get('OrderTrackingId')
+
+        token = get_access_token()
+
+        headers = {
+            'Authorization': f'Bearer {token}',
+            'Content-Type': 'application/json'
+        }
+
+        status = requests.get(
+            f'{PESAPAL_BASE_URL}/api/Transactions/GetTransactionStatus?orderTrackingId={order_tracking_id}',
+            headers=headers
+        )
+
+        if status.status_code != 200:
+            return "Failed to get payment status"
+
+        data = status.json()
+
+        return jsonify(data)
+
+    except Exception as e:
+        return f"Error: {str(e)}"
+
+
+@app.route('/')
+def index():
+    return "Pesapal Card Payment API"
+
+
+if __name__ == '__main__':
+    app.run(debug=True)

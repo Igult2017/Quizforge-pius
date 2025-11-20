@@ -1,22 +1,15 @@
 // pesapal-client.ts
-// Simple, safe PesaPal client (TypeScript)
-// Copy-paste this file. Fill environment variables before running.
+// PesaPal client for Kenya payments (TypeScript)
 
 import axios, { AxiosError } from "axios";
 
 /**
  * Configuration -- use environment variables.
- * - Set these in your hosting environment or a .env file (do NOT commit secrets).
  */
 const CONSUMER_KEY = process.env.PESAPAL_CONSUMER_KEY || "";
 const CONSUMER_SECRET = process.env.PESAPAL_CONSUMER_SECRET || "";
-// Dormant placeholder for the IPN ID (leave empty for now; fill later after you register IPN)
-const PESAPAL_IPN_ID = process.env.PESAPAL_IPN_ID || ""; // <-- dormant by default
 
-const PESAPAL_BASE_URL =
-  process.env.NODE_ENV === "production"
-    ? "https://pay.pesapal.com/v3/api"
-    : "https://cybqa.pesapal.com/pesapalv3/api";
+const PESAPAL_BASE_URL = "https://pay.pesapal.com/v3";
 
 if (!CONSUMER_KEY || !CONSUMER_SECRET) {
   console.warn("[PesaPal] Warning: consumer key/secret not set in environment variables.");
@@ -26,6 +19,9 @@ if (!CONSUMER_KEY || !CONSUMER_SECRET) {
 let cachedToken: string | null = null;
 let tokenExpiry: number | null = null;
 
+// IPN cache
+let cachedIpnId: string | null = null;
+
 /** Get and cache access token */
 export async function getAccessToken(): Promise<string> {
   if (cachedToken && tokenExpiry && Date.now() < tokenExpiry) {
@@ -34,7 +30,7 @@ export async function getAccessToken(): Promise<string> {
 
   try {
     const resp = await axios.post(
-      `${PESAPAL_BASE_URL}/Auth/RequestToken`,
+      `${PESAPAL_BASE_URL}/api/Auth/RequestToken`,
       {
         consumer_key: CONSUMER_KEY,
         consumer_secret: CONSUMER_SECRET,
@@ -49,7 +45,7 @@ export async function getAccessToken(): Promise<string> {
 
     const data = resp.data || {};
     const token = data.token;
-    const expiryInSeconds = data.expiry_in_seconds || 600; // fallback 10 minutes
+    const expiryInSeconds = data.expiryDate || 600; // fallback 10 minutes
 
     if (!token) {
       throw new Error("No token returned from PesaPal");
@@ -62,6 +58,68 @@ export async function getAccessToken(): Promise<string> {
     const e = err as AxiosError;
     console.error("[PesaPal] Authentication error:", e.response?.data ?? e.message);
     throw new Error("Failed to authenticate with PesaPal");
+  }
+}
+
+/** Register or get existing IPN (Instant Payment Notification) */
+export async function registerIPN(callbackUrl: string): Promise<string> {
+  // Return cached IPN if available
+  if (cachedIpnId) {
+    return cachedIpnId;
+  }
+
+  const token = await getAccessToken();
+
+  try {
+    // Check for existing IPNs
+    const listResp = await axios.get(
+      `${PESAPAL_BASE_URL}/api/URLSetup/GetIpnList`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json",
+        },
+      }
+    );
+
+    // If we find an existing IPN with our callback URL, use it
+    const ipns = listResp.data || [];
+    for (const ipn of ipns) {
+      if (ipn.url === callbackUrl) {
+        console.log(`[PesaPal] Using existing IPN: ${ipn.ipn_id}`);
+        cachedIpnId = ipn.ipn_id;
+        return ipn.ipn_id;
+      }
+    }
+
+    // Register new IPN
+    const registerResp = await axios.post(
+      `${PESAPAL_BASE_URL}/api/URLSetup/RegisterIPN`,
+      {
+        url: callbackUrl,
+        ipn_notification_type: "GET",
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+      }
+    );
+
+    const ipnId = registerResp.data?.ipn_id;
+    if (!ipnId) {
+      throw new Error("No IPN ID returned from PesaPal");
+    }
+
+    console.log(`[PesaPal] Registered new IPN: ${ipnId}`);
+    cachedIpnId = ipnId;
+    return ipnId;
+  } catch (err) {
+    const e = err as AxiosError;
+    console.error("[PesaPal] IPN registration error:", e.response?.data ?? e.message);
+    throw new Error("Failed to register IPN with PesaPal");
   }
 }
 
@@ -92,29 +150,28 @@ export interface PesaPalOrderResponse {
 export async function createOrder(orderData: CreateOrderData): Promise<PesaPalOrderResponse> {
   const token = await getAccessToken();
 
+  // Register IPN dynamically
+  const ipnId = await registerIPN(orderData.callbackUrl);
+
   const payload = {
     id: orderData.id,
-    currency: orderData.currency || "USD",
+    currency: orderData.currency || "KES", // Default to Kenyan Shillings
     amount: orderData.amount,
     description: orderData.description,
     callback_url: orderData.callbackUrl,
-    notification_id: PESAPAL_IPN_ID, // dormant (empty) until you register and fill it
+    notification_id: ipnId,
     payment_method: "CARD",
     billing_address: {
       email_address: orderData.email,
       phone_number: orderData.phone,
-      country_code: orderData.countryCode || "US",
+      country_code: orderData.countryCode || "KE", // Default to Kenya
       first_name: orderData.firstName,
       last_name: orderData.lastName,
-      line_1: "N/A",
-      city: "N/A",
-      state: "N/A",
-      postal_code: "N/A",
     },
   };
 
   try {
-    const resp = await axios.post(`${PESAPAL_BASE_URL}/Transactions/SubmitOrderRequest`, payload, {
+    const resp = await axios.post(`${PESAPAL_BASE_URL}/api/Transactions/SubmitOrderRequest`, payload, {
       headers: {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
@@ -162,7 +219,7 @@ export async function getTransactionStatus(orderTrackingId: string): Promise<Tra
 
   try {
     const resp = await axios.get(
-      `${PESAPAL_BASE_URL}/Transactions/GetTransactionStatus?orderTrackingId=${encodeURIComponent(
+      `${PESAPAL_BASE_URL}/api/Transactions/GetTransactionStatus?orderTrackingId=${encodeURIComponent(
         orderTrackingId
       )}`,
       {
