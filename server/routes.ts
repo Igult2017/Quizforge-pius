@@ -26,6 +26,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Auto-create user if they don't exist (first-time Firebase login)
       if (!user && normalizedEmail) {
         console.log(`[AUTH] Creating new user for Firebase login: ${normalizedEmail}`);
+        
+        // Check if this is the first real user (excluding 'anonymous')
+        const allUsers = await storage.getAllUsers();
+        const realUsers = allUsers.filter(u => u.id !== 'anonymous');
+        const isFirstUser = realUsers.length === 0;
+        
+        if (isFirstUser) {
+          console.log(`[AUTH] ⭐ First user detected! Granting admin access to: ${normalizedEmail}`);
+        }
+        
         user = await storage.upsertUser({
           id: userId,
           email: normalizedEmail,
@@ -33,6 +43,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           lastName: req.user.claims.last_name || null,
           profileImageUrl: null,
         });
+        
+        // Grant admin to first user
+        if (isFirstUser) {
+          await storage.makeUserAdmin(user.id);
+          user = await storage.getUser(user.id); // Refresh to get updated admin status
+          console.log(`[AUTH] ✅ Admin access granted to first user: ${normalizedEmail}`);
+        }
       }
 
       if (!user) {
