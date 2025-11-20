@@ -1,0 +1,82 @@
+> rest-express@1.0.0 start
+> npm run db:migrate && NODE_ENV=production node dist/index.js
+
+
+> rest-express@1.0.0 db:migrate
+> drizzle-kit push --force
+
+No config path provided, using default 'drizzle.config.ts'
+Reading config file '/app/drizzle.config.ts'
+Using 'pg' driver for database querying
+[⣷] Pulling schema from database...
+KG[⣯] Pulling schema from database...
+KG[⣟] Pulling schema from database...
+KG[⡿] Pulling schema from database...
+KG[✓] Pulling schema from database...
+[✓] Changes applied
+Firebase Admin initialized with Application Default Credentials for project: quizeforge-44a83
+12:07:47 AM [express] Serving on port 3000
+
+🚀 Starting background question generation service
+   Schedule: */5 * * * * (every 5 minutes)
+   Batch size: 10 questions per run
+🔧 Initializing background generation progress...
+✓ Generation progress already initialized
+✓ Background generation service started
+
+
+🎓 Generating questions for NCLEX - Management of Care
+   Progress: 64/850
+🔍 Auto-detecting working Gemini model...
+   Testing: gemini-2.0-flash-exp...
+✓ Found working model: gemini-2.0-flash-exp
+   ✓ Generated and saved 10 questions in 14.5s
+   📊 New progress: 74/850 
+12:08:42 AM [express] GET /api/auth/user 304 in 213ms
+[ADMIN CHECK] No user or claims found
+12:08:42 AM [express] GET /api/admin/questions/counts 401 in 2ms
+[ADMIN CHECK] No user or claims found
+12:08:44 AM [express] GET /api/admin/analytics 401 in 1ms
+[ADMIN CHECK] No user or claims found
+12:08:47 AM [express] GET /api/admin/users 401 in 1ms
+[ADMIN CHECK] No user or claims found
+12:08:49 AM [express] GET /api/admin/questions/counts 401 in 1ms
+[ADMIN CHECK] No user or claims found
+12:08:55 AM [express] GET /api/admin/analytics 401 in 1ms
+12:09:00 AM [express] GET /api/auth/user 304 in 32ms
+Quiz request - Category: "NCLEX", Count: 50
+Questions found: 50 for category "NCLEX"
+Starting quiz: requested 50, found 50, using 50 questions for NCLEX
+Error starting quiz: error: insert or update on table "quiz_attempts" violates foreign key constraint "quiz_attempts_user_id_users_id_fk"
+    at /app/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async file:///app/node_modules/drizzle-orm/node-postgres/session.js:83:22
+    at async PostgresStorage.createQuizAttemptWithAnswers (file:///app/dist/index.js:392:30)
+    at async file:///app/dist/index.js:1504:23 {
+  length: 296,
+  severity: 'ERROR',
+  code: '23503',
+  detail: 'Key (user_id)=(anonymous) is not present in table "users".',
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: 'public',
+  table: 'quiz_attempts',
+12:09:02 AM [express] POST /api/quiz/start 500 in 16ms
+12:09:02 AM [express] GET /api/auth/user 304 in 15ms
+12:09:02 AM [express] GET /api/auth/user 304 in 3ms
+12:09:09 AM [express] GET /api/auth/user 304 in 3ms
+12:09:09 AM [express] GET /api/auth/user 304 in 2ms
+[ADMIN CHECK] No user or claims found
+12:09:11 AM [express] GET /api/admin/analytics 401 in 1ms
+[ADMIN CHECK] No user or claims found
+12:09:14 AM [express] GET /api/admin/questions/counts 401 in 1ms
+  column: undefined,
+  dataType: undefined,
+  constraint: 'quiz_attempts_user_id_users_id_fk',
+  file: 'ri_triggers.c',
+  line: '2599',
+  routine: 'ri_ReportViolation'
+}

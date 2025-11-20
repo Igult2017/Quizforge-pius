@@ -601,8 +601,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get question counts by category (admin only)
-  app.get("/api/admin/questions/counts", isAdmin, async (req, res) => {
+  // Get question counts by category (public - for dashboard display)
+  app.get("/api/admin/questions/counts", async (req, res) => {
     try {
       const counts = await storage.getQuestionCountsByCategory();
       
@@ -664,8 +664,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // ============= BACKGROUND GENERATION ROUTES =============
 
-  // Get background generation status
-  app.get("/api/admin/generation/status", isAdmin, async (req, res) => {
+  // Get background generation status (public - for dashboard display)
+  app.get("/api/admin/generation/status", async (req, res) => {
     try {
       const { db } = await import("./db.js");
       const { generationSubjectProgress, systemSettings } = await import("@shared/schema");
