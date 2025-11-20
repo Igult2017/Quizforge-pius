@@ -9,6 +9,8 @@ import { Link, useLocation } from "wouter";
 import nurseImage1 from "@assets/generated_images/Professional_Nurse_Portrait_c25f7b05.png";
 import nurseImage2 from "@assets/generated_images/Nursing_Professional_Portrait_72f6c6ff.png";
 import nurseImage3 from "@assets/generated_images/Healthcare_Student_Studying_944b5e0c.png";
+import { SEO } from "@/components/SEO";
+import { pageSEO, organizationSchema, productSchema, faqSchema } from "@/lib/seo-data";
 
 // =================================================================
 // CUSTOM ICON COMPONENT (Based on User's Gear/Process Image)
@@ -358,14 +360,31 @@ export default function Landing() {
     return false;
   }, [isAuthenticated, hasActiveSubscription, hasUsedFreeTrial, subscription]);
 
+  // Combined structured data for the landing page
+  const landingStructuredData = {
+    "@context": "https://schema.org",
+    "@graph": [
+      organizationSchema,
+      productSchema,
+      faqSchema
+    ]
+  };
+
   return (
-    // Load Poppins font via Google Fonts
-    <div className="min-h-screen bg-background font-sans" style={{ fontFamily: 'Poppins, sans-serif' }}>
-      <style dangerouslySetInnerHTML={{ __html: `
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap');
-        .font-poppins {
-          font-family: 'Poppins', sans-serif !important;
-        }
+    <>
+      <SEO
+        title={pageSEO.home.title}
+        description={pageSEO.home.description}
+        keywords={pageSEO.home.keywords}
+        structuredData={landingStructuredData}
+        canonicalUrl="https://www.nursebrace.com"
+      />
+      <div className="min-h-screen bg-background font-sans" style={{ fontFamily: 'Poppins, sans-serif' }}>
+        <style dangerouslySetInnerHTML={{ __html: `
+          @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap');
+          .font-poppins {
+            font-family: 'Poppins', sans-serif !important;
+          }
 
         /* Custom Styled Button from User Image */
         .styled-button {
@@ -794,5 +813,6 @@ export default function Landing() {
       {/* Finalized Footer Component */}
       <Footer isAuthenticated={isAuthenticated} handleFreeTrial={handleFreeTrial} />
     </div>
+    </>
   );
 }

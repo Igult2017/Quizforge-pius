@@ -75,6 +75,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   const server = createServer(app);
   
+  // ============= SEO ROUTES =============
+  
+  // Robots.txt for SEO
+  app.get('/robots.txt', (req, res) => {
+    const domain = process.env.APP_URL || (process.env.REPLIT_DOMAINS ? `https://${process.env.REPLIT_DOMAINS.split(',')[0]}` : 'https://www.nursebrace.com');
+    
+    res.type('text/plain');
+    res.send(`# Robots.txt for NurseBrace
+User-agent: *
+Allow: /
+Allow: /pricing
+Allow: /categories
+Disallow: /admin
+Disallow: /api
+Disallow: /checkout
+Disallow: /login
+Disallow: /signup
+
+Sitemap: ${domain}/sitemap.xml
+`);
+  });
+
+  // Sitemap.xml for SEO
+  app.get('/sitemap.xml', (req, res) => {
+    const domain = process.env.APP_URL || (process.env.REPLIT_DOMAINS ? `https://${process.env.REPLIT_DOMAINS.split(',')[0]}` : 'https://www.nursebrace.com');
+    const today = new Date().toISOString().split('T')[0];
+    
+    const urls = [
+      { loc: `${domain}/`, priority: '1.0', changefreq: 'daily' },
+      { loc: `${domain}/pricing`, priority: '0.9', changefreq: 'weekly' },
+      { loc: `${domain}/categories`, priority: '0.8', changefreq: 'weekly' },
+      { loc: `${domain}/about`, priority: '0.5', changefreq: 'monthly' },
+      { loc: `${domain}/blog`, priority: '0.7', changefreq: 'weekly' },
+    ];
+
+    const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${urls.map(url => `  <url>
+    <loc>${url.loc}</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>${url.changefreq}</changefreq>
+    <priority>${url.priority}</priority>
+  </url>`).join('\n')}
+</urlset>`;
+
+    res.type('application/xml');
+    res.send(sitemap);
+  });
+  
   // ============= PAYMENT ROUTES =============
   
   // Create payment order

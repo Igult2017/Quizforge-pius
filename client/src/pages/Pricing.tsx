@@ -3,6 +3,8 @@ import { PricingCard } from "@/components/PricingCard";
 import { CheckCircle2 } from "lucide-react";
 import { useLocation } from "wouter";
 import { useUserData } from "@/hooks/useUserData";
+import { SEO } from "@/components/SEO";
+import { pageSEO, productSchema } from "@/lib/seo-data";
 
 export default function Pricing() {
   const [, setLocation] = useLocation();
@@ -58,8 +60,16 @@ export default function Pricing() {
   };
 
   return (
-    <div className="min-h-screen bg-background font-poppins">
-      <style dangerouslySetInnerHTML={{ __html: `
+    <>
+      <SEO
+        title={pageSEO.pricing.title}
+        description={pageSEO.pricing.description}
+        keywords={pageSEO.pricing.keywords}
+        structuredData={productSchema}
+        canonicalUrl="https://www.nursebrace.com/pricing"
+      />
+      <div className="min-h-screen bg-background font-poppins">
+        <style dangerouslySetInnerHTML={{ __html: `
         .pricing-section h1, 
         .pricing-section h2, 
         .pricing-section h3, 
@@ -150,6 +160,6 @@ export default function Pricing() {
           />
         </div>
       </div>
-    </div>
+      </>
   );
 }
