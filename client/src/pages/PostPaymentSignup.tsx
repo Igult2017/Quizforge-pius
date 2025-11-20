@@ -23,7 +23,7 @@ export default function PostPaymentSignup() {
   // Get merchantReference from URL params
   const params = new URLSearchParams(window.location.search);
   const merchantReference = params.get("merchantReference") || params.get("OrderMerchantReference");
-  const orderTrackingId = params.get("OrderTrackingId");
+  const reference = params.get("reference") || params.get("OrderTrackingId"); // Support both Paystack and PesaPal
 
   useEffect(() => {
     const verifyPayment = async () => {
@@ -36,7 +36,7 @@ export default function PostPaymentSignup() {
       try {
         const response = await apiRequest("POST", "/api/payments/verify", {
           merchantReference,
-          orderTrackingId,
+          reference,
         });
 
         const data = await response.json();
@@ -55,7 +55,7 @@ export default function PostPaymentSignup() {
     };
 
     verifyPayment();
-  }, [merchantReference, orderTrackingId]);
+  }, [merchantReference, reference]);
 
   const handleCreateAccount = async (e: React.FormEvent) => {
     e.preventDefault();
