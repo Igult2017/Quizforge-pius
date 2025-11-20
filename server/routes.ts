@@ -86,10 +86,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Missing required fields" });
       }
 
-      // Plan pricing in Kenyan Shillings (KES)
+      // Plan pricing in US Dollars (USD)
       const planPricing: Record<string, number> = {
-        weekly: 500,   // ~$5 USD = 500 KES
-        monthly: 1500, // ~$15 USD = 1500 KES
+        weekly: 5,
+        monthly: 15,
       };
 
       const amount = planPricing[plan];
@@ -112,15 +112,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const callbackUrl = `${baseUrl}/payment/callback`;
       
-      console.log(`[Payment] Creating order for ${plan} plan (${amount} KES)`);
+      console.log(`[Payment] Creating order for ${plan} plan ($${amount} USD)`);
       console.log(`[Payment] Callback URL: ${callbackUrl}`);
 
       // Create payment record in database
       const payment = await storage.createPayment({
         merchantReference,
         plan,
-        amount: amount * 100, // store in cents (50000 for 500 KES)
-        currency: "KES",
+        amount: amount * 100, // store in cents
+        currency: "USD",
         status: "pending",
         email,
         firstName,
@@ -141,8 +141,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         phone: phone || "",
         description: `NurseBrace ${plan} subscription`,
         callbackUrl,
-        currency: "KES",
-        countryCode: "KE",
+        currency: "USD",
+        countryCode: "US",
       });
 
       // Update payment with order tracking ID

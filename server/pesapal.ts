@@ -155,7 +155,7 @@ export async function createOrder(orderData: CreateOrderData): Promise<PesaPalOr
 
   const payload = {
     id: orderData.id,
-    currency: orderData.currency || "KES", // Default to Kenyan Shillings
+    currency: orderData.currency || "USD",
     amount: orderData.amount,
     description: orderData.description,
     callback_url: orderData.callbackUrl,
@@ -164,7 +164,7 @@ export async function createOrder(orderData: CreateOrderData): Promise<PesaPalOr
     billing_address: {
       email_address: orderData.email,
       phone_number: orderData.phone,
-      country_code: orderData.countryCode || "KE", // Default to Kenya
+      country_code: orderData.countryCode || "US",
       first_name: orderData.firstName,
       last_name: orderData.lastName,
     },
