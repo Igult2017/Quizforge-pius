@@ -1,0 +1,100 @@
+ column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+
+> rest-express@1.0.0 start
+> npm run db:migrate && NODE_ENV=production node dist/index.js
+
+
+> rest-express@1.0.0 db:migrate
+> npm run db:sql-migrate
+
+
+> rest-express@1.0.0 db:sql-migrate
+> tsx server/runMigration.ts
+
+🔧 Running SQL migration...
+  - Executing: ALTER TABLE users ADD COLUMN IF NOT EXISTS teas_fr...
+Firebase Admin initialized with Application Default Credentials for project: quizeforge-44a83
+[INIT] Checking system users...
+  line: '3716',
+  routine: 'errorMissingColumn'
+}
+Server initialization failed: error: column "nclex_free_trial_used" does not exist
+    at /app/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async file:///app/node_modules/drizzle-orm/node-postgres/session.js:83:22
+    at async PostgresStorage.getUser (file:///app/dist/index.js:263:24)
+    at async initializeSystemUsers (file:///app/dist/index.js:2449:27)
+    at async file:///app/dist/index.js:2490:5 {
+  length: 121,
+  severity: 'ERROR',
+  code: '42703',
+  detail: undefined,
+  hint: undefined,
+  position: '71',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '3716',
+  routine: 'errorMissingColumn'
+}
+⚠️  SQL migration encountered an error (continuing anyway):
+Error connecting to database: fetch failed
+[INIT] Error initializing system users: error: column "nclex_free_trial_used" does not exist
+    at /app/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async file:///app/node_modules/drizzle-orm/node-postgres/session.js:83:22
+    at async PostgresStorage.getUser (file:///app/dist/index.js:263:24)
+    at async initializeSystemUsers (file:///app/dist/index.js:2449:27)
+    at async file:///app/dist/index.js:2490:5 {
+  length: 121,
+  severity: 'ERROR',
+  code: '42703',
+  detail: undefined,
+  hint: undefined,
+  position: '71',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '3716',
+  routine: 'errorMissingColumn'
+}
+Server initialization failed: error: column "nclex_free_trial_used" does not exist
+    at /app/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async file:///app/node_modules/drizzle-orm/node-postgres/session.js:83:22
+    at async PostgresStorage.getUser (file:///app/dist/index.js:263:24)
+    at async initializeSystemUsers (file:///app/dist/index.js:2449:27)
+    at async file:///app/dist/index.js:2490:5 {
+  length: 121,
+  severity: 'ERROR',
+  code: '42703',
+  detail: undefined,
+  hint: undefined,
+  position: '71',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '3716',
+  routine: 'errorMissingColumn'
+}
