@@ -7,6 +7,7 @@ import {
   GoogleAuthProvider,
   signOut,
   onAuthStateChanged,
+  sendEmailVerification,
   User,
   type Auth
 } from "firebase/auth";
@@ -91,6 +92,16 @@ export const signupWithEmail = async (email: string, password: string) => {
     console.log("[Firebase] Attempting signup with email:", email);
     const result = await createUserWithEmailAndPassword(authInstance, email, password);
     console.log("[Firebase] Signup successful:", result.user.email);
+    
+    // Send verification email to new users
+    try {
+      await sendEmailVerification(result.user);
+      console.log("[Firebase] Verification email sent to:", result.user.email);
+    } catch (verificationError: any) {
+      console.error("[Firebase] Failed to send verification email:", verificationError.message);
+      // Don't throw - allow user to continue even if email fails
+    }
+    
     return result;
   } catch (error: any) {
     console.error("[Firebase] Signup error:", error.code, error.message);
@@ -129,5 +140,45 @@ export const onAuthChange = (callback: (user: User | null) => void) => {
     return () => {};
   }
   return onAuthStateChanged(authInstance, callback);
+};
+
+export const resendVerificationEmail = async () => {
+  const authInstance = getAuthSafe();
+  if (!authInstance) {
+    throw new Error("Firebase is not configured");
+  }
+  
+  const user = authInstance.currentUser;
+  if (!user) {
+    throw new Error("No user is currently signed in");
+  }
+  
+  if (user.emailVerified) {
+    throw new Error("Email is already verified");
+  }
+  
+  try {
+    await sendEmailVerification(user);
+    console.log("[Firebase] Verification email resent to:", user.email);
+  } catch (error: any) {
+    console.error("[Firebase] Failed to resend verification email:", error.message);
+    throw error;
+  }
+};
+
+export const checkEmailVerified = async (): Promise<boolean> => {
+  const authInstance = getAuthSafe();
+  if (!authInstance) {
+    return false;
+  }
+  
+  const user = authInstance.currentUser;
+  if (!user) {
+    return false;
+  }
+  
+  // Reload user to get latest verification status
+  await user.reload();
+  return user.emailVerified;
 };
 

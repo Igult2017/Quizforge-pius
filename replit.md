@@ -17,9 +17,13 @@ The backend is an **Express.js** application with a RESTful API. It uses **Drizz
 ### Admin Authentication
 Admin authentication is Firebase-based. The first user to sign up via Firebase Auth is automatically designated as the admin, with their UID stored in database. Firebase ID token verification with custom claims check is used for secure access.
 
-**Recent Updates (Nov 19, 2025)**: 
-1. **NEW: Automatic Background Question Generation** - System now automatically generates all 12,500 questions in the background without user interaction. Runs every 5 minutes, rotating through all subjects until complete. Fully monitored via Admin Panel → Generation.
-2. **NEW: Flexible Gemini Model Support** - System automatically detects which Gemini model works with your API key. Set `GEMINI_MODEL` to specify a particular model, or let it auto-detect.
+**Recent Updates (Nov 20, 2025)**: 
+1. **NEW: Email Verification for New Signups** - Users who sign up via email/password now automatically receive a verification email. A friendly banner appears on the Categories page for unverified users with a "Resend Email" button. Existing users are not affected. Users can dismiss the banner.
+2. **NEW: Base64 Service Account Support** - Firebase Admin now supports base64-encoded service account keys via `FIREBASE_SERVICE_ACCOUNT_KEY_BASE64` environment variable, solving Coolify JSON parsing issues.
+
+**Previous Updates (Nov 19, 2025)**: 
+1. **Automatic Background Question Generation** - System automatically generates all 12,500 questions in the background without user interaction. Runs every 5 minutes, rotating through all subjects until complete. Fully monitored via Admin Panel → Generation.
+2. **Flexible Gemini Model Support** - System automatically detects which Gemini model works with your API key. Set `GEMINI_MODEL` to specify a particular model, or let it auto-detect.
 3. Fixed critical Firebase Admin integration for proper authentication flow.
 
 ### UI/UX Decisions
@@ -54,6 +58,7 @@ Admin authentication is Firebase-based. The first user to sign up via Firebase A
 
 ### Authentication
 - **Firebase Authentication**: Used for both frontend (client-side SDK for email/password, Google Sign-In) and backend (firebase-admin for ID token verification).
+- **Email Verification**: New users who sign up via email/password automatically receive a verification email. A dismissible banner prompts unverified users to check their email, with resend functionality. Google Sign-In users are automatically verified.
 - Environment variables: `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_PROJECT_ID`, `VITE_FIREBASE_APP_ID`.
 
 ### Payment Processing
@@ -73,7 +78,8 @@ Admin authentication is Firebase-based. The first user to sign up via Firebase A
 - `GEMINI_API_KEY` - Google Gemini API for question generation (**required**)
 - `GEMINI_MODEL` - Optional: specify which Gemini model to use (auto-detects if not set)
 - `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_PROJECT_ID`, `VITE_FIREBASE_APP_ID` - Firebase configuration
-- `FIREBASE_SERVICE_ACCOUNT_KEY` - Firebase Admin SDK credentials (JSON)
+- `FIREBASE_SERVICE_ACCOUNT_KEY` - Firebase Admin SDK credentials (JSON) **OR**
+- `FIREBASE_SERVICE_ACCOUNT_KEY_BASE64` - Base64-encoded Firebase Admin SDK credentials (recommended for Coolify)
 - `PESAPAL_CONSUMER_KEY`, `PESAPAL_CONSUMER_SECRET` - For payment processing
 - `SESSION_SECRET` - Session encryption secret
 - `NODE_ENV` - Set to 'production' in deployment

@@ -81,7 +81,8 @@ export default function Signup() {
       
       toast({
         title: "Welcome to NurseBrace!",
-        description: "Your account has been created successfully.",
+        description: "Account created! Please check your email to verify your account before accessing practice questions.",
+        duration: 7000,
       });
       
       // Keep loading state while Router redirects based on auth state
