@@ -11,6 +11,8 @@ import Checkout from "./pages/Checkout";
 import PostPaymentSignup from "./pages/PostPaymentSignup";
 import Pricing from "./pages/Pricing";
 import Contact from "./pages/Contact";
+import Exams from "./pages/Exams";
+import About from "./pages/About";
 import Categories from "./pages/Categories";
 import Quiz from "./pages/Quiz";
 import Results from "./pages/Results";
@@ -45,6 +47,8 @@ function App() {
           <Route path="/post-payment-signup" component={PostPaymentSignup} />
           <Route path="/pricing" component={Pricing} />
           <Route path="/contact" component={Contact} />
+          <Route path="/exams" component={Exams} />
+          <Route path="/about" component={About} />
           <Route component={Landing} />
         </Switch>
       </>
@@ -71,6 +75,8 @@ function App() {
       <Route path="/results" component={Results} />
       <Route path="/pricing" component={Pricing} />
       <Route path="/contact" component={Contact} />
+      <Route path="/exams" component={Exams} />
+      <Route path="/about" component={About} />
       <Route path="/checkout" component={Checkout} />
 
       {/* Redirect login/signup for authenticated users */}

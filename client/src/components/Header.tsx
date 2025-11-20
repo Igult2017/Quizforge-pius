@@ -36,11 +36,14 @@ export function Header({
           </Link>
           
           <nav className="hidden md:flex items-center gap-6 text-sm">
+            <Link href="/exams" className="text-muted-foreground hover:text-foreground transition-colors" data-testid="link-nav-exams">
+              Exams
+            </Link>
             <Link href="/pricing" className="text-muted-foreground hover:text-foreground transition-colors" data-testid="link-nav-pricing">
               Pricing
             </Link>
-            <Link href="/contact" className="text-muted-foreground hover:text-foreground transition-colors" data-testid="link-nav-contact">
-              Contact
+            <Link href="/about" className="text-muted-foreground hover:text-foreground transition-colors" data-testid="link-nav-about">
+              About
             </Link>
           </nav>
         </div>

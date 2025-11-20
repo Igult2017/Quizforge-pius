@@ -241,9 +241,8 @@ const Footer = ({ isAuthenticated, handleFreeTrial }) => {
           <div>
             <h4 className={headerClasses}>Product</h4>
             <ul className="space-y-3 text-sm">
-              <li><Link href="/features" className="text-blue-600 hover:text-blue-800 transition duration-150 font-poppins">Features</Link></li>
+              <li><Link href="/exams" className="text-blue-600 hover:text-blue-800 transition duration-150 font-poppins">Exams</Link></li>
               <li><Link href="/pricing" className="text-blue-600 hover:text-blue-800 transition duration-150 font-poppins">Pricing</Link></li>
-              <li><Link href="/updates" className="text-blue-600 hover:text-blue-800 transition duration-150 font-poppins">Latest Updates</Link></li>
             </ul>
           </div>
 
@@ -260,7 +259,6 @@ const Footer = ({ isAuthenticated, handleFreeTrial }) => {
           <div>
             <h4 className={headerClasses}>Resources</h4>
             <ul className="space-y-3 text-sm">
-              <li><Link href="/guides" className="text-blue-600 hover:text-blue-800 transition duration-150 font-poppins">User Guides</Link></li>
               <li><Link href="/faq" className="text-blue-600 hover:text-blue-800 transition duration-150 font-poppins">FAQ</Link></li>
             </ul>
           </div>
@@ -271,7 +269,6 @@ const Footer = ({ isAuthenticated, handleFreeTrial }) => {
             <ul className="space-y-3 text-sm">
               <li><Link href="/privacy" className="text-blue-600 hover:text-blue-800 transition duration-150 font-poppins">Privacy Policy</Link></li>
               <li><Link href="/terms" className="text-blue-600 hover:text-blue-800 transition duration-150 font-poppins">Terms of Service</Link></li>
-              <li><Link href="/cookies" className="text-blue-600 hover:text-blue-800 transition duration-150 font-poppins">Cookie Policy</Link></li>
             </ul>
           </div>
         </div>
