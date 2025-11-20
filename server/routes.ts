@@ -473,6 +473,12 @@ ${urls.map(url => `  <url>
         return res.status(404).json({ error: "User not found" });
       }
 
+      // ADMIN BYPASS: Admins always have access - skip all subscription/free trial checks
+      const isAdmin = user.isAdmin;
+      if (isAdmin) {
+        console.log(`[ADMIN ACCESS] Admin user ${user.email} bypassing all access checks for ${category}`);
+      }
+
       // Check if user has active subscription or admin granted access
       const hasActiveSubscription = await storage.hasActiveSubscription(userId);
       const hasAdminAccess = user.adminGrantedAccess && (!user.adminAccessExpiresAt || user.adminAccessExpiresAt > new Date());
@@ -480,7 +486,8 @@ ${urls.map(url => `  <url>
       // Determine if this is a free trial attempt
       let isFreeTrialAttempt = false;
       
-      if (!hasActiveSubscription && !hasAdminAccess && !user.isAdmin) {
+      // Only check free trial for NON-ADMIN users
+      if (!isAdmin && !hasActiveSubscription && !hasAdminAccess) {
         // Check if user has free trial available for this category
         const categoryField = category === "NCLEX" ? "nclexFreeTrialUsed" :
                              category === "TEAS" ? "teasFreeTrialUsed" :
