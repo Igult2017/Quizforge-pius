@@ -17,6 +17,7 @@ interface CategoryCardProps {
   onStart: () => void;
   locked?: boolean;
   freeTrialAvailable?: boolean;
+  disabled?: boolean;
 }
 
 const colorStyles = {
@@ -44,6 +45,7 @@ export function CategoryCard({
   onStart,
   locked = false,
   freeTrialAvailable = false,
+  disabled = false,
 }: CategoryCardProps) {
   // Always show progress if we have totalCount data
   const showProgress = totalCount !== undefined;
@@ -60,13 +62,13 @@ export function CategoryCard({
             <CardTitle className="text-2xl">{title}</CardTitle>
             <CardDescription>{description}</CardDescription>
           </div>
-          {locked && (
+          {locked && !disabled && (
             <Badge variant="secondary" className="gap-1">
               <Lock className="h-3 w-3" />
               Locked
             </Badge>
           )}
-          {!locked && freeTrialAvailable && (
+          {!locked && !disabled && freeTrialAvailable && (
             <Badge variant="outline" className="gap-1">
               Free Trial
             </Badge>
@@ -102,8 +104,9 @@ export function CategoryCard({
       </CardContent>
       <CardFooter>
         <Button 
-          className={`w-full ${locked ? `bg-gradient-to-r ${colorButtons[color]} text-white hover:opacity-90` : `bg-gradient-to-r ${colorButtons[color]} text-white hover:opacity-90`}`}
+          className={`w-full bg-gradient-to-r ${colorButtons[color]} text-white hover:opacity-90`}
           onClick={onStart}
+          disabled={disabled}
           data-testid={`button-start-${title.toLowerCase().replace(/\s+/g, '-')}`}
         >
           {locked ? (
@@ -111,6 +114,8 @@ export function CategoryCard({
               <Lock className="mr-2 h-4 w-4" />
               Subscribe to Unlock
             </>
+          ) : disabled ? (
+            "Loading..."
           ) : (
             <>
               Start Practice

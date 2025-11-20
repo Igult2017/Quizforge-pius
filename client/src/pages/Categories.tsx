@@ -45,10 +45,20 @@ export default function Categories() {
   // Admin and subscribers can access all categories
   const canAccessAll = hasActiveSubscription || userData?.isAdmin || hasValidAdminAccess();
 
+  // Helper function to check if a category is locked (consistent logic used in UI and handler)
+  const isCategoryLocked = (category: string): boolean => {
+    if (canAccessAll || authLoading || userLoading) return false;
+    
+    if (category === "NCLEX") return nclexFreeTrialUsed;
+    if (category === "TEAS") return teasFreeTrialUsed;
+    if (category === "HESI") return hesiFreeTrialUsed;
+    return false;
+  };
+
   const handleStartPractice = (category: string) => {
-    // Check if authentication is still loading
+    // Guard against clicks during loading to prevent race conditions
     if (authLoading || userLoading) {
-      return; // Disable button while loading
+      return;
     }
 
     // Check if user is authenticated
@@ -62,14 +72,8 @@ export default function Categories() {
       return;
     }
 
-    // Check if category is locked
-    const isLocked = !canAccessAll && (
-      (category === "NCLEX" && nclexFreeTrialUsed) ||
-      (category === "TEAS" && teasFreeTrialUsed) ||
-      (category === "HESI" && hesiFreeTrialUsed)
-    );
-
-    if (isLocked) {
+    // Check if category is locked using shared helper function
+    if (isCategoryLocked(category)) {
       toast({
         title: "Free Trial Used",
         description: `You've already used your free trial for ${category}. Subscribe to continue practicing.`,
@@ -111,8 +115,9 @@ export default function Categories() {
             color="purple"
             iconSrc={nclexIcon}
             onStart={() => handleStartPractice("NCLEX")}
-            locked={(!canAccessAll && nclexFreeTrialUsed) || authLoading || userLoading}
+            locked={isCategoryLocked("NCLEX")}
             freeTrialAvailable={!canAccessAll && !nclexFreeTrialUsed && !authLoading && !userLoading}
+            disabled={authLoading || userLoading}
           />
 
           <CategoryCard
@@ -130,8 +135,9 @@ export default function Categories() {
             color="orange"
             iconSrc={teasIcon}
             onStart={() => handleStartPractice("TEAS")}
-            locked={(!canAccessAll && teasFreeTrialUsed) || authLoading || userLoading}
+            locked={isCategoryLocked("TEAS")}
             freeTrialAvailable={!canAccessAll && !teasFreeTrialUsed && !authLoading && !userLoading}
+            disabled={authLoading || userLoading}
           />
 
           <CategoryCard
@@ -149,8 +155,9 @@ export default function Categories() {
             color="teal"
             iconSrc={hesiIcon}
             onStart={() => handleStartPractice("HESI")}
-            locked={(!canAccessAll && hesiFreeTrialUsed) || authLoading || userLoading}
+            locked={isCategoryLocked("HESI")}
             freeTrialAvailable={!canAccessAll && !hesiFreeTrialUsed && !authLoading && !userLoading}
+            disabled={authLoading || userLoading}
           />
         </div>
       </div>
