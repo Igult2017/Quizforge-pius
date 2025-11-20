@@ -25,11 +25,29 @@ export interface UserData {
   hasActiveSubscription: boolean;
 }
 
+export interface CategoryProgress {
+  answered: number;
+  total: number;
+  percentage: number;
+}
+
+export interface ProgressData {
+  NCLEX: CategoryProgress;
+  TEAS: CategoryProgress;
+  HESI: CategoryProgress;
+}
+
 export function useUserData() {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
 
   const { data: userData, isLoading: userLoading, refetch } = useQuery<UserData | null>({
     queryKey: ["/api/auth/user"],
+    enabled: isAuthenticated,
+  });
+
+  // Fetch progress data
+  const { data: progressData, isLoading: progressLoading, refetch: refetchProgress } = useQuery<ProgressData>({
+    queryKey: ["/api/auth/user/progress"],
     enabled: isAuthenticated,
   });
 
@@ -77,7 +95,12 @@ export function useUserData() {
     hesiFreeTrialUsed: isAuthenticated && resolvedUserData?.hesiFreeTrialUsed || false,
     allFreeTrialsUsed,
     subscription: isAuthenticated ? resolvedUserData?.subscription || null : null,
-    refetch,
+    progressData: progressData || null,
+    progressLoading,
+    refetch: async () => {
+      await refetch();
+      await refetchProgress();
+    },
   };
 }
 

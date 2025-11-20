@@ -73,6 +73,10 @@ export interface IStorage {
 
   // Quiz Answers
   saveQuizAnswer(answer: InsertQuizAnswer): Promise<QuizAnswer>;
+  
+  // Progress Tracking
+  getUserProgressByCategory(userId: string, category: string): Promise<{ answered: number; total: number; percentage: number }>;
+  getUserProgressAllCategories(userId: string): Promise<Record<string, { answered: number; total: number; percentage: number }>>;
   getQuizAnswers(attemptId: number): Promise<QuizAnswer[]>;
   updateQuizAnswer(id: number, data: Partial<QuizAnswer>): Promise<void>;
 
@@ -401,6 +405,46 @@ export class PostgresStorage implements IStorage {
       .update(quizAnswers)
       .set(data)
       .where(eq(quizAnswers.id, id));
+  }
+
+  // Progress Tracking
+  async getUserProgressByCategory(userId: string, category: string): Promise<{ answered: number; total: number; percentage: number }> {
+    // Import EXAM_CONFIGS to get total questions
+    const { EXAM_CONFIGS } = await import("./questionTopics");
+    const totalQuestions = EXAM_CONFIGS[category]?.totalQuestions || 0;
+
+    // Count unique questions answered in this category across all attempts
+    const result = await db
+      .selectDistinct({ questionId: quizAnswers.questionId })
+      .from(quizAnswers)
+      .innerJoin(quizAttempts, eq(quizAnswers.attemptId, quizAttempts.id))
+      .where(
+        and(
+          eq(quizAttempts.userId, userId),
+          eq(quizAttempts.category, category),
+          eq(quizAttempts.status, "completed")
+        )
+      );
+
+    const answeredCount = result.length;
+    const percentage = totalQuestions > 0 ? Math.round((answeredCount / totalQuestions) * 100) : 0;
+
+    return {
+      answered: answeredCount,
+      total: totalQuestions,
+      percentage,
+    };
+  }
+
+  async getUserProgressAllCategories(userId: string): Promise<Record<string, { answered: number; total: number; percentage: number }>> {
+    const categories = ["NCLEX", "TEAS", "HESI"];
+    const progress: Record<string, { answered: number; total: number; percentage: number }> = {};
+
+    for (const category of categories) {
+      progress[category] = await this.getUserProgressByCategory(userId, category);
+    }
+
+    return progress;
   }
 
   // Payments

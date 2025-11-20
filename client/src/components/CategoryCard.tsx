@@ -10,6 +10,8 @@ interface CategoryCardProps {
   questionCount: string;
   features: string[];
   progress?: number;
+  answeredCount?: number;
+  totalCount?: number;
   color: "purple" | "orange" | "teal";
   iconSrc?: string;
   onStart: () => void;
@@ -35,12 +37,16 @@ export function CategoryCard({
   questionCount,
   features,
   progress = 0,
+  answeredCount,
+  totalCount,
   color,
   iconSrc,
   onStart,
   locked = false,
   freeTrialAvailable = false,
 }: CategoryCardProps) {
+  // Always show progress if we have totalCount data
+  const showProgress = totalCount !== undefined;
   return (
     <Card className={`border-l-4 ${colorStyles[color]} hover-elevate transition-all ${locked ? 'opacity-60' : ''}`} data-testid={`card-category-${title.toLowerCase().replace(/\s+/g, '-')}`}>
       <CardHeader>
@@ -79,13 +85,18 @@ export function CategoryCard({
             </div>
           ))}
         </div>
-        {progress > 0 && (
+        {showProgress && (
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Progress</span>
               <span className="font-semibold">{progress}%</span>
             </div>
-            <Progress value={progress} />
+            <Progress value={progress} data-testid={`progress-${title.toLowerCase().replace(/\s+/g, '-')}`} />
+            {answeredCount !== undefined && totalCount !== undefined && (
+              <p className="text-xs text-muted-foreground" data-testid={`text-progress-${title.toLowerCase().replace(/\s+/g, '-')}`}>
+                {answeredCount.toLocaleString()} of {totalCount.toLocaleString()} questions answered
+              </p>
+            )}
           </div>
         )}
       </CardContent>

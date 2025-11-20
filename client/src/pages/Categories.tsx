@@ -13,7 +13,7 @@ export default function Categories() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
-  const { hasActiveSubscription, nclexFreeTrialUsed, teasFreeTrialUsed, hesiFreeTrialUsed, userData, refetch, isLoading: userLoading } = useUserData();
+  const { hasActiveSubscription, nclexFreeTrialUsed, teasFreeTrialUsed, hesiFreeTrialUsed, userData, progressData, refetch, isLoading: userLoading } = useUserData();
 
   // Refetch user data when page becomes visible (to update free trial status after quiz)
   useEffect(() => {
@@ -99,13 +99,15 @@ export default function Categories() {
           <CategoryCard
             title="NCLEX Practice"
             description="Master your RN or PN licensing exam with comprehensive practice questions."
-            questionCount="5,000+ RN & PN questions"
+            questionCount="7,000 RN & PN questions"
             features={[
               "Exam simulations",
               "Detailed explanations",
               "All subject areas"
             ]}
-            progress={35}
+            progress={progressData?.NCLEX?.percentage || 0}
+            answeredCount={progressData?.NCLEX?.answered}
+            totalCount={progressData?.NCLEX?.total}
             color="purple"
             iconSrc={nclexIcon}
             onStart={() => handleStartPractice("NCLEX")}
@@ -116,13 +118,15 @@ export default function Categories() {
           <CategoryCard
             title="ATI TEAS Prep"
             description="Ace your nursing school entrance exam with targeted practice questions."
-            questionCount="2,500+ TEAS questions"
+            questionCount="2,500 TEAS questions"
             features={[
               "All subject areas",
               "Practice tests",
               "Math & Science focus"
             ]}
-            progress={68}
+            progress={progressData?.TEAS?.percentage || 0}
+            answeredCount={progressData?.TEAS?.answered}
+            totalCount={progressData?.TEAS?.total}
             color="orange"
             iconSrc={teasIcon}
             onStart={() => handleStartPractice("TEAS")}
@@ -133,13 +137,15 @@ export default function Categories() {
           <CategoryCard
             title="HESI A2 Study"
             description="Master math and science concepts for nursing school admission success."
-            questionCount="1,500+ HESI questions"
+            questionCount="3,000 HESI questions"
             features={[
               "Math & Science focus",
               "Performance tracking",
               "Comprehensive coverage"
             ]}
-            progress={42}
+            progress={progressData?.HESI?.percentage || 0}
+            answeredCount={progressData?.HESI?.answered}
+            totalCount={progressData?.HESI?.total}
             color="teal"
             iconSrc={hesiIcon}
             onStart={() => handleStartPractice("HESI")}

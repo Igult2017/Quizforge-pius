@@ -80,6 +80,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get user progress across all categories
+  app.get('/api/auth/user/progress', isAuthenticated, async (req: any, res) => {
+    try {
+      if (!req.user || !req.user.claims) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+
+      const userId = req.user.claims.sub;
+      const progress = await storage.getUserProgressAllCategories(userId);
+
+      return res.json(progress);
+    } catch (error: any) {
+      console.error("[PROGRESS ERROR]", error);
+      return res.status(500).json({ error: "Failed to fetch progress" });
+    }
+  });
 
   const server = createServer(app);
   
