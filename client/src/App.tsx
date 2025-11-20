@@ -2,6 +2,7 @@ import React from "react";
 import { Switch, Route, Redirect } from "wouter";
 import { useAuth } from "./hooks/useAuth";
 import { useUserData } from "./hooks/useUserData";
+import { TawkToChat } from "./components/TawkToChat";
 
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
@@ -34,16 +35,19 @@ function App() {
   // Unauthenticated routes
   if (!isAuthenticated) {
     return (
-      <Switch>
-        <Route path="/" component={Landing} />
-        <Route path="/login" component={Login} />
-        <Route path="/signup" component={Signup} />
-        <Route path="/checkout" component={Checkout} />
-        <Route path="/post-payment-signup" component={PostPaymentSignup} />
-        <Route path="/pricing" component={Pricing} />
-        <Route path="/contact" component={Contact} />
-        <Route component={Landing} />
-      </Switch>
+      <>
+        <TawkToChat />
+        <Switch>
+          <Route path="/" component={Landing} />
+          <Route path="/login" component={Login} />
+          <Route path="/signup" component={Signup} />
+          <Route path="/checkout" component={Checkout} />
+          <Route path="/post-payment-signup" component={PostPaymentSignup} />
+          <Route path="/pricing" component={Pricing} />
+          <Route path="/contact" component={Contact} />
+          <Route component={Landing} />
+        </Switch>
+      </>
     );
   }
 
@@ -51,10 +55,12 @@ function App() {
   const isAdmin = userData?.isAdmin || false;
 
   return (
-    <Switch>
-      {/* Admin routes */}
-      <Route path="/admin/:rest*" component={Admin} />
-      <Route path="/admin" component={Admin} />
+    <>
+      <TawkToChat />
+      <Switch>
+        {/* Admin routes */}
+        <Route path="/admin/:rest*" component={Admin} />
+        <Route path="/admin" component={Admin} />
 
       {/* User routes */}
       <Route path="/">
@@ -77,6 +83,7 @@ function App() {
 
       <Route component={NotFound} />
     </Switch>
+    </>
   );
 }
 
