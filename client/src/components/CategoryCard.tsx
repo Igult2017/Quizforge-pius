@@ -91,9 +91,8 @@ export function CategoryCard({
       </CardContent>
       <CardFooter>
         <Button 
-          className={`w-full ${locked ? 'bg-muted text-muted-foreground' : `bg-gradient-to-r ${colorButtons[color]} text-white hover:opacity-90`}`}
+          className={`w-full ${locked ? `bg-gradient-to-r ${colorButtons[color]} text-white hover:opacity-90` : `bg-gradient-to-r ${colorButtons[color]} text-white hover:opacity-90`}`}
           onClick={onStart}
-          disabled={locked}
           data-testid={`button-start-${title.toLowerCase().replace(/\s+/g, '-')}`}
         >
           {locked ? (
