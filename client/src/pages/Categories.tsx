@@ -4,11 +4,81 @@ import nclexIcon from "@assets/generated_images/NCLEX_stethoscope_icon_fdac6417.
 import teasIcon from "@assets/generated_images/TEAS_study_books_icon_e557edc3.png";
 import hesiIcon from "@assets/generated_images/HESI_brain_knowledge_icon_67dac13b.png";
 import { useLocation } from "wouter";
+import { useUserData } from "@/hooks/useUserData";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import { useEffect } from "react";
 
 export default function Categories() {
   const [, setLocation] = useLocation();
+  const { toast } = useToast();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const { hasActiveSubscription, nclexFreeTrialUsed, teasFreeTrialUsed, hesiFreeTrialUsed, userData, refetch, isLoading: userLoading } = useUserData();
+
+  // Refetch user data when page becomes visible (to update free trial status after quiz)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && isAuthenticated) {
+        refetch();
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [isAuthenticated, refetch]);
+
+  // Helper function to safely check admin access expiry
+  const hasValidAdminAccess = () => {
+    if (!userData?.adminGrantedAccess) return false;
+    if (!userData?.adminAccessExpiresAt) return true; // No expiry = permanent access
+    
+    try {
+      const expiryDate = new Date(userData.adminAccessExpiresAt);
+      // Check if date is valid
+      if (isNaN(expiryDate.getTime())) return false;
+      return expiryDate > new Date();
+    } catch {
+      return false;
+    }
+  };
+
+  // Admin and subscribers can access all categories
+  const canAccessAll = hasActiveSubscription || userData?.isAdmin || hasValidAdminAccess();
 
   const handleStartPractice = (category: string) => {
+    // Check if authentication is still loading
+    if (authLoading || userLoading) {
+      return; // Disable button while loading
+    }
+
+    // Check if user is authenticated
+    if (!isAuthenticated || !userData) {
+      toast({
+        title: "Sign In Required",
+        description: "Please sign in to start practicing.",
+        variant: "default",
+      });
+      setLocation("/login");
+      return;
+    }
+
+    // Check if category is locked
+    const isLocked = !canAccessAll && (
+      (category === "NCLEX" && nclexFreeTrialUsed) ||
+      (category === "TEAS" && teasFreeTrialUsed) ||
+      (category === "HESI" && hesiFreeTrialUsed)
+    );
+
+    if (isLocked) {
+      toast({
+        title: "Free Trial Used",
+        description: `You've already used your free trial for ${category}. Subscribe to continue practicing.`,
+        variant: "default",
+      });
+      setLocation("/pricing");
+      return;
+    }
+
     console.log(`Starting ${category} practice`);
     setLocation(`/quiz?category=${encodeURIComponent(category)}`);
   };
@@ -39,6 +109,8 @@ export default function Categories() {
             color="purple"
             iconSrc={nclexIcon}
             onStart={() => handleStartPractice("NCLEX")}
+            locked={(!canAccessAll && nclexFreeTrialUsed) || authLoading || userLoading}
+            freeTrialAvailable={!canAccessAll && !nclexFreeTrialUsed && !authLoading && !userLoading}
           />
 
           <CategoryCard
@@ -54,6 +126,8 @@ export default function Categories() {
             color="orange"
             iconSrc={teasIcon}
             onStart={() => handleStartPractice("TEAS")}
+            locked={(!canAccessAll && teasFreeTrialUsed) || authLoading || userLoading}
+            freeTrialAvailable={!canAccessAll && !teasFreeTrialUsed && !authLoading && !userLoading}
           />
 
           <CategoryCard
@@ -69,6 +143,8 @@ export default function Categories() {
             color="teal"
             iconSrc={hesiIcon}
             onStart={() => handleStartPractice("HESI")}
+            locked={(!canAccessAll && hesiFreeTrialUsed) || authLoading || userLoading}
+            freeTrialAvailable={!canAccessAll && !hesiFreeTrialUsed && !authLoading && !userLoading}
           />
         </div>
       </div>

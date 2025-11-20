@@ -118,16 +118,15 @@ const Badge = ({ className, variant, ...props }) => {
   );
 };
 
-// --- MOCK HOOKS ---
-const useUserData = () => {
-  // This hook is usually provided externally, mocking its return structure
-  return {
-    isAuthenticated: false, // Set to false initially for the landing page view
-    hasActiveSubscription: false,
-    hasUsedFreeTrial: false,
-    subscription: null, // { plan: 'monthly' }
-  };
-};
+// --- MOCK HOOKS (not used, actual hook is imported) ---
+// const useUserData = () => {
+//   return {
+//     isAuthenticated: false,
+//     hasActiveSubscription: false,
+//     allFreeTrialsUsed: false,
+//     subscription: null,
+//   };
+// };
 
 // --- MOCK HEADER COMPONENT ---
 const Header = ({ onSignIn, onGetStarted }) => {
@@ -309,7 +308,7 @@ export default function Landing() {
   const [, setLocation] = useLocation();
 
   const {
-    isAuthenticated, hasActiveSubscription, hasUsedFreeTrial, subscription
+    isAuthenticated, hasActiveSubscription, allFreeTrialsUsed, subscription
   } = useUserData();
 
   const handleFreeTrial = useCallback(() => {
@@ -339,12 +338,12 @@ export default function Landing() {
       return isCurrentPlan ? "Current Plan" : "Go to Practice";
     }
     
-    if (hasUsedFreeTrial && planType === "free") {
+    if (allFreeTrialsUsed && planType === "free") {
       return "Trial Used";
     }
     
     return planType === "free" ? "Start Practice" : "Subscribe";
-  }, [isAuthenticated, hasActiveSubscription, hasUsedFreeTrial, subscription]);
+  }, [isAuthenticated, hasActiveSubscription, allFreeTrialsUsed, subscription]);
 
   const isButtonDisabled = useCallback((planType, planName) => {
     if (!isAuthenticated) return false;
@@ -353,12 +352,12 @@ export default function Landing() {
       return subscription?.plan === planName.toLowerCase();
     }
     
-    if (hasUsedFreeTrial && planType === "free") {
+    if (allFreeTrialsUsed && planType === "free") {
       return true;
     }
     
     return false;
-  }, [isAuthenticated, hasActiveSubscription, hasUsedFreeTrial, subscription]);
+  }, [isAuthenticated, hasActiveSubscription, allFreeTrialsUsed, subscription]);
 
   // Combined structured data for the landing page
   const landingStructuredData = {

@@ -56,15 +56,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.json(null);
       }
 
+      // Get actual subscription data
+      const subscription = await storage.getActiveSubscription(user.id);
+      const hasActiveSubscription = !!subscription;
+
       return res.json({
         id: user.id,
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
         isAdmin: user.isAdmin || false,
-        hasUsedFreeTrial: user.hasUsedFreeTrial || false,
-        hasActiveSubscription: false,
-        subscription: null,
+        adminGrantedAccess: user.adminGrantedAccess || false,
+        adminAccessExpiresAt: user.adminAccessExpiresAt || null,
+        nclexFreeTrialUsed: user.nclexFreeTrialUsed || false,
+        teasFreeTrialUsed: user.teasFreeTrialUsed || false,
+        hesiFreeTrialUsed: user.hesiFreeTrialUsed || false,
+        hasActiveSubscription,
+        subscription,
       });
     } catch (error: any) {
       console.error("[AUTH ERROR]", error);
@@ -442,8 +450,8 @@ ${urls.map(url => `  <url>
   
   // ============= QUIZ ROUTES =============
   
-  // Start a new quiz - public route (no authentication required)
-  app.post("/api/quiz/start", async (req: any, res) => {
+  // Start a new quiz - requires authentication
+  app.post("/api/quiz/start", isAuthenticated, async (req: any, res) => {
     try {
       const { category } = req.body;
       
@@ -451,11 +459,54 @@ ${urls.map(url => `  <url>
         return res.status(400).json({ error: "Category is required" });
       }
 
-      // Public quiz - always use 50 questions
+      // Validate category
+      const validCategories = ["NCLEX", "TEAS", "HESI"];
+      if (!validCategories.includes(category)) {
+        return res.status(400).json({ error: "Invalid category" });
+      }
+
+      // Get authenticated user
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      // Check if user has active subscription or admin granted access
+      const hasActiveSubscription = await storage.hasActiveSubscription(userId);
+      const hasAdminAccess = user.adminGrantedAccess && (!user.adminAccessExpiresAt || user.adminAccessExpiresAt > new Date());
+      
+      // Determine if this is a free trial attempt
+      let isFreeTrialAttempt = false;
+      
+      if (!hasActiveSubscription && !hasAdminAccess && !user.isAdmin) {
+        // Check if user has free trial available for this category
+        const categoryField = category === "NCLEX" ? "nclexFreeTrialUsed" :
+                             category === "TEAS" ? "teasFreeTrialUsed" :
+                             "hesiFreeTrialUsed";
+        
+        if (user[categoryField]) {
+          return res.status(403).json({ 
+            error: "Free trial already used",
+            message: `You've already used your free trial for ${category}. Subscribe to continue practicing.`,
+            requiresSubscription: true,
+          });
+        }
+        
+        isFreeTrialAttempt = true;
+        
+        // Mark the category as used IMMEDIATELY when quiz starts
+        // This prevents users from repeatedly starting new free trials without finishing
+        await storage.markCategoryFreeTrialUsed(userId, categoryField);
+        console.log(`[FREE TRIAL] Marked ${category} as used for user ${userId} at quiz start`);
+      }
+
+      // Always use 50 questions
       const questionCount = 50;
 
       // Get random questions
-      console.log(`Quiz request - Category: "${category}", Count: ${questionCount}`);
+      console.log(`Quiz request - User: ${user.email}, Category: "${category}", Count: ${questionCount}, FreeTrial: ${isFreeTrialAttempt}`);
       const questions = await storage.getRandomQuestions(category, questionCount);
       console.log(`Questions found: ${questions.length} for category "${category}"`);
       
@@ -472,14 +523,17 @@ ${urls.map(url => `  <url>
       
       console.log(`Starting quiz: requested ${questionCount}, found ${questions.length}, using ${actualQuestionCount} questions for ${category}`);
 
-      // Create anonymous quiz attempt
+      // Create quiz attempt
       const attempt = await storage.createQuizAttemptWithAnswers({
-        userId: "anonymous",
+        userId,
         category,
         status: "in_progress",
         totalQuestions: actualQuestionCount,
-        isFreeTrialAttempt: false,
+        isFreeTrialAttempt,
       }, questions.map(q => q.id));
+
+      // Get updated user data after marking category as used
+      const updatedUser = await storage.getUser(userId);
 
       res.json({
         attemptId: attempt.id,
@@ -488,6 +542,13 @@ ${urls.map(url => `  <url>
           question: q.question,
           options: q.options,
         })),
+        isFreeTrialAttempt,
+        // Include updated free trial flags so client can refresh state
+        updatedFreeTrialStatus: isFreeTrialAttempt ? {
+          nclexFreeTrialUsed: updatedUser?.nclexFreeTrialUsed || false,
+          teasFreeTrialUsed: updatedUser?.teasFreeTrialUsed || false,
+          hesiFreeTrialUsed: updatedUser?.hesiFreeTrialUsed || false,
+        } : undefined,
       });
     } catch (error: any) {
       console.error("Error starting quiz:", error);
@@ -536,8 +597,8 @@ ${urls.map(url => `  <url>
     }
   });
 
-  // Submit quiz and get results - public
-  app.post("/api/quiz/:attemptId/submit", async (req: any, res) => {
+  // Submit quiz and get results - requires authentication
+  app.post("/api/quiz/:attemptId/submit", isAuthenticated, async (req: any, res) => {
     try {
       const { attemptId } = req.params;
 
@@ -545,6 +606,12 @@ ${urls.map(url => `  <url>
       const attempt = await storage.getQuizAttempt(Number(attemptId));
       if (!attempt) {
         return res.status(404).json({ error: "Quiz attempt not found" });
+      }
+
+      // Verify user owns this attempt
+      const userId = req.user.claims.sub;
+      if (attempt.userId !== userId) {
+        return res.status(403).json({ error: "Unauthorized" });
       }
 
       // Get all answers
@@ -559,6 +626,9 @@ ${urls.map(url => `  <url>
         score: correctCount,
         completedAt: new Date(),
       });
+
+      // Note: Free trial is marked as used when quiz STARTS (see /api/quiz/start)
+      // not when it's submitted, to prevent repeated restarts
 
       res.json({
         success: true,

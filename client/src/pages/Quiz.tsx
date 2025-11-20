@@ -55,13 +55,18 @@ export default function Quiz() {
       const res = await apiRequest("POST", "/api/quiz/start", {
         category,
       });
-      return await res.json() as QuizAttempt;
+      return await res.json() as QuizAttempt & { updatedFreeTrialStatus?: { nclexFreeTrialUsed: boolean; teasFreeTrialUsed: boolean; hesiFreeTrialUsed: boolean } };
     },
     onSuccess: (data) => {
       setAttemptId(data.attemptId);
       setQuestions(data.questions);
       setAnswers(Array(data.questions.length).fill(null));
       setSubscriptionError(null);
+      
+      // If free trial status was updated, invalidate user query to refresh UI
+      if (data.updatedFreeTrialStatus) {
+        queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      }
     },
     onError: (error: Error) => {
       // Check for subscription error first (403 status)

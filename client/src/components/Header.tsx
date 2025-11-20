@@ -24,7 +24,7 @@ export function Header({
   onGetStarted,
 }: HeaderProps) {
   const [, setLocation] = useLocation();
-  const { isAuthenticated, userData, hasActiveSubscription, hasUsedFreeTrial } = useUserData();
+  const { isAuthenticated, userData, hasActiveSubscription, allFreeTrialsUsed } = useUserData();
   const isAdmin = userData?.isAdmin || false;
   return (
     <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -58,7 +58,7 @@ export function Header({
                   <Crown className="h-3 w-3" />
                   {userData?.subscription?.plan === "weekly" ? "Weekly" : "Monthly"} Plan
                 </Badge>
-              ) : hasUsedFreeTrial ? (
+              ) : allFreeTrialsUsed ? (
                 <Button 
                   variant="default" 
                   size="sm"

@@ -35,7 +35,8 @@ export interface IStorage {
   
   // Users (legacy methods)
   getUserByEmail(email: string): Promise<User | undefined>;
-  markFreeTrialAsUsed(userId: string): Promise<void>;
+  markCategoryFreeTrialUsed(userId: string, categoryField: string): Promise<void>;
+  hasActiveSubscription(userId: string): Promise<boolean>;
   
   // Admin user management
   getAllUsers(): Promise<User[]>;
@@ -138,11 +139,20 @@ export class PostgresStorage implements IStorage {
       .where(eq(users.id, oldId));
   }
 
-  async markFreeTrialAsUsed(userId: string): Promise<void> {
+  async markCategoryFreeTrialUsed(userId: string, categoryField: string): Promise<void> {
+    // Update the specific category free trial field
+    const updateData: any = { updatedAt: new Date() };
+    updateData[categoryField] = true;
+    
     await db
       .update(users)
-      .set({ hasUsedFreeTrial: true, updatedAt: new Date() })
+      .set(updateData)
       .where(eq(users.id, userId));
+  }
+
+  async hasActiveSubscription(userId: string): Promise<boolean> {
+    const subscription = await this.getActiveSubscription(userId);
+    return subscription !== undefined;
   }
 
   // Admin user management

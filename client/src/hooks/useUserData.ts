@@ -8,8 +8,12 @@ export interface UserData {
   firstName: string | null;
   lastName: string | null;
   profileImageUrl: string | null;
-  hasUsedFreeTrial: boolean;
+  nclexFreeTrialUsed: boolean;
+  teasFreeTrialUsed: boolean;
+  hesiFreeTrialUsed: boolean;
   isAdmin?: boolean;
+  adminGrantedAccess?: boolean;
+  adminAccessExpiresAt?: string | null;
   subscription: {
     id: number;
     userId: string;
@@ -56,12 +60,22 @@ export function useUserData() {
     });
   }
 
+  // Check if ALL category free trials have been used
+  const allFreeTrialsUsed = isAuthenticated && resolvedUserData
+    ? resolvedUserData.nclexFreeTrialUsed && 
+      resolvedUserData.teasFreeTrialUsed && 
+      resolvedUserData.hesiFreeTrialUsed
+    : false;
+
   return {
     userData: resolvedUserData,
     isLoading: authLoading || userLoading,
     isAuthenticated,
     hasActiveSubscription: isAuthenticated && resolvedUserData?.hasActiveSubscription || false,
-    hasUsedFreeTrial: isAuthenticated && resolvedUserData?.hasUsedFreeTrial || false,
+    nclexFreeTrialUsed: isAuthenticated && resolvedUserData?.nclexFreeTrialUsed || false,
+    teasFreeTrialUsed: isAuthenticated && resolvedUserData?.teasFreeTrialUsed || false,
+    hesiFreeTrialUsed: isAuthenticated && resolvedUserData?.hesiFreeTrialUsed || false,
+    allFreeTrialsUsed,
     subscription: isAuthenticated ? resolvedUserData?.subscription || null : null,
     refetch,
   };

@@ -18,7 +18,9 @@ interface User {
   email: string;
   firstName: string | null;
   lastName: string | null;
-  hasUsedFreeTrial: boolean;
+  nclexFreeTrialUsed: boolean;
+  teasFreeTrialUsed: boolean;
+  hesiFreeTrialUsed: boolean;
   isAdmin: boolean;
   isBanned: boolean;
   adminGrantedAccess: boolean;
@@ -64,7 +66,8 @@ export default function AdminUsers() {
       case "subscribers":
         return users.filter(u => u.hasAnySubscription && !u.isAdmin);
       case "trial":
-        return users.filter(u => !u.hasAnySubscription && !u.hasUsedFreeTrial && !u.isAdmin);
+        // Show users who haven't used ANY free trial yet
+        return users.filter(u => !u.hasAnySubscription && !u.nclexFreeTrialUsed && !u.teasFreeTrialUsed && !u.hesiFreeTrialUsed && !u.isAdmin);
       case "banned":
         return users.filter(u => u.isBanned && !u.isAdmin);
       default:
@@ -287,7 +290,7 @@ export default function AdminUsers() {
   }
 
   const subscribersCount = users?.filter(u => u.hasActiveSubscription).length || 0;
-  const trialCount = users?.filter(u => !u.hasActiveSubscription && !u.hasUsedFreeTrial && !u.isAdmin).length || 0;
+  const trialCount = users?.filter(u => !u.hasActiveSubscription && !u.nclexFreeTrialUsed && !u.teasFreeTrialUsed && !u.hesiFreeTrialUsed && !u.isAdmin).length || 0;
   const bannedCount = users?.filter(u => u.isBanned).length || 0;
 
   return (
@@ -364,10 +367,12 @@ export default function AdminUsers() {
                         <Badge variant="default">
                           {user.subscription?.plan} Plan
                         </Badge>
-                      ) : user.hasUsedFreeTrial ? (
-                        <Badge variant="secondary">Trial Used</Badge>
+                      ) : (user.nclexFreeTrialUsed && user.teasFreeTrialUsed && user.hesiFreeTrialUsed) ? (
+                        <Badge variant="secondary">All Trials Used</Badge>
                       ) : (
-                        <Badge variant="outline">Free Trial Available</Badge>
+                        <Badge variant="outline">
+                          Trial: {!user.nclexFreeTrialUsed ? 'N' : ''}{!user.teasFreeTrialUsed ? 'T' : ''}{!user.hesiFreeTrialUsed ? 'H' : ''}
+                        </Badge>
                       )}
                     </div>
                   </TableCell>

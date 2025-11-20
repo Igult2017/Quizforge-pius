@@ -1,7 +1,8 @@
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { ArrowRight, CheckCircle2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { ArrowRight, CheckCircle2, Lock } from "lucide-react";
 
 interface CategoryCardProps {
   title: string;
@@ -12,6 +13,8 @@ interface CategoryCardProps {
   color: "purple" | "orange" | "teal";
   iconSrc?: string;
   onStart: () => void;
+  locked?: boolean;
+  freeTrialAvailable?: boolean;
 }
 
 const colorStyles = {
@@ -35,17 +38,34 @@ export function CategoryCard({
   color,
   iconSrc,
   onStart,
+  locked = false,
+  freeTrialAvailable = false,
 }: CategoryCardProps) {
   return (
-    <Card className={`border-l-4 ${colorStyles[color]} hover-elevate transition-all`} data-testid={`card-category-${title.toLowerCase().replace(/\s+/g, '-')}`}>
+    <Card className={`border-l-4 ${colorStyles[color]} hover-elevate transition-all ${locked ? 'opacity-60' : ''}`} data-testid={`card-category-${title.toLowerCase().replace(/\s+/g, '-')}`}>
       <CardHeader>
-        {iconSrc && (
-          <div className="w-12 h-12 mb-2 rounded-lg overflow-hidden">
-            <img src={iconSrc} alt={title} className="w-full h-full object-cover" />
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex-1">
+            {iconSrc && (
+              <div className="w-12 h-12 mb-2 rounded-lg overflow-hidden">
+                <img src={iconSrc} alt={title} className="w-full h-full object-cover" />
+              </div>
+            )}
+            <CardTitle className="text-2xl">{title}</CardTitle>
+            <CardDescription>{description}</CardDescription>
           </div>
-        )}
-        <CardTitle className="text-2xl">{title}</CardTitle>
-        <CardDescription>{description}</CardDescription>
+          {locked && (
+            <Badge variant="secondary" className="gap-1">
+              <Lock className="h-3 w-3" />
+              Locked
+            </Badge>
+          )}
+          {!locked && freeTrialAvailable && (
+            <Badge variant="outline" className="gap-1">
+              Free Trial
+            </Badge>
+          )}
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -71,12 +91,22 @@ export function CategoryCard({
       </CardContent>
       <CardFooter>
         <Button 
-          className={`w-full bg-gradient-to-r ${colorButtons[color]} text-white hover:opacity-90`}
+          className={`w-full ${locked ? 'bg-muted text-muted-foreground' : `bg-gradient-to-r ${colorButtons[color]} text-white hover:opacity-90`}`}
           onClick={onStart}
+          disabled={locked}
           data-testid={`button-start-${title.toLowerCase().replace(/\s+/g, '-')}`}
         >
-          Start Practice
-          <ArrowRight className="ml-2 h-4 w-4" />
+          {locked ? (
+            <>
+              <Lock className="mr-2 h-4 w-4" />
+              Subscribe to Unlock
+            </>
+          ) : (
+            <>
+              Start Practice
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </>
+          )}
         </Button>
       </CardFooter>
     </Card>

@@ -8,7 +8,7 @@ import { pageSEO, productSchema } from "@/lib/seo-data";
 
 export default function Pricing() {
   const [, setLocation] = useLocation();
-  const { isAuthenticated, hasActiveSubscription, hasUsedFreeTrial, subscription } = useUserData();
+  const { isAuthenticated, hasActiveSubscription, allFreeTrialsUsed, subscription } = useUserData();
 
   const handleFreeTrial = () => {
     if (isAuthenticated) {
@@ -38,7 +38,7 @@ export default function Pricing() {
       return isCurrentPlan ? "Current Plan" : "Switch Plan";
     }
     
-    if (hasUsedFreeTrial && planType === "free") {
+    if (allFreeTrialsUsed && planType === "free") {
       return "Trial Used";
     }
     
@@ -52,7 +52,7 @@ export default function Pricing() {
       return subscription?.plan === planName.toLowerCase();
     }
     
-    if (hasUsedFreeTrial && planType === "free") {
+    if (allFreeTrialsUsed && planType === "free") {
       return true;
     }
     
@@ -117,8 +117,9 @@ export default function Pricing() {
             period="one-time"
             description="Try before you subscribe"
             features={[
-              "30 practice questions",
-              "All question categories",
+              "50 NCLEX questions (one-time)",
+              "50 ATI TEAS questions (one-time)",
+              "50 HESI A2 questions (one-time)",
               "Detailed explanations"
             ]}
             buttonText={getButtonText("free", "free")}

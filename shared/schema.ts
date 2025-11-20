@@ -28,7 +28,9 @@ export const users = pgTable("users", {
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
-  hasUsedFreeTrial: boolean("has_used_free_trial").default(false).notNull(),
+  nclexFreeTrialUsed: boolean("nclex_free_trial_used").default(false).notNull(),
+  teasFreeTrialUsed: boolean("teas_free_trial_used").default(false).notNull(),
+  hesiFreeTrialUsed: boolean("hesi_free_trial_used").default(false).notNull(),
   isAdmin: boolean("is_admin").default(false).notNull(),
   isBanned: boolean("is_banned").default(false).notNull(),
   adminGrantedAccess: boolean("admin_granted_access").default(false).notNull(),
@@ -144,7 +146,9 @@ export type UpsertUser = {
 export const insertUserSchema = createInsertSchema(users).omit({
   createdAt: true,
   updatedAt: true,
-  hasUsedFreeTrial: true,
+  nclexFreeTrialUsed: true,
+  teasFreeTrialUsed: true,
+  hesiFreeTrialUsed: true,
 });
 
 export const insertSubscriptionSchema = createInsertSchema(subscriptions).omit({
