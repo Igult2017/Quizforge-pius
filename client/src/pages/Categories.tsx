@@ -1,6 +1,5 @@
 import { Header } from "@/components/Header";
 import { CategoryCard } from "@/components/CategoryCard";
-import { EmailVerificationBanner } from "@/components/EmailVerificationBanner";
 import nclexIcon from "@assets/generated_images/NCLEX_stethoscope_icon_fdac6417.png";
 import teasIcon from "@assets/generated_images/TEAS_study_books_icon_e557edc3.png";
 import hesiIcon from "@assets/generated_images/HESI_brain_knowledge_icon_67dac13b.png";
@@ -89,9 +88,6 @@ export default function Categories() {
       <Header />
 
       <div className="container mx-auto px-4 py-12">
-        {/* Email Verification Banner */}
-        <EmailVerificationBanner />
-
         <div className="mb-8">
           <h1 className="text-3xl md:text-4xl font-bold mb-2">Choose Your Practice Category</h1>
           <p className="text-lg text-muted-foreground">

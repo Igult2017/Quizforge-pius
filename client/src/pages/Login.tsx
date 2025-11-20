@@ -1,13 +1,14 @@
 // Login.tsx
 import { useState } from "react";
 import { auth, loginWithEmail, loginWithGoogle } from "@/lib/firebase";
+import { sendEmailVerification } from "firebase/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, getQueryFn } from "@/lib/queryClient";
-import { Loader2, GraduationCap } from "lucide-react";
+import { Loader2, GraduationCap, Mail } from "lucide-react";
 import { Link } from "wouter";
 
 const style = `
@@ -31,6 +32,9 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isResendingVerification, setIsResendingVerification] = useState(false);
+  const [showResendVerification, setShowResendVerification] = useState(false);
+  const [unverifiedEmail, setUnverifiedEmail] = useState("");
   const [isReturningUser] = useState(checkIsReturningUser());
   const welcomeText = isReturningUser 
     ? "Welcome back! Continue your exam prep journey."
@@ -45,6 +49,25 @@ export default function Login() {
       const credential = await loginWithEmail(email, password);
       const user = credential.user;
       if (!user) throw new Error("Firebase login failed: user not returned.");
+
+      // Check if email is verified
+      if (!user.emailVerified) {
+        // Show resend verification option
+        setUnverifiedEmail(email);
+        setShowResendVerification(true);
+        
+        // Sign out the user immediately
+        await auth?.signOut();
+        
+        toast({
+          variant: "destructive",
+          title: "Email Not Verified",
+          description: "Please verify your email address before logging in. Check your inbox for the verification link.",
+          duration: 7000,
+        });
+        setIsLoading(false);
+        return;
+      }
 
       await user.getIdToken(true);
 
@@ -69,6 +92,37 @@ export default function Login() {
         description: error.message || "Invalid email or password",
       });
       setIsLoading(false);
+    }
+  };
+
+  const handleResendVerification = async () => {
+    setIsResendingVerification(true);
+    
+    try {
+      // Temporarily sign in to send verification email
+      const credential = await loginWithEmail(unverifiedEmail, password);
+      const user = credential.user;
+      
+      if (user) {
+        await sendEmailVerification(user);
+        // Sign out again
+        await auth?.signOut();
+        
+        toast({
+          title: "Verification Email Sent",
+          description: "Please check your inbox and verify your email address.",
+          duration: 5000,
+        });
+      }
+    } catch (error: any) {
+      console.error("Resend verification error:", error);
+      toast({
+        variant: "destructive",
+        title: "Failed to Send Email",
+        description: error.message || "Please try again later",
+      });
+    } finally {
+      setIsResendingVerification(false);
     }
   };
 
@@ -189,6 +243,28 @@ export default function Login() {
                   {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Sign In"}
                 </Button>
               </form>
+
+              {showResendVerification && (
+                <div className="bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200 dark:border-yellow-800 rounded-md p-4">
+                  <div className="flex items-start gap-3">
+                    <Mail className="h-5 w-5 text-yellow-600 dark:text-yellow-500 mt-0.5 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-gray-700 dark:text-gray-300 mb-2">
+                        Haven't received the verification email?
+                      </p>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={handleResendVerification}
+                        disabled={isResendingVerification}
+                        data-testid="button-resend-verification-login"
+                      >
+                        {isResendingVerification ? "Sending..." : "Resend Verification Email"}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div className="text-center text-sm text-gray-500 pt-2">
                 Don't have an account?{" "}
