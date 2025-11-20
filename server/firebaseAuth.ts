@@ -10,9 +10,24 @@ try {
   
   // Initialize with service account if provided, otherwise use default credentials
   const serviceAccountKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+  const serviceAccountKeyBase64 = process.env.FIREBASE_SERVICE_ACCOUNT_KEY_BASE64;
   
-  if (serviceAccountKey) {
-    // Parse service account JSON from environment variable
+  if (serviceAccountKeyBase64) {
+    // Decode base64-encoded service account (recommended for Coolify)
+    try {
+      const decodedKey = Buffer.from(serviceAccountKeyBase64, 'base64').toString('utf-8');
+      const serviceAccount = JSON.parse(decodedKey);
+      firebaseAdmin = admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount),
+        projectId: projectId,
+      });
+      console.log("Firebase Admin initialized with base64-encoded service account");
+    } catch (decodeError) {
+      console.error("Failed to decode FIREBASE_SERVICE_ACCOUNT_KEY_BASE64:", decodeError);
+      throw new Error("Invalid FIREBASE_SERVICE_ACCOUNT_KEY_BASE64: must be valid base64-encoded JSON");
+    }
+  } else if (serviceAccountKey) {
+    // Parse service account JSON from environment variable (direct JSON)
     try {
       const serviceAccount = JSON.parse(serviceAccountKey);
       firebaseAdmin = admin.initializeApp({
