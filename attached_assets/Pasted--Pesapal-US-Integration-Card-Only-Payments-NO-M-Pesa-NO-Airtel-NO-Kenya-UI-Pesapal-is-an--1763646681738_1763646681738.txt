@@ -1,0 +1,179 @@
+🇺🇸 Pesapal US Integration — Card-Only Payments (NO M-Pesa, NO Airtel, NO Kenya UI)
+
+Pesapal is an African payment gateway, but it does support pure card-only flows using Visa/Mastercard/Amex even for non-African companies.
+
+However, Pesapal checkout defaults to displaying all enabled payment methods, including:
+
+M-Pesa (Kenya)
+
+Airtel Money
+
+Mobile wallets
+
+Local currencies (KES)
+
+If you submit a standard SubmitOrderRequest, you’ll see the mobile money UI because Pesapal assumes a Kenya-based merchant unless you explicitly instruct it otherwise.
+
+🔑 Key Concept Developers Must Understand
+
+Pesapal has two different fields that developers often confuse:
+
+Field	Used For	Effect
+payment_method	Subscriptions only	❌ Does NOT filter the checkout UI
+payment_methods	Allowed payment methods	✅ Controls what the user sees
+
+Therefore:
+
+❌ This will NOT hide Mpesa:
+"payment_method": "CARD"
+
+✅ This WILL hide Mpesa and Airtel and show only card checkout:
+"payment_methods": ["CARD"]
+
+
+This is the only correct way to remove all mobile-money options.
+
+🌍 Removing all Kenya-specific elements
+
+For a US-based company:
+
+You must remove/replace:
+Kenya-specific	Replace with
+"KES" currency	"USD" (if enabled on your merchant account)
+"country_code": "KE"	"country_code": "US"
+Phone format +254	Standard E.164 US formatting +1xxx…
+M-Pesa, Airtel UI	Filter via "payment_methods": ["CARD"]
+
+Pesapal does not enforce Kenya values; the country is purely informational on billing.
+
+🧑‍💻 Working Example — Pesapal Card-Only (US-Ready)
+
+This is the minimum API-safe implementation:
+
+from flask import Flask, request, jsonify, url_for
+import requests, uuid, os
+from dotenv import load_dotenv
+
+load_dotenv()
+app = Flask(__name__)
+
+PESAPAL_KEY = os.getenv("PESAPAL_CONSUMER_KEY")
+PESAPAL_SECRET = os.getenv("PESAPAL_CONSUMER_SECRET")
+BASE_URL = "https://pay.pesapal.com/v3"
+
+
+def get_access_token():
+    response = requests.post(
+        f"{BASE_URL}/api/Auth/RequestToken",
+        json={"consumer_key": PESAPAL_KEY, "consumer_secret": PESAPAL_SECRET}
+    )
+    response.raise_for_status()
+    return response.json().get("token")
+
+
+def register_ipn(callback_url):
+    token = get_access_token()
+    headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+
+    # Register a new IPN URL
+    payload = {"url": callback_url, "ipn_notification_type": "GET"}
+    resp = requests.post(f"{BASE_URL}/api/URLSetup/RegisterIPN", json=payload, headers=headers)
+    resp.raise_for_status()
+    return resp.json().get("ipn_id")
+
+
+@app.route("/initiate-card-payment", methods=["POST"])
+def initiate_card_payment():
+    amount = request.json.get("amount")
+    email = request.json.get("email")
+    phone = request.json.get("phone")
+    first = request.json.get("first_name")
+    last = request.json.get("last_name")
+
+    callback_url = url_for("payment_callback", _external=True)
+    ipn_id = register_ipn(callback_url)
+    token = get_access_token()
+
+    order_id = str(uuid.uuid4())
+
+    order_request = {
+        "id": order_id,
+        "currency": "USD",                  # ← US company billing
+        "amount": float(amount),
+        "description": "Card Payment",
+
+        "callback_url": callback_url,
+        "notification_id": ipn_id,
+
+        # ❗ THE KEY TO HIDING KENYA WALLET OPTIONS
+        "payment_methods": ["CARD"],        # ← Card-only checkout
+
+        "billing_address": {
+            "email_address": email,
+            "phone_number": phone,          # E.164 US format
+            "country_code": "US",           # ← Not Kenya
+            "first_name": first,
+            "last_name": last
+        }
+    }
+
+    headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+
+    resp = requests.post(f"{BASE_URL}/api/Transactions/SubmitOrderRequest",
+                         json=order_request, headers=headers)
+    resp.raise_for_status()
+
+    return jsonify(resp.json())
+
+
+@app.route("/payment-callback")
+def payment_callback():
+    order_tracking_id = request.args.get("OrderTrackingId")
+
+    token = get_access_token()
+    headers = {"Authorization": f"Bearer {token}"}
+
+    resp = requests.get(
+        f"{BASE_URL}/api/Transactions/GetTransactionStatus?orderTrackingId={order_tracking_id}",
+        headers=headers
+    )
+
+    return jsonify(resp.json())
+
+
+if __name__ == "__main__":
+    app.run(debug=True)
+
+🧾 What the customer sees on Pesapal checkout
+
+Only:
+
+Visa
+
+Mastercard
+
+American Express
+
+No:
+
+Mpesa
+
+Airtel Money
+
+Kenya mobile phone input
+
++254 country code
+
+All of that disappears because:
+
+"payment_methods": ["CARD"]
+
+🟦 Summary for US Developer Teams
+
+✔ Pesapal supports card-only payments
+✔ No Kenya elements required
+✔ Currency can be USD
+✔ Phone and country fields can be US values
+✔ To hide Mpesa & Airtel you must explicitly whitelist:
+
+"payment_methods": ["CARD"]

@@ -1,5 +1,5 @@
 // pesapal-client.ts
-// PesaPal client for Kenya payments (TypeScript)
+// PesaPal client for international card payments (TypeScript)
 
 import axios, { AxiosError } from "axios";
 
@@ -160,7 +160,7 @@ export async function createOrder(orderData: CreateOrderData): Promise<PesaPalOr
     description: orderData.description,
     callback_url: orderData.callbackUrl,
     notification_id: ipnId,
-    payment_method: "CARD",
+    payment_methods: ["CARD"],
     billing_address: {
       email_address: orderData.email,
       phone_number: orderData.phone,
