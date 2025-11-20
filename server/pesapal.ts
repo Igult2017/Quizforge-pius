@@ -170,6 +170,8 @@ export async function createOrder(orderData: CreateOrderData): Promise<PesaPalOr
     },
   };
 
+  console.log("[PesaPal] Sending payload to PesaPal:", JSON.stringify(payload, null, 2));
+
   try {
     const resp = await axios.post(`${PESAPAL_BASE_URL}/api/Transactions/SubmitOrderRequest`, payload, {
       headers: {
