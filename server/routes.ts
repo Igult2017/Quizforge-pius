@@ -685,7 +685,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/admin/generation/status", async (req, res) => {
     try {
       const { db } = await import("./db.js");
-      const { generationSubjectProgress, systemSettings } = await import("@shared/schema");
+      const { generationSubjectProgress, systemSettings, questions } = await import("@shared/schema");
       const { eq, sql } = await import("drizzle-orm");
 
       // Get auto-generation enabled status
@@ -697,21 +697,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const isEnabled = setting.length > 0 ? setting[0].value === "true" : true;
 
-      // Get all subject progress
+      // Count ACTUAL questions in database grouped by category and subject
+      const actualCounts = await db
+        .select({
+          category: questions.category,
+          subject: questions.subject,
+          count: sql<number>`cast(count(*) as int)`,
+        })
+        .from(questions)
+        .groupBy(questions.category, questions.subject);
+
+      // Create a map of actual counts for quick lookup
+      const countsMap = new Map<string, number>();
+      actualCounts.forEach(({ category, subject, count }) => {
+        const key = `${category}|${subject}`;
+        countsMap.set(key, count);
+      });
+
+      // Get subject progress tracking (for targets)
       const subjects = await db
         .select()
         .from(generationSubjectProgress)
         .orderBy(generationSubjectProgress.sortOrder);
 
-      // Calculate totals
-      const totalTarget = subjects.reduce((sum, s) => sum + s.targetCount, 0);
-      const totalGenerated = subjects.reduce((sum, s) => sum + s.generatedCount, 0);
+      // Merge actual counts with tracking data
+      const subjectsWithActualCounts = subjects.map(subject => {
+        const key = `${subject.category}|${subject.subject}`;
+        const actualCount = countsMap.get(key) || 0;
+        
+        return {
+          ...subject,
+          generatedCount: actualCount, // Use actual database count
+        };
+      });
+
+      // Calculate totals from ACTUAL database counts
+      const totalTarget = subjectsWithActualCounts.reduce((sum, s) => sum + s.targetCount, 0);
+      const totalGenerated = subjectsWithActualCounts.reduce((sum, s) => sum + s.generatedCount, 0);
 
       res.json({
         isEnabled,
         totalTarget,
         totalGenerated,
-        subjects,
+        subjects: subjectsWithActualCounts,
       });
     } catch (error) {
       console.error("Error getting generation status:", error);
