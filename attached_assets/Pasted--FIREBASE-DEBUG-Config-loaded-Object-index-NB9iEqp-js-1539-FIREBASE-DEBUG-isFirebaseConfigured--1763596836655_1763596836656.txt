@@ -1,0 +1,57 @@
+[FIREBASE DEBUG] Config loaded: Object
+index-NB9iEqp-.js:1539 [FIREBASE DEBUG] isFirebaseConfigured: true
+index-NB9iEqp-.js:1842 [ADMIN DETECTION] Object
+index-NB9iEqp-.js:1842 [AuthChange] Triggered: Object
+index-NB9iEqp-.js:1842 [AuthChange] Triggered: Object
+index-NB9iEqp-.js:1842 [Auth] Token refreshed successfully: ✅
+index-NB9iEqp-.js:1842 [ADMIN DETECTION] Object
+index-NB9iEqp-.js:1842 [Auth] Token refreshed successfully: ✅
+index-NB9iEqp-.js:1842 [ADMIN DETECTION] Object
+index-NB9iEqp-.js:1842 [ADMIN DETECTION] Object
+index-NB9iEqp-.js:1842 [RESOLVED USER DATA] Object
+index-NB9iEqp-.js:2060 AdminQuestions component rendered
+index-NB9iEqp-.js:2060 Question counts: Object
+/api/admin/questions/counts:1  Failed to load resource: the server responded with a status of 401 ()Understand this error
+index-NB9iEqp-.js:2060 AdminQuestions component rendered
+index-NB9iEqp-.js:2060 Question counts: Object
+index-NB9iEqp-.js:1992 Navigating to: /admin/generation
+/api/admin/generation/status:1  Failed to load resource: the server responded with a status of 401 ()Understand this error
+/api/admin/generation/status:1  Failed to load resource: the server responded with a status of 401 ()Understand this error
+index-NB9iEqp-.js:1992 Navigating to: /admin/questions
+index-NB9iEqp-.js:2060 AdminQuestions component rendered
+index-NB9iEqp-.js:2060 Question counts: Object
+/api/admin/questions/counts:1  Failed to load resource: the server responded with a status of 401 ()Understand this error
+index-NB9iEqp-.js:2060 AdminQuestions component rendered
+index-NB9iEqp-.js:2060 Question counts: Object
+index-NB9iEqp-.js:1992 Navigating to: /categories
+index-NB9iEqp-.js:1842 [ADMIN DETECTION] Object
+index-NB9iEqp-.js:1842 [AuthChange] Triggered: Object
+index-NB9iEqp-.js:1842 [Auth] Token refreshed successfully: ✅
+index-NB9iEqp-.js:1842 [ADMIN DETECTION] Object
+index-NB9iEqp-.js:1842 [RESOLVED USER DATA] Object
+index-NB9iEqp-.js:1982 Starting NCLEX practice
+index-NB9iEqp-.js:1842 [ADMIN DETECTION] Object
+index-NB9iEqp-.js:1842 [AuthChange] Triggered: Object
+index-NB9iEqp-.js:1842 [AuthChange] Triggered: Object
+index-NB9iEqp-.js:1842 [ADMIN DETECTION] Object
+index-NB9iEqp-.js:1842 [Auth] Token refreshed successfully: ✅
+index-NB9iEqp-.js:1842 [ADMIN DETECTION] Object
+index-NB9iEqp-.js:1842 [Auth] Token refreshed successfully: ✅
+index-NB9iEqp-.js:1842 [ADMIN DETECTION] Object
+index-NB9iEqp-.js:1842 [RESOLVED USER DATA] Object
+/api/quiz/start:1  Failed to load resource: the server responded with a status of 500 ()Understand this error
+index-NB9iEqp-.js:1842 [ADMIN DETECTION] Object
+index-NB9iEqp-.js:1842 [RESOLVED USER DATA] Object
+index-NB9iEqp-.js:1842 [ADMIN DETECTION] Object
+index-NB9iEqp-.js:1842 [AuthChange] Triggered: Object
+index-NB9iEqp-.js:1842 [Auth] Token refreshed successfully: ✅
+index-NB9iEqp-.js:1842 [ADMIN DETECTION] Object
+index-NB9iEqp-.js:1842 [RESOLVED USER DATA] Object
+/api/admin/analytics:1  Failed to load resource: the server responded with a status of 401 ()Understand this error
+index-NB9iEqp-.js:1992 Navigating to: /admin/questions
+index-NB9iEqp-.js:2060 AdminQuestions component rendered
+index-NB9iEqp-.js:2060 Question counts: Object
+/api/admin/questions/counts:1  Failed to load resource: the server responded with a status of 401 ()Understand this error
+index-NB9iEqp-.js:2060 AdminQuestions component rendered
+index-NB9iEqp-.js:2060 Question counts: Object
+index-NB9iEqp-.js:1992 Navigating to: /admin/questions

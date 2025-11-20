@@ -10,6 +10,7 @@ import { isFirstFirebaseUser } from "./firebaseAuth";
 export async function isAdmin(req: any, res: Response, next: NextFunction) {
   try {
     if (!req.user || !req.user.claims || !req.user.claims.sub) {
+      console.log("[ADMIN CHECK] No user or claims found");
       return res.status(401).json({ error: "Unauthorized" });
     }
 
@@ -17,10 +18,14 @@ export async function isAdmin(req: any, res: Response, next: NextFunction) {
     const userEmail = req.user.claims.email;
     const normalizedEmail = userEmail?.toLowerCase().trim();
 
+    console.log(`[ADMIN CHECK] Checking admin status for: ${userEmail} (UID: ${userId})`);
+
     // Check if user is the first Firebase user (automatic admin)
     const isFirstUser = await isFirstFirebaseUser(userId);
     
-    if (isFirstUser) {
+    console.log(`[ADMIN CHECK] isFirstUser result: ${isFirstUser}`);
+    
+    if (isFirstUser === true) {
       console.log(`[FIREBASE ADMIN] First Firebase user detected: ${userEmail} (UID: ${userId})`);
 
       // Ensure user exists in DB
@@ -46,23 +51,33 @@ export async function isAdmin(req: any, res: Response, next: NextFunction) {
         await storage.makeUserAdmin(user.id);
       }
 
+      console.log(`[ADMIN CHECK] ✅ First user admin access granted`);
       return next();
     }
 
-    // Regular admin check for non-first users
+    // If first user detection failed (null), fallback to database check
+    if (isFirstUser === null) {
+      console.warn(`[ADMIN CHECK] ⚠️ First user detection failed - checking database`);
+    }
+
+    // Regular admin check (database)
     let user = await storage.getUser(userId);
 
     if (!user && normalizedEmail) {
       user = await storage.getUserByEmail(normalizedEmail);
     }
 
+    console.log(`[ADMIN CHECK] User found in DB: ${user ? 'Yes' : 'No'}, isAdmin: ${user?.isAdmin || false}`);
+
     if (!user || !user.isAdmin) {
+      console.log(`[ADMIN CHECK] ❌ Access denied - not admin`);
       return res.status(403).json({ error: "Forbidden - Admin access required" });
     }
 
+    console.log(`[ADMIN CHECK] ✅ Database admin access granted`);
     next();
   } catch (error) {
-    console.error("Admin middleware error:", error);
+    console.error("[ADMIN CHECK] Error:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 }
