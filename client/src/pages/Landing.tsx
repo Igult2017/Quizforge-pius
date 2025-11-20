@@ -11,6 +11,7 @@ import nurseImage2 from "@assets/generated_images/Nursing_Professional_Portrait_
 import nurseImage3 from "@assets/generated_images/Healthcare_Student_Studying_944b5e0c.png";
 import { SEO } from "@/components/SEO";
 import { pageSEO, organizationSchema, productSchema, faqSchema } from "@/lib/seo-data";
+import { useUserData } from "@/hooks/useUserData";
 
 // =================================================================
 // CUSTOM ICON COMPONENT (Based on User's Gear/Process Image)
@@ -135,7 +136,6 @@ const Header = ({ onSignIn, onGetStarted }) => {
   const navItems = [
     { name: "Exams", href: "/exams" },
     { name: "Pricing", href: "/pricing" },
-    { name: "Blog", href: "/blog" },
     { name: "About", href: "/about" },
   ];
 
