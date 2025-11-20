@@ -174,54 +174,122 @@ Make questions realistic and clinically relevant. Ensure proper formatting with 
       cleanContent = cleanContent.replace(/^```\n?/, "").replace(/\n?```$/, "");
     }
 
-    // Parse JSON with aggressive cleanup
+    // Parse JSON with multiple fallback strategies
     let questions;
     try {
       questions = JSON.parse(cleanContent);
     } catch (parseError: any) {
-      console.error("❌ JSON parse error:", parseError.message);
+      console.error("❌ Initial JSON parse error:", parseError.message);
       
-      // Try aggressive JSON cleanup
+      // Strategy 1: Clean up common JSON issues
       let fixedContent = cleanContent
+        // Remove BOM and invisible characters
+        .replace(/^\uFEFF/, '')
+        .replace(/[\u0000-\u001F\u007F-\u009F]/g, '')
         // Remove trailing commas before closing brackets/braces
         .replace(/,(\s*[}\]])/g, '$1')
-        // Remove any text before the first [
-        .replace(/^[^[]*/, '')
-        // Remove any text after the last ]
-        .replace(/[^\]]*$/, '')
-        // Try to fix truncated strings by closing them
-        .replace(/("[^"]*$)/, '$1"');
+        // Ensure it starts with [ and ends with ]
+        .trim();
+      
+      // Make sure we only have the array part
+      const firstBracket = fixedContent.indexOf('[');
+      const lastBracket = fixedContent.lastIndexOf(']');
+      
+      if (firstBracket !== -1 && lastBracket !== -1 && lastBracket > firstBracket) {
+        fixedContent = fixedContent.substring(firstBracket, lastBracket + 1);
+      }
       
       try {
-        console.log("🔧 Attempting to parse cleaned JSON (attempt 1)...");
+        console.log("🔧 Attempting parse with basic cleanup (attempt 1)...");
         questions = JSON.parse(fixedContent);
-        console.log("✅ Successfully parsed after cleanup");
+        console.log("✅ Successfully parsed after basic cleanup");
       } catch (secondError: any) {
-        // Try more aggressive cleanup - extract only complete question objects
+        // Strategy 2: Try to fix quote issues
         try {
-          console.log("🔧 Attempting manual question extraction (attempt 2)...");
+          console.log("🔧 Attempting parse with quote fixing (attempt 2)...");
           
-          // Find all complete question objects using regex
-          const questionPattern = /\{[^}]*"question"[^}]*"options"[^}]*"correctAnswer"[^}]*"explanation"[^}]*\}/g;
-          const matches = cleanContent.match(questionPattern);
+          // Replace escaped single quotes in strings with apostrophes
+          let quoteFixed = fixedContent
+            .replace(/\\'/g, "'")
+            // Fix double-escaped quotes
+            .replace(/\\\\"/g, '\\"');
           
-          if (matches && matches.length > 0) {
-            // Wrap in array and try to parse
-            fixedContent = '[' + matches.join(',') + ']';
-            questions = JSON.parse(fixedContent);
-            console.log(`✅ Extracted ${questions.length} complete questions via pattern matching`);
-          } else {
-            throw new Error("Could not extract any complete questions");
-          }
+          questions = JSON.parse(quoteFixed);
+          console.log("✅ Successfully parsed after quote fixing");
         } catch (thirdError: any) {
-          // If all fails, log details and throw
-          const errorPosition = parseInt(secondError.message.match(/\d+/)?.[0] || '0');
-          const sample = cleanContent.substring(Math.max(0, errorPosition - 100), errorPosition + 100);
-          console.error("Failed all cleanup attempts. Sample around error position:");
-          console.error(sample);
-          console.error("\nFirst 500 chars of response:", cleanContent.substring(0, 500));
-          console.error("\nLast 500 chars of response:", cleanContent.substring(cleanContent.length - 500));
-          throw new Error(`Invalid JSON response from Gemini AI: ${parseError.message}`);
+          // Strategy 3: Extract complete question objects manually
+          try {
+            console.log("🔧 Attempting manual extraction of complete questions (attempt 3)...");
+            
+            // Split on question object boundaries and rebuild
+            const objectMatches: any[] = [];
+            let depth = 0;
+            let currentObj = '';
+            let inString = false;
+            let escapeNext = false;
+            
+            for (let i = 0; i < cleanContent.length; i++) {
+              const char = cleanContent[i];
+              
+              if (escapeNext) {
+                currentObj += char;
+                escapeNext = false;
+                continue;
+              }
+              
+              if (char === '\\') {
+                escapeNext = true;
+                currentObj += char;
+                continue;
+              }
+              
+              if (char === '"') {
+                inString = !inString;
+              }
+              
+              if (!inString) {
+                if (char === '{') {
+                  if (depth === 0) currentObj = '';
+                  depth++;
+                }
+                if (char === '}') {
+                  depth--;
+                  if (depth === 0) {
+                    currentObj += char;
+                    // Try to parse this object
+                    try {
+                      const obj = JSON.parse(currentObj);
+                      if (obj.question && obj.options && obj.correctAnswer && obj.explanation) {
+                        objectMatches.push(obj);
+                      }
+                    } catch (e) {
+                      // Skip invalid objects
+                    }
+                    currentObj = '';
+                    continue;
+                  }
+                }
+              }
+              
+              if (depth > 0) {
+                currentObj += char;
+              }
+            }
+            
+            if (objectMatches.length > 0) {
+              questions = objectMatches;
+              console.log(`✅ Manually extracted ${questions.length} valid question objects`);
+            } else {
+              throw new Error("Could not extract any valid question objects");
+            }
+          } catch (fourthError: any) {
+            // If all strategies fail, provide detailed error info
+            console.error("❌ All parsing strategies failed");
+            console.error("\nOriginal error:", parseError.message);
+            console.error("\nFirst 300 chars:", cleanContent.substring(0, 300));
+            console.error("\nLast 300 chars:", cleanContent.substring(Math.max(0, cleanContent.length - 300)));
+            throw new Error(`Invalid JSON response from Gemini AI after all cleanup attempts: ${parseError.message}`);
+          }
         }
       }
     }

@@ -1,0 +1,85 @@
+> rest-express@1.0.0 start
+> npm run db:migrate && NODE_ENV=production node dist/index.js
+
+
+> rest-express@1.0.0 db:migrate
+> drizzle-kit push --force
+
+No config path provided, using default 'drizzle.config.ts'
+Reading config file '/app/drizzle.config.ts'
+Using 'pg' driver for database querying
+[⣷] Pulling schema from database...
+KG[⣯] Pulling schema from database...
+KG[⣟] Pulling schema from database...
+KG[⡿] Pulling schema from database...
+KG[⢿] Pulling schema from database...
+KG[⣻] Pulling schema from database...
+KG[⣽] Pulling schema from database...
+KG[⣷] Pulling schema from database...
+KG[✓] Pulling schema from database...
+[✓] Changes applied
+Firebase Admin initialized with Application Default Credentials for project: quizeforge-44a83
+[INIT] Checking system users...
+[INIT] ✓ Anonymous user already exists
+1:12:37 AM [express] Serving on port 3000
+
+🚀 Starting background question generation service
+   Schedule: */5 * * * * (every 5 minutes)
+   Batch size: 10 questions per run
+🔧 Initializing background generation progress...
+✓ Generation progress already initialized
+✓ Background generation service started
+
+1:12:40 AM [express] GET /api/admin/generation/status 304 in 12ms
+
+🎓 Generating questions for NCLEX - Management of Care
+   Progress: 214/850
+🔍 Auto-detecting working Gemini model...
+   Testing: gemini-2.0-flash-exp...
+✓ Found working model: gemini-2.0-flash-exp
+1:12:51 AM [express] GET /api/admin/generation/status 200 in 6ms
+🔧 Attempting to parse cleaned JSON (attempt 1)...
+🔧 Attempting manual question extraction (attempt 2)...
+1:13:01 AM [express] GET /api/admin/generation/status 200 in 5ms
+1:13:11 AM [express] GET /api/admin/generation/status 304 in 21ms
+❌ JSON parse error: Unexpected token ']', ..."in.",
+    ],
+    "co"... is not valid JSON
+Failed all cleanup attempts. Sample around error position:
+nding of anticoagulant therapy.",
+    "subject": "Management of Care",
+    "difficulty": "medium"
+  }
+]
+
+First 500 chars of response: [
+  {
+    "question": "A client with a history of chronic obstructive pulmonary disease (COPD) is admitted to the medical-surgical unit. Which nursing intervention is the MOST appropriate to delegate to a licensed practical nurse (LPN)?",
+    "options": ["Administering oxygen therapy and monitoring oxygen saturation", "Assessing the client's respiratory effort and lung sounds", "Developing the plan of care for the client's respiratory needs", "Educating the client on pursed-lip breathing techniq
+
+Last 500 chars of response:  eating large amounts of leafy green vegetables.'", "'I can continue to take aspirin for my headaches.'"],
+    "correctAnswer": "'I can continue to take aspirin for my headaches.'",
+    "explanation": "Aspirin also has anticoagulant properties and should not be taken concurrently with other anticoagulant medications due to the increased risk of bleeding. The other statements reflect an understanding of anticoagulant therapy.",
+    "subject": "Management of Care",
+    "difficulty": "medium"
+  }
+]
+Error generating questions with Gemini AI: Error: Invalid JSON response from Gemini AI: Unexpected token ']', ..."in.",
+    ],
+    "co"... is not valid JSON
+    at generateQuestions (file:///app/dist/index.js:606:17)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async generateForSubject (file:///app/dist/index.js:750:24)
+    at async runGenerationCycle (file:///app/dist/index.js:821:5)
+   ✗ Error generating questions: Failed to generate questions: Invalid JSON response from Gemini AI: Unexpected token ']', ..."in.",
+    ],
+    "co"... is not valid JSON
+1:13:22 AM [express] GET /api/admin/generation/status 304 in 21ms
+1:13:32 AM [express] GET /api/admin/generation/status 304 in 21ms
+[ADMIN CHECK] No user or claims found
+1:13:41 AM [express] POST /api/admin/generation/trigger 401 in 1ms
+1:13:42 AM [express] GET /api/admin/generation/status 304 in 16ms
+1:13:53 AM [express] GET /api/admin/generation/status 304 in 16ms
+1:14:03 AM [express] GET /api/admin/generation/status 304 in 18ms
+1:14:13 AM [express] GET /api/auth/user 304 in 183ms
+1:14:13 AM [express] GET /api/admin/questions/counts 304 in 2ms
