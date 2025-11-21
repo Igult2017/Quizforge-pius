@@ -31,7 +31,7 @@ export default function AdminGeneration() {
   const { toast } = useToast();
 
   // Fetch generation status
-  const { data: status, isLoading } = useQuery<GenerationStatus>({
+  const { data: status, isLoading, refetch } = useQuery<GenerationStatus>({
     queryKey: ["/api/admin/generation/status"],
     refetchInterval: 10000, // Refresh every 10 seconds
   });
@@ -171,6 +171,16 @@ export default function AdminGeneration() {
                   Resume Generation
                 </>
               )}
+            </Button>
+
+            <Button
+              onClick={() => refetch()}
+              disabled={isLoading}
+              variant="outline"
+              data-testid="button-refresh-status"
+            >
+              <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`} />
+              Refresh Status
             </Button>
 
             <Button
