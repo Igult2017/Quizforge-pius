@@ -9,7 +9,8 @@ const SECRET_KEY = process.env.PAYSTACK_SECRET_KEY || "";
 const PAYSTACK_BASE_URL = "https://api.paystack.co";
 
 if (!SECRET_KEY) {
-  console.warn("[Paystack] Warning: PAYSTACK_SECRET_KEY not set in environment variables.");
+  console.error("[Paystack] ERROR: PAYSTACK_SECRET_KEY is not set in environment variables. Payment processing will fail!");
+  console.error("[Paystack] Please add your Paystack live secret key to your environment variables.");
 }
 
 // Countries allowed for payment: USA, European countries, Australia
@@ -100,6 +101,13 @@ export async function initializePayment(data: {
   merchantReference: string;
   countryCode: string;
 }): Promise<PaystackInitializeResponse> {
+  // Check if secret key is configured
+  if (!SECRET_KEY) {
+    throw new Error(
+      "Payment processing is not configured. Please set PAYSTACK_SECRET_KEY in environment variables."
+    );
+  }
+
   // Validate country code
   if (!isCountryAllowed(data.countryCode)) {
     throw new Error(
