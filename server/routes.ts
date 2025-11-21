@@ -1344,7 +1344,7 @@ ${urls.map(url => `  <url>
   });
 
   // Admin analytics dashboard
-  app.get("/api/admin/analytics", isAdmin, async (req: any, res) => {
+  app.get("/api/admin/analytics", isAuthenticated, isAdmin, async (req: any, res) => {
     try {
       const users = await storage.getAllUsers();
       const allSubscriptions = await storage.getAllSubscriptions();
