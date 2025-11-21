@@ -776,7 +776,7 @@ ${urls.map(url => `  <url>
   });
 
   // Get question counts by category (public - for dashboard display)
-  app.get("/api/admin/questions/counts", async (req, res) => {
+  app.get("/api/admin/questions/counts", isAuthenticated, isAdmin, async (req, res) => {
     try {
       const counts = await storage.getQuestionCountsByCategory();
       
@@ -838,8 +838,8 @@ ${urls.map(url => `  <url>
 
   // ============= BACKGROUND GENERATION ROUTES =============
 
-  // Get background generation status (public - for dashboard display)
-  app.get("/api/admin/generation/status", async (req, res) => {
+  // Get background generation status
+  app.get("/api/admin/generation/status", isAuthenticated, isAdmin, async (req, res) => {
     try {
       const { db } = await import("./db.js");
       const { generationSubjectProgress, systemSettings, questions } = await import("@shared/schema");
