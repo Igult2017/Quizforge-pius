@@ -185,8 +185,8 @@ ${urls.map(url => `  <url>
 
       // Plan pricing in US Dollars (USD)
       const planPricing: Record<string, number> = {
-        weekly: 5,
-        monthly: 15,
+        weekly: 19.99,
+        monthly: 49.99,
       };
 
       const amount = planPricing[plan];

@@ -178,8 +178,8 @@ export default function PostPaymentSignup() {
   }
 
   const planDetails: Record<string, { price: string; name: string; duration: string }> = {
-    weekly: { price: "$5", name: "Weekly Plan", duration: "7 days" },
-    monthly: { price: "$15", name: "Monthly Plan", duration: "30 days" },
+    weekly: { price: "$19.99", name: "Weekly Plan", duration: "7 days" },
+    monthly: { price: "$49.99", name: "Monthly Plan", duration: "30 days" },
   };
 
   const currentPlan = planDetails[paymentData?.plan] || {};

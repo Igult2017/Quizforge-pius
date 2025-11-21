@@ -129,7 +129,7 @@ export default function Pricing() {
 
           <PricingCard
             title="Monthly Plan"
-            price="$15"
+            price="$49.99"
             period="month"
             description="Consistent study, most popular"
             features={[
@@ -146,7 +146,7 @@ export default function Pricing() {
 
           <PricingCard
             title="Weekly Plan"
-            price="$5"
+            price="$19.99"
             period="week"
             description="Perfect for intensive exam prep"
             features={[

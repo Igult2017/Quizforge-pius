@@ -40,8 +40,8 @@ export default function Checkout() {
   }, [isAuthenticated, userData]);
 
   const planDetails: Record<string, { price: string; name: string }> = {
-    weekly: { price: "$5", name: "Weekly Plan" },
-    monthly: { price: "$15", name: "Monthly Plan" },
+    weekly: { price: "$19.99", name: "Weekly Plan" },
+    monthly: { price: "$49.99", name: "Monthly Plan" },
   };
 
   const currentPlan = planDetails[plan];
