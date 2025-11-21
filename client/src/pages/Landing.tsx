@@ -651,7 +651,7 @@ export default function Landing() {
                     {hasActiveSubscription && subscription?.plan === "monthly" ? "Current Plan" : "Most Popular"}
                   </Badge>
                   <CardTitle className="font-poppins">Monthly Plan</CardTitle>
-                  <CardDescription className="text-2xl font-bold mt-2 font-poppins">$15/month</CardDescription>
+                  <CardDescription className="text-2xl font-bold mt-2 font-poppins">$49.99/month</CardDescription>
                 </CardHeader>
                 <CardContent className="font-poppins">
                   <ul className="space-y-3">
@@ -688,7 +688,7 @@ export default function Landing() {
                   )}
                   <CardTitle className="font-poppins">Weekly Plan</CardTitle>
                   {/* The previous error was here. CardDescription should be closed before CardHeader */}
-                  <CardDescription className="text-2xl font-bold mt-2 font-poppins">$5/week</CardDescription>
+                  <CardDescription className="text-2xl font-bold mt-2 font-poppins">$19.99/week</CardDescription>
                 </CardHeader> {/* <-- FIXED: Changed </CardDescription> to </CardHeader> */}
                 <CardContent className="font-poppins">
                   <ul className="space-y-3">
