@@ -1,0 +1,68 @@
+2025-Dec-12 15:39:37.982769
+Starting deployment of Igult2017/Quizforge-pius:main to localhost.
+2025-Dec-12 15:39:38.409734
+Preparing container with helper image: ghcr.io/coollabsio/coolify-helper:1.0.12
+2025-Dec-12 15:39:40.260884
+----------------------------------------
+2025-Dec-12 15:39:40.265233
+Importing Igult2017/Quizforge-pius:main (commit sha c73aa4339fcd76c3230254e610aa23c6dbcf2fee) to /artifacts/h0840s0ows84w4wg8s80w0g4.
+2025-Dec-12 15:39:43.002732
+Image not found (g0g88ok4kksokcoo8o8c8cco:c73aa4339fcd76c3230254e610aa23c6dbcf2fee). Building new image.
+2025-Dec-12 15:39:46.713483
+----------------------------------------
+2025-Dec-12 15:39:46.723807
+Building docker image started.
+2025-Dec-12 15:39:46.732011
+To check the current progress, click on Show Debug Logs.
+2025-Dec-12 15:40:15.599846
+Oops something is not okay, are you okay? 😢
+2025-Dec-12 15:40:15.656089
+#0 building with "default" instance using docker driver
+2025-Dec-12 15:40:15.656089
+2025-Dec-12 15:40:15.656089
+#1 [internal] load build definition from Dockerfile
+2025-Dec-12 15:40:15.656089
+#1 transferring dockerfile: 2.46kB done
+2025-Dec-12 15:40:15.656089
+#1 DONE 0.0s
+2025-Dec-12 15:40:15.656089
+2025-Dec-12 15:40:15.656089
+#2 [internal] load metadata for docker.io/library/node:20-alpine
+2025-Dec-12 15:40:15.656089
+#2 DONE 0.3s
+2025-Dec-12 15:40:15.656089
+2025-Dec-12 15:40:15.656089
+#3 [internal] load .dockerignore
+2025-Dec-12 15:40:15.656089
+#3 transferring context: 2B done
+2025-Dec-12 15:40:15.656089
+#3 DONE 0.0s
+2025-Dec-12 15:40:15.656089
+2025-Dec-12 15:40:15.656089
+#4 [1/6] FROM docker.io/library/node:20-alpine@sha256:643e7036aa985317ebfee460005e322aa550c6b6883000d01daefb58689a58e2
+2025-Dec-12 15:40:15.656089
+#4 DONE 0.0s
+2025-Dec-12 15:40:15.656089
+2025-Dec-12 15:40:15.656089
+#5 [internal] load build context
+2025-Dec-12 15:40:15.656089
+#5 transferring context: 17.51MB 0.3s done
+2025-Dec-12 15:40:15.656089
+#5 DONE 0.3s
+2025-Dec-12 15:40:15.656089
+2025-Dec-12 15:40:15.656089
+#6 [2/6] WORKDIR /app
+2025-Dec-12 15:40:15.656089
+#6 CACHED
+2025-Dec-12 15:40:15.656089
+2025-Dec-12 15:40:15.656089
+#7 [3/6] COPY package*.json ./
+2025-Dec-12 15:40:15.656089
+#7 CACHED
+2025-Dec-12 15:40:15.656089
+2025-Dec-12 15:40:15.656089
+#8 [4/6] RUN npm install
+2025-Dec-12 15:40:15.693030
+Deployment failed. Removing the new version of your application.
+2025-Dec-12 15:40:18.291793
+Gracefully shutting down build container: h0840s0ows84w4wg8s80w0g4
