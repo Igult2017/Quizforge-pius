@@ -35,6 +35,7 @@ Admin authentication is Firebase-based. The first user to sign up via Firebase A
 8. **NEW: Topic Selection Page** - New intermediate page (`/topic-selection`) between categories and quiz, allowing users to select specific subjects and toggle adaptive learning mode.
 9. **ENHANCED: Granular Topic Selection** - Users can now expand each subject to select individual topics (e.g., "Advocacy" under "Management of Care") using collapsible nested checkboxes. URL params support both `subjects` (fully selected) and `topics` (format: `subject:topic`) for filtering.
 10. **NEW: Admin User Deletion** - Admins can delete users (including other admins, but not themselves) from the admin panel. Cascade deletes all related data (quiz history, subscriptions, payments). Confirmation dialog required.
+11. **NEW: Auto-Logout on Inactivity** - Users are automatically logged out after 10 minutes of inactivity for security. Tracks mouse, keyboard, touch, scroll, and click events. Toast notification shown when session expires.
 
 **Previous Updates (Nov 20, 2025)**:
 1. Paystack Payment Integration, Google Sign-In Account Merging, Strict Email Verification, Base64 Service Account Support.

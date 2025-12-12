@@ -2,6 +2,7 @@ import React from "react";
 import { Switch, Route, Redirect } from "wouter";
 import { useAuth } from "./hooks/useAuth";
 import { useUserData } from "./hooks/useUserData";
+import { useAutoLogout } from "./hooks/useAutoLogout";
 import { TawkToChat } from "./components/TawkToChat";
 
 import Landing from "./pages/Landing";
@@ -24,6 +25,9 @@ import NotFound from "./pages/not-found";
 function App() {
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const { userData, isLoading: userLoading } = useUserData();
+  
+  // Auto-logout after 10 minutes of inactivity
+  useAutoLogout(isAuthenticated);
 
   const isLoading = authLoading || userLoading;
 
