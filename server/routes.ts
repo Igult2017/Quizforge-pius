@@ -796,11 +796,59 @@ ${urls.map(url => `  <url>
     }
   });
 
-  // Get question counts by topic/subject
+  // Get question counts by topic/subject (includes all defined subjects, even with 0 questions)
   app.get("/api/admin/questions/counts-by-topic", async (req, res) => {
     try {
-      const counts = await storage.getQuestionCountsByTopic();
-      res.json(counts);
+      const actualCounts = await storage.getQuestionCountsByTopic();
+      
+      // Create a map for quick lookup: "CATEGORY|subject" -> count
+      const countsMap = new Map<string, number>();
+      for (const c of actualCounts) {
+        countsMap.set(`${c.category}|${c.subject}`, c.count);
+      }
+      
+      // Import the defined subjects
+      const { NCLEX_SUBJECTS, TEAS_SUBJECTS, HESI_SUBJECTS } = await import("./questionTopics");
+      
+      // Build complete list with all defined subjects
+      const result: { category: string; subject: string; count: number }[] = [];
+      
+      // Add all NCLEX subjects
+      for (const subject of NCLEX_SUBJECTS) {
+        result.push({
+          category: "NCLEX",
+          subject: subject.name,
+          count: countsMap.get(`NCLEX|${subject.name}`) || 0,
+        });
+      }
+      
+      // Add all TEAS subjects
+      for (const subject of TEAS_SUBJECTS) {
+        result.push({
+          category: "TEAS",
+          subject: subject.name,
+          count: countsMap.get(`TEAS|${subject.name}`) || 0,
+        });
+      }
+      
+      // Add all HESI subjects
+      for (const subject of HESI_SUBJECTS) {
+        result.push({
+          category: "HESI",
+          subject: subject.name,
+          count: countsMap.get(`HESI|${subject.name}`) || 0,
+        });
+      }
+      
+      // Also include any subjects in database that aren't in the defined list
+      for (const c of actualCounts) {
+        const exists = result.some(r => r.category === c.category && r.subject === c.subject);
+        if (!exists) {
+          result.push(c);
+        }
+      }
+      
+      res.json(result);
     } catch (error) {
       console.error("Get question counts by topic error:", error);
       res.status(500).json({ error: "Failed to get question counts by topic" });
