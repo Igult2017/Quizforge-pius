@@ -5,12 +5,11 @@ import { generateQuestions } from "./gemini";
 import { storage } from "./storage";
 
 const BATCH_SIZE = 5; // Generate 5 questions per API call
-const PROCESSING_INTERVAL_MS = 30000; // Process every 30 seconds to minimize API calls
+const DELAY_BETWEEN_BATCHES_MS = 5000; // 5 second delay between batches to avoid rate limits
 const MAX_ERRORS_BEFORE_PAUSE = 3;
-const RETRY_DELAY_MS = 60000; // Wait 1 minute after an error before retrying
 
 let isProcessing = false;
-let processingInterval: NodeJS.Timeout | null = null;
+let shouldStopProcessing = false;
 
 export async function processNextJobBatch(): Promise<{ processed: boolean; jobId?: number; generated?: number; error?: string }> {
   if (isProcessing) {
@@ -162,31 +161,54 @@ export async function processNextJobBatch(): Promise<{ processed: boolean; jobId
   }
 }
 
-export function startJobProcessor() {
-  if (processingInterval) {
-    console.log("📋 Job processor already running");
+// Continuously process jobs until all are done or stopped
+async function runContinuousProcessing() {
+  if (isProcessing) {
+    console.log("📋 Processor already running");
     return;
   }
 
-  console.log(`\n📋 Starting generation job processor`);
-  console.log(`   Interval: ${PROCESSING_INTERVAL_MS / 1000} seconds`);
-  console.log(`   Batch size: ${BATCH_SIZE} questions per run`);
+  shouldStopProcessing = false;
+  
+  console.log(`\n📋 Starting automatic job processing...`);
+  console.log(`   Batch size: ${BATCH_SIZE} questions per API call`);
+  console.log(`   Delay between batches: ${DELAY_BETWEEN_BATCHES_MS / 1000} seconds`);
 
-  // Process immediately on start
-  processNextJobBatch();
+  while (!shouldStopProcessing) {
+    const result = await processNextJobBatch();
+    
+    if (!result.processed) {
+      // No jobs to process, stop the loop
+      console.log("📋 No pending jobs, stopping processor");
+      break;
+    }
 
-  // Then process on interval
-  processingInterval = setInterval(async () => {
-    await processNextJobBatch();
-  }, PROCESSING_INTERVAL_MS);
+    if (result.error) {
+      // Error occurred, check if we should continue
+      const [activeJob] = await db
+        .select()
+        .from(generationJobs)
+        .where(inArray(generationJobs.status, ["pending", "running"]))
+        .limit(1);
+      
+      if (!activeJob) {
+        console.log("📋 No more active jobs after error, stopping processor");
+        break;
+      }
+    }
+
+    // Wait between batches to avoid rate limits
+    if (!shouldStopProcessing) {
+      await new Promise(resolve => setTimeout(resolve, DELAY_BETWEEN_BATCHES_MS));
+    }
+  }
+
+  console.log("📋 Automatic processing stopped");
 }
 
 export function stopJobProcessor() {
-  if (processingInterval) {
-    clearInterval(processingInterval);
-    processingInterval = null;
-    console.log("📋 Generation job processor stopped");
-  }
+  shouldStopProcessing = true;
+  console.log("📋 Stopping job processor...");
 }
 
 export async function createGenerationJob(params: {
@@ -214,8 +236,8 @@ export async function createGenerationJob(params: {
 
   console.log(`📋 Created generation job #${job.id}: ${params.totalCount} ${params.category} questions on "${params.topic}"`);
   
-  // Trigger immediate processing
-  setTimeout(() => processNextJobBatch(), 1000);
+  // Start automatic continuous processing (runs in background)
+  setTimeout(() => runContinuousProcessing(), 1000);
 
   return job;
 }
@@ -250,8 +272,8 @@ export async function resumeJob(jobId: number) {
     .set({ status: "pending", errorCount: 0, lastError: null, updatedAt: new Date() })
     .where(eq(generationJobs.id, jobId));
   
-  // Trigger immediate processing
-  setTimeout(() => processNextJobBatch(), 1000);
+  // Start automatic continuous processing
+  setTimeout(() => runContinuousProcessing(), 1000);
 }
 
 export async function deleteJob(jobId: number) {

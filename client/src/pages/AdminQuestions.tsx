@@ -143,22 +143,6 @@ export default function AdminQuestions() {
     },
   });
 
-  // Manual job processing (since auto-processor is disabled)
-  const processJobsMutation = useMutation({
-    mutationFn: async () => {
-      const res = await apiRequest("POST", "/api/admin/generation-jobs/process");
-      return await res.json();
-    },
-    onSuccess: () => {
-      toast({ title: "Processing triggered", description: "Generating next batch of questions..." });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/generation-jobs"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/questions/counts"] });
-    },
-    onError: (error: any) => {
-      toast({ title: "Processing failed", description: error.message, variant: "destructive" });
-    },
-  });
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -250,6 +234,17 @@ export default function AdminQuestions() {
   const activeJobs = jobs?.filter(j => j.status === "running" || j.status === "pending") || [];
   const completedJobs = jobs?.filter(j => j.status === "completed") || [];
   const otherJobs = jobs?.filter(j => j.status !== "running" && j.status !== "pending" && j.status !== "completed") || [];
+
+  // Auto-refresh jobs list while processing is active
+  useEffect(() => {
+    if (activeJobs.length > 0) {
+      const interval = setInterval(() => {
+        queryClient.invalidateQueries({ queryKey: ["/api/admin/generation-jobs"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/admin/questions/counts"] });
+      }, 5000); // Refresh every 5 seconds during active processing
+      return () => clearInterval(interval);
+    }
+  }, [activeJobs.length]);
 
   return (
     <div className="p-6 space-y-6 max-w-7xl mx-auto bg-background">
@@ -465,7 +460,7 @@ Example for Medical-Surgical:
 
             <div className="flex items-center justify-between pt-4 border-t gap-4">
               <div className="text-sm text-muted-foreground">
-                Questions are generated 5 at a time. Click "Process Jobs" to generate.
+                Questions are generated automatically in batches of 5. Processing continues until complete.
               </div>
 
               <Button
@@ -480,8 +475,8 @@ Example for Medical-Surgical:
                   </>
                 ) : (
                   <>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Start Generation Job
+                    <Play className="mr-2 h-4 w-4" />
+                    Start Generation
                   </>
                 )}
               </Button>
@@ -498,23 +493,9 @@ Example for Medical-Surgical:
               <Loader2 className="h-4 w-4 animate-spin" />
               Active Generation Jobs ({activeJobs.length})
             </CardTitle>
-            <Button
-              onClick={() => processJobsMutation.mutate()}
-              disabled={processJobsMutation.isPending}
-              data-testid="button-process-jobs"
-            >
-              {processJobsMutation.isPending ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Processing...
-                </>
-              ) : (
-                <>
-                  <Play className="mr-2 h-4 w-4" />
-                  Process Jobs
-                </>
-              )}
-            </Button>
+            <Badge variant="outline" className="text-green-600 dark:text-green-400">
+              Auto-processing in batches of 5
+            </Badge>
           </CardHeader>
           <CardContent className="space-y-4">
             {activeJobs.map((job) => {
