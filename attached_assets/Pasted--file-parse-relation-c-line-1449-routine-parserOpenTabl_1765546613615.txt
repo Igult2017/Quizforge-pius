@@ -1,0 +1,100 @@
+ file: 'parse_relation.c',
+  line: '1449',
+  routine: 'parserOpenTable'
+⏸️  Auto-generation is paused
+}
+Job processor error: error: relation "generation_jobs" does not exist
+    at /app/node_modules/pg-pool/index.js:45:11
+⏸️  Auto-generation is paused
+[ADMIN CHECK] No user or claims found
+1:35:02 PM [express] GET /api/admin/generation-jobs 401 in 17ms
+1:35:07 PM [express] GET /api/auth/user 304 in 581ms
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async file:///app/node_modules/drizzle-orm/node-postgres/session.js:83:22
+    at async processNextJobBatch (file:///app/dist/index.js:1399:19)
+    at async Timeout._onTimeout (file:///app/dist/index.js:1505:5) {
+  length: 115,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '217',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1449',
+  routine: 'parserOpenTable'
+}
+1:35:07 PM [express] GET /api/auth/user/progress 304 in 146ms
+[ADMIN CHECK] No user or claims found
+1:35:07 PM [express] GET /api/admin/generation-jobs 401 in 3ms
+[ADMIN CHECK] Checking admin status for: nursebraceadmin@gmail.com (UID: g3mYmkT9vLPkrPOJn81f3uTt1az2)
+[FIREBASE ADMIN] Using persisted first user UID: 34865I3cA5c0EMbYDtThCckcxF32
+[ADMIN CHECK] isFirstUser result: false
+[ADMIN CHECK] User found in DB: Yes, isAdmin: true
+[ADMIN CHECK] ✅ Database admin access granted
+1:35:07 PM [express] GET /api/admin/questions/counts 304 in 24ms
+[ADMIN CHECK] No user or claims found
+1:35:13 PM [express] GET /api/admin/generation-jobs 401 in 1ms
+[ADMIN CHECK] No user or claims found
+1:35:18 PM [express] GET /api/admin/generation-jobs 401 in 3ms
+[ADMIN CHECK] No user or claims found
+1:35:23 PM [express] GET /api/admin/generation-jobs 401 in 0ms
+[ADMIN CHECK] No user or claims found
+1:35:23 PM [express] POST /api/admin/generation-jobs 401 in 2ms
+[ADMIN CHECK] No user or claims found
+1:35:34 PM [express] GET /api/admin/generation-jobs 401 in 3ms
+Job processor error: error: relation "generation_jobs" does not exist
+    at /app/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async file:///app/node_modules/drizzle-orm/node-postgres/session.js:83:22
+    at async processNextJobBatch (file:///app/dist/index.js:1399:19)
+    at async Timeout._onTimeout (file:///app/dist/index.js:1505:5) {
+  length: 115,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '217',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1449',
+  routine: 'parserOpenTable'
+}
+Job processor error: error: relation "generation_jobs" does not exist
+    at /app/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async file:///app/node_modules/drizzle-orm/node-postgres/session.js:83:22
+    at async processNextJobBatch (file:///app/dist/index.js:1399:19)
+    at async Timeout._onTimeout (file:///app/dist/index.js:1505:5) {
+  length: 115,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '217',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1449',
+  routine: 'parserOpenTable'
+}
