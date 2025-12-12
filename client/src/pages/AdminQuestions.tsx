@@ -946,12 +946,12 @@ The AI will match this style, format, and complexity level."
 
                 <div className="space-y-2">
                   <Label>Subject (optional)</Label>
-                  <Select value={pdfSubject} onValueChange={setPdfSubject}>
+                  <Select value={pdfSubject || "__all__"} onValueChange={(val) => setPdfSubject(val === "__all__" ? "" : val)}>
                     <SelectTrigger data-testid="select-pdf-subject">
                       <SelectValue placeholder="All subjects" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">All subjects</SelectItem>
+                      <SelectItem value="__all__">All subjects</SelectItem>
                       {topicCounts
                         ?.filter(t => t.category === pdfCategory)
                         .map(t => (
