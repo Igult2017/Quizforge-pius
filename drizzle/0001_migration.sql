@@ -29,4 +29,7 @@ CREATE TABLE IF NOT EXISTS "generation_jobs" (
 );
 
 -- Add generation_job_id column to generation_logs table
-ALTER TABLE generation_logs ADD COLUMN IF NOT EXISTS generation_job_id integer REFERENCES generation_jobs(id)
+ALTER TABLE generation_logs ADD COLUMN IF NOT EXISTS generation_job_id integer REFERENCES generation_jobs(id);
+
+-- Make subject_progress_id nullable (required for manual generation jobs)
+ALTER TABLE generation_logs ALTER COLUMN subject_progress_id DROP NOT NULL

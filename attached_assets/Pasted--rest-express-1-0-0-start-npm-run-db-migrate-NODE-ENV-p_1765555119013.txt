@@ -1,0 +1,66 @@
+> rest-express@1.0.0 start
+> npm run db:migrate && NODE_ENV=production node dist/index.js
+
+
+> rest-express@1.0.0 db:migrate
+> npm run db:sql-migrate
+
+
+> rest-express@1.0.0 db:sql-migrate
+> tsx server/runMigration.ts
+
+🔧 Running SQL migration...
+  - Executing: ALTER TABLE users ADD COLUMN IF NOT EXISTS teas_free_trial_u...
+  - Executing: ALTER TABLE users ADD COLUMN IF NOT EXISTS hesi_free_trial_u...
+✅ SQL migration completed successfully
+Firebase Admin initialized with base64-encoded service account
+[INIT] Checking system users...
+[INIT] ✓ Anonymous user already exists
+3:56:47 PM [express] Serving on port 3000
+📋 Manual question generation mode - use admin panel to generate questions
+3:57:23 PM [express] GET /api/admin/generation-jobs 304 in 35ms
+3:57:28 PM [express] GET /api/auth/user/progress 304 in 132ms
+3:57:28 PM [express] GET /api/auth/user 304 in 721ms
+3:57:28 PM [express] GET /api/admin/generation-jobs 304 in 19ms
+3:57:28 PM [express] GET /api/admin/questions/counts 200 in 42ms
+3:57:28 PM [express] GET /api/admin/questions/counts-by-topic 200 in 49ms
+3:57:33 PM [express] GET /api/admin/generation-jobs 304 in 3ms
+3:57:34 PM [express] POST /api/admin/generation-jobs/1/pause 200 in 4ms
+3:57:34 PM [express] GET /api/admin/generation-jobs 200 in 4ms
+3:57:36 PM [express] POST /api/admin/generation-jobs/1/resume 200 in 3ms
+3:57:36 PM [express] GET /api/admin/generation-jobs 200 in 5ms
+
+📝 Processing generation job #1
+   Topic: Medical  surgical  | Category: NCLEX | Difficulty: hard
+   Progress: 15/50 (generating 5 more)
+🔍 Auto-detecting working Gemini model...
+   Testing: gemini-2.0-flash-exp...
+✓ Found working model: gemini-2.0-flash-exp
+3:57:42 PM [express] GET /api/admin/generation-jobs 200 in 2ms
+3:57:47 PM [express] GET /api/admin/generation-jobs 304 in 5ms
+3:57:52 PM [express] GET /api/admin/generation-jobs 200 in 13ms
+3:57:58 PM [express] GET /api/admin/generation-jobs 304 in 2ms
+3:58:03 PM [express] GET /api/admin/generation-jobs 304 in 7ms
+   ✗ Error generating questions: null value in column "subject_progress_id" of relation "generation_logs" violates not-null constraint
+Job processor error: error: null value in column "subject_progress_id" of relation "generation_logs" violates not-null constraint
+    at /app/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async processNextJobBatch (file:///app/dist/index.js:1483:7) {
+  length: 397,
+  severity: 'ERROR',
+  code: '23502',
+  detail: 'Failing row contains (1291, null, NCLEX, Medical  surgical , 5, 0, 0, failed, null value in column "subject_progress_id" of relation "generati..., 14741, 2025-12-12 15:57:52.375999, 1).',
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: 'public',
+  table: 'generation_logs',
+  column: 'subject_progress_id',
+  dataType: undefined,
+  constraint: undefined,
+  file: 'execMain.c',
+  line: '2022',
+  routine: 'ExecConstraints'
+}
