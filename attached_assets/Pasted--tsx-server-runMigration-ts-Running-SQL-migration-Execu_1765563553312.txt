@@ -1,0 +1,100 @@
+> tsx server/runMigration.ts
+
+🔧 Running SQL migration...
+  - Executing: ALTER TABLE users DROP COLUMN IF EXISTS has_used_free_trial...
+  - Executing: ALTER TABLE users ADD COLUMN IF NOT EXISTS nclex_free_trial_...
+  - Executing: ALTER TABLE users ADD COLUMN IF NOT EXISTS teas_free_trial_u...
+  - Executing: ALTER TABLE users ADD COLUMN IF NOT EXISTS hesi_free_trial_u...
+  - Executing: CREATE TABLE IF NOT EXISTS "generation_jobs" (     "id" seri...
+  - Executing: ALTER TABLE generation_logs ADD COLUMN IF NOT EXISTS generat...
+  - Executing: ALTER TABLE generation_logs ALTER COLUMN subject_progress_id...
+  - Executing: ALTER TABLE generation_jobs ADD COLUMN IF NOT EXISTS areas_t...
+✅ SQL migration completed successfully
+Firebase Admin initialized with base64-encoded service account
+[INIT] Checking system users...
+[INIT] ✓ Anonymous user already exists
+6:05:00 PM [express] Serving on port 3000
+📋 Manual question generation mode - use admin panel to generate questions
+6:05:05 PM [express] GET /api/admin/generation-jobs 200 in 18ms
+6:05:10 PM [express] GET /api/admin/generation-jobs 304 in 7ms
+6:05:15 PM [express] GET /api/admin/generation-jobs 304 in 5ms
+6:05:21 PM [express] GET /api/admin/generation-jobs 304 in 3ms
+6:05:26 PM [express] GET /api/admin/generation-jobs 304 in 11ms
+6:05:32 PM [express] GET /api/admin/generation-jobs 304 in 5ms
+6:05:37 PM [express] GET /api/admin/generation-jobs 304 in 4ms
+6:05:42 PM [express] GET /api/admin/generation-jobs 304 in 5ms
+6:05:45 PM [express] GET /api/auth/user 304 in 114ms
+6:05:45 PM [express] GET /api/auth/user/progress 304 in 704ms
+6:05:45 PM [express] GET /api/admin/generation-jobs 200 in 12ms
+6:05:45 PM [express] GET /api/admin/questions/counts 304 in 26ms
+6:05:45 PM [express] GET /api/admin/questions/counts-by-topic 304 in 65ms
+6:05:51 PM [express] GET /api/admin/generation-jobs 304 in 8ms
+6:05:56 PM [express] GET /api/admin/generation-jobs 304 in 4ms
+6:06:01 PM [express] GET /api/admin/generation-jobs 304 in 9ms
+6:06:07 PM [express] GET /api/admin/generation-jobs 304 in 4ms
+6:06:12 PM [express] GET /api/admin/generation-jobs 304 in 3ms
+6:06:17 PM [express] GET /api/admin/generation-jobs 304 in 4ms
+6:06:22 PM [express] GET /api/admin/generation-jobs 304 in 4ms
+6:06:28 PM [express] GET /api/admin/generation-jobs 304 in 3ms
+6:06:33 PM [express] GET /api/admin/generation-jobs 304 in 5ms
+6:06:38 PM [express] GET /api/admin/generation-jobs 304 in 4ms
+6:06:44 PM [express] GET /api/admin/generation-jobs 304 in 36ms
+6:06:44 PM [express] GET /api/admin/questions/by-category/NCLEX 200 in 763ms
+6:07:02 PM [express] GET /api/admin/generation-jobs 304 in 53ms
+6:07:07 PM [express] GET /api/admin/generation-jobs 304 in 3ms
+6:07:13 PM [express] GET /api/admin/generation-jobs 304 in 10ms
+6:07:18 PM [express] GET /api/admin/generation-jobs 304 in 4ms
+6:07:23 PM [express] GET /api/admin/generation-jobs 304 in 2ms
+6:07:28 PM [express] GET /api/admin/generation-jobs 304 in 2ms
+6:08:34 PM [express] GET /api/admin/generation-jobs 304 in 12ms
+6:08:39 PM [express] GET /api/admin/generation-jobs 304 in 4ms
+6:09:30 PM [express] GET /api/admin/generation-jobs 304 in 21ms
+6:09:36 PM [express] GET /api/admin/generation-jobs 304 in 3ms
+6:09:41 PM [express] GET /api/admin/generation-jobs 304 in 3ms
+6:09:47 PM [express] GET /api/admin/generation-jobs 304 in 7ms
+6:13:36 PM [express] GET /api/admin/generation-jobs 304 in 38ms
+6:13:42 PM [express] GET /api/admin/generation-jobs 304 in 9ms
+6:13:47 PM [express] GET /api/admin/generation-jobs 304 in 3ms
+6:13:52 PM [express] GET /api/admin/generation-jobs 304 in 2ms
+6:13:58 PM [express] GET /api/admin/generation-jobs 304 in 8ms
+6:14:03 PM [express] GET /api/admin/generation-jobs 304 in 7ms
+6:14:08 PM [express] GET /api/admin/generation-jobs 304 in 3ms
+6:14:13 PM [express] GET /api/admin/generation-jobs 304 in 3ms
+6:14:19 PM [express] GET /api/admin/generation-jobs 304 in 3ms
+6:14:24 PM [express] GET /api/admin/generation-jobs 304 in 4ms
+6:15:35 PM [express] GET /api/admin/generation-jobs 304 in 25ms
+6:15:40 PM [express] GET /api/admin/generation-jobs 304 in 12ms
+6:16:40 PM [express] GET /api/admin/generation-jobs 304 in 16ms
+6:16:46 PM [express] GET /api/admin/generation-jobs 304 in 3ms
+6:16:51 PM [express] GET /api/admin/generation-jobs 304 in 3ms
+Delete questions by topic error: error: update or delete on table "questions" violates foreign key constraint "quiz_answers_question_id_questions_id_fk" on table "quiz_answers"
+    at /app/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async file:///app/node_modules/drizzle-orm/node-postgres/session.js:83:22
+    at async PostgresStorage.deleteQuestionsByTopic (file:///app/dist/index.js:823:24)
+    at async file:///app/dist/index.js:2611:28 {
+  length: 330,
+  severity: 'ERROR',
+  code: '23503',
+  detail: 'Key (id)=(1) is still referenced from table "quiz_answers".',
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: 'public',
+  table: 'quiz_answers',
+  column: undefined,
+  dataType: undefined,
+  constraint: 'quiz_answers_question_id_questions_id_fk',
+  file: 'ri_triggers.c',
+  line: '2612',
+6:16:56 PM [express] DELETE /api/admin/questions/by-topic 500 in 118ms
+6:16:56 PM [express] GET /api/admin/generation-jobs 304 in 66ms
+6:17:02 PM [express] GET /api/admin/generation-jobs 304 in 4ms
+6:17:07 PM [express] GET /api/admin/generation-jobs 304 in 3ms
+6:17:12 PM [express] GET /api/admin/generation-jobs 304 in 3ms
+6:17:17 PM [express] GET /api/admin/generation-jobs 304 in 7ms
+6:17:28 PM [express] GET /api/admin/generation-jobs 304 in 18ms
+  routine: 'ri_ReportViolation'
+}

@@ -1,4 +1,4 @@
-import { eq, and, sql } from "drizzle-orm";
+import { eq, and, sql, inArray } from "drizzle-orm";
 import { db } from "./db";
 import {
   users,
@@ -362,6 +362,24 @@ export class PostgresStorage implements IStorage {
   }
 
   async deleteQuestionsByTopic(category: string, subject: string): Promise<number> {
+    // First, get the question IDs that will be deleted
+    const questionsToDelete = await db
+      .select({ id: questions.id })
+      .from(questions)
+      .where(and(eq(questions.category, category), eq(questions.subject, subject)));
+    
+    if (questionsToDelete.length === 0) {
+      return 0;
+    }
+    
+    const questionIds = questionsToDelete.map(q => q.id);
+    
+    // Delete related quiz answers first (to avoid foreign key constraint violation)
+    await db
+      .delete(quizAnswers)
+      .where(inArray(quizAnswers.questionId, questionIds));
+    
+    // Now delete the questions
     const result = await db
       .delete(questions)
       .where(and(eq(questions.category, category), eq(questions.subject, subject)))
