@@ -8,6 +8,7 @@ import { z } from "zod";
 import { insertQuestionSchema, insertQuizAttemptSchema, insertQuizAnswerSchema, insertPaymentSchema } from "@shared/schema";
 import { initializePayment, verifyPayment, isCountryAllowed } from "./paystack";
 import { nanoid } from "nanoid";
+import { sendPaymentLeadNotification } from "./mailer";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Get current user endpoint (Firebase/Replit Auth)
@@ -310,6 +311,50 @@ ${urls.map(url => `  <url>
   });
   
   // ============= PAYMENT ROUTES =============
+
+  // Offline lead capture (payment system temporarily down)
+  app.post("/api/payments/offline-lead", async (req, res) => {
+    try {
+      const schema = z.object({
+        plan: z.string().min(1),
+        email: z.string().email(),
+        firstName: z.string().min(1),
+        lastName: z.string().min(1),
+        phone: z.string().optional(),
+      });
+
+      const result = schema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ error: "Invalid form data" });
+      }
+
+      const { plan, email, firstName, lastName, phone } = result.data;
+
+      // Send notification email (fire and forget - don't fail if email fails)
+      sendPaymentLeadNotification({
+        email,
+        firstName,
+        lastName,
+        phone,
+        plan,
+      }).catch((err) => {
+        console.error("[Lead] Failed to send notification:", err);
+      });
+
+      console.log(`[Lead] Captured payment lead for plan: ${plan}`);
+
+      return res.json({
+        success: true,
+        message: "The payment system is currently down. We are working to restore it. Sorry for the inconvenience. We will contact you shortly to assist with your subscription.",
+      });
+    } catch (error: any) {
+      console.error("[Lead] Error capturing lead:", error);
+      return res.status(500).json({ 
+        success: false,
+        error: "Something went wrong. Please try again later." 
+      });
+    }
+  });
   
   // Create payment order
   app.post("/api/payments/create-order", async (req, res) => {
