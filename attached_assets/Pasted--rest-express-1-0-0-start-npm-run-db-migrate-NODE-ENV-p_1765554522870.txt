@@ -1,0 +1,67 @@
+> rest-express@1.0.0 start
+> npm run db:migrate && NODE_ENV=production node dist/index.js
+
+
+> rest-express@1.0.0 db:migrate
+> npm run db:sql-migrate
+
+
+> rest-express@1.0.0 db:sql-migrate
+> tsx server/runMigration.ts
+
+🔧 Running SQL migration...
+  - Executing: ALTER TABLE users ADD COLUMN IF NOT EXISTS teas_free_trial_u...
+  - Executing: ALTER TABLE users ADD COLUMN IF NOT EXISTS hesi_free_trial_u...
+✅ SQL migration completed successfully
+Firebase Admin initialized with base64-encoded service account
+[INIT] Checking system users...
+[INIT] ✓ Anonymous user already exists
+3:46:12 PM [express] Serving on port 3000
+📋 Manual question generation mode - use admin panel to generate questions
+3:46:24 PM [express] GET /api/admin/generation-jobs 304 in 40ms
+3:46:29 PM [express] GET /api/admin/generation-jobs 304 in 10ms
+3:46:34 PM [express] GET /api/admin/generation-jobs 304 in 5ms
+3:46:39 PM [express] GET /api/auth/user 304 in 459ms
+3:46:39 PM [express] GET /api/auth/user/progress 304 in 130ms
+3:46:39 PM [express] GET /api/admin/generation-jobs 304 in 20ms
+3:46:39 PM [express] GET /api/admin/questions/counts 200 in 29ms
+3:46:39 PM [express] GET /api/admin/questions/counts-by-topic 200 in 88ms
+3:46:44 PM [express] POST /api/admin/generation-jobs/1/pause 200 in 5ms
+3:46:44 PM [express] GET /api/admin/generation-jobs 200 in 8ms
+3:46:47 PM [express] POST /api/admin/generation-jobs/1/resume 200 in 6ms
+3:46:47 PM [express] GET /api/admin/generation-jobs 200 in 4ms
+
+📝 Processing generation job #1
+   Topic: Medical  surgical  | Category: NCLEX | Difficulty: hard
+   Progress: 10/50 (generating 5 more)
+🔍 Auto-detecting working Gemini model...
+   Testing: gemini-2.0-flash-exp...
+✓ Found working model: gemini-2.0-flash-exp
+3:46:53 PM [express] GET /api/admin/generation-jobs 200 in 4ms
+3:46:58 PM [express] GET /api/admin/generation-jobs 200 in 14ms
+3:47:03 PM [express] GET /api/admin/generation-jobs 304 in 3ms
+3:47:09 PM [express] GET /api/admin/generation-jobs 304 in 6ms
+3:47:14 PM [express] GET /api/admin/generation-jobs 304 in 5ms
+   ✗ Error generating questions: column "generation_job_id" of relation "generation_logs" does not exist
+Job processor error: error: column "generation_job_id" of relation "generation_logs" does not exist
+    at /app/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async processNextJobBatch (file:///app/dist/index.js:1483:7) {
+  length: 145,
+  severity: 'ERROR',
+  code: '42703',
+  detail: undefined,
+  hint: undefined,
+  position: '61',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_target.c',
+  line: '1065',
+  routine: 'checkInsertTargets'
+}
