@@ -1745,6 +1745,36 @@ ${urls.map(url => `  <url>
     }
   });
 
+  // Delete user (admin only, cannot delete self)
+  app.delete("/api/admin/users/:userId", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { userId } = req.params;
+      const adminId = req.user.claims.sub;
+
+      // Prevent self-deletion
+      if (userId === adminId) {
+        return res.status(400).json({ error: "You cannot delete your own account" });
+      }
+
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      await storage.deleteUser(userId);
+      
+      console.log(`[ADMIN] Admin ${adminId} deleted user ${user.email} (${userId})`);
+      
+      res.json({
+        success: true,
+        message: `User ${user.email} has been deleted`,
+      });
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      res.status(500).json({ error: "Failed to delete user" });
+    }
+  });
+
   // Extend/reduce subscription duration
   app.post("/api/admin/users/:userId/extend-subscription", isAuthenticated, isAdmin, async (req: any, res) => {
     try {

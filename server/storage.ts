@@ -48,6 +48,7 @@ export interface IStorage {
   revokeAdminStatus(userId: string): Promise<void>;
   banUser(userId: string): Promise<void>;
   unbanUser(userId: string): Promise<void>;
+  deleteUser(userId: string): Promise<void>;
 
   // Subscriptions
   createSubscription(subscription: InsertSubscription): Promise<Subscription>;
@@ -234,6 +235,38 @@ export class PostgresStorage implements IStorage {
         updatedAt: new Date() 
       })
       .where(eq(users.id, userId));
+  }
+
+  async deleteUser(userId: string): Promise<void> {
+    // Get all quiz attempts for this user
+    const userAttempts = await db
+      .select({ id: quizAttempts.id })
+      .from(quizAttempts)
+      .where(eq(quizAttempts.userId, userId));
+    
+    const attemptIds = userAttempts.map(a => a.id);
+    
+    // Delete quiz answers first (foreign key constraint)
+    if (attemptIds.length > 0) {
+      await db.delete(quizAnswers).where(inArray(quizAnswers.attemptId, attemptIds));
+    }
+    
+    // Delete quiz attempts
+    await db.delete(quizAttempts).where(eq(quizAttempts.userId, userId));
+    
+    // Delete user topic performance
+    await db.delete(userTopicPerformance).where(eq(userTopicPerformance.userId, userId));
+    
+    // Delete subscriptions
+    await db.delete(subscriptions).where(eq(subscriptions.userId, userId));
+    
+    // Delete payments (keep for audit or delete based on requirements - deleting here as per user request)
+    await db.delete(payments).where(eq(payments.userId, userId));
+    
+    // Finally delete the user
+    await db.delete(users).where(eq(users.id, userId));
+    
+    console.log(`[ADMIN] User ${userId} deleted with all related data`);
   }
 
   // Subscriptions

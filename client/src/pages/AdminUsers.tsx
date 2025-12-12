@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Mail, UserCheck, UserX, XCircle, Ban, Clock, Users, CreditCard, TestTube, ShieldAlert, Shield, ShieldOff } from "lucide-react";
+import { Mail, UserCheck, UserX, XCircle, Ban, Clock, Users, CreditCard, TestTube, ShieldAlert, Shield, ShieldOff, Trash2 } from "lucide-react";
 
 interface User {
   id: string;
@@ -256,6 +256,27 @@ export default function AdminUsers() {
       toast({
         title: "Error",
         description: error.message || "Failed to revoke admin status",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteUserMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      return await apiRequest("DELETE", `/api/admin/users/${userId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      toast({
+        title: "Success",
+        description: "User deleted successfully",
+      });
+      setSelectedUser(null);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete user",
         variant: "destructive",
       });
     },
@@ -671,6 +692,39 @@ export default function AdminUsers() {
                           </DialogFooter>
                         </DialogContent>
                       </Dialog>
+
+                      {currentUser?.id !== user.id && (
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => setSelectedUser(user)}
+                              data-testid={`button-delete-user-${user.id}`}
+                            >
+                              <Trash2 className="h-4 w-4 text-red-600" />
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>Delete User</DialogTitle>
+                              <DialogDescription>
+                                Are you sure you want to delete {user.email}? This action cannot be undone. All user data including quiz history, subscriptions, and payments will be permanently removed.
+                              </DialogDescription>
+                            </DialogHeader>
+                            <DialogFooter>
+                              <Button
+                                variant="destructive"
+                                onClick={() => deleteUserMutation.mutate(user.id)}
+                                disabled={deleteUserMutation.isPending}
+                                data-testid="button-confirm-delete-user"
+                              >
+                                {deleteUserMutation.isPending ? "Deleting..." : "Delete User"}
+                              </Button>
+                            </DialogFooter>
+                          </DialogContent>
+                        </Dialog>
+                      )}
                     </div>
                   </TableCell>
                 </TableRow>
