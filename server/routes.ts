@@ -964,7 +964,7 @@ ${urls.map(url => `  <url>
   // ============= GENERATION JOBS ROUTES =============
   
   // Create a new generation job (batch generation with progress tracking)
-  app.post("/api/admin/generation-jobs", isAuthenticated, isAdmin, async (req: any, res) => {
+  app.post("/api/admin/generation-jobs", isAdmin, async (req: any, res) => {
     try {
       const { category, topic, difficulty, totalCount, sampleQuestion } = req.body;
 
@@ -1008,7 +1008,7 @@ ${urls.map(url => `  <url>
   });
 
   // Get all generation jobs
-  app.get("/api/admin/generation-jobs", isAuthenticated, isAdmin, async (req, res) => {
+  app.get("/api/admin/generation-jobs", isAdmin, async (req, res) => {
     try {
       const { getAllJobs } = await import("./generationJobProcessor.js");
       const jobs = await getAllJobs();
@@ -1020,7 +1020,7 @@ ${urls.map(url => `  <url>
   });
 
   // Get single generation job status
-  app.get("/api/admin/generation-jobs/:id", isAuthenticated, isAdmin, async (req, res) => {
+  app.get("/api/admin/generation-jobs/:id", isAdmin, async (req, res) => {
     try {
       const { getJobStatus } = await import("./generationJobProcessor.js");
       const job = await getJobStatus(Number(req.params.id));
@@ -1037,7 +1037,7 @@ ${urls.map(url => `  <url>
   });
 
   // Pause a generation job
-  app.post("/api/admin/generation-jobs/:id/pause", isAuthenticated, isAdmin, async (req, res) => {
+  app.post("/api/admin/generation-jobs/:id/pause", isAdmin, async (req, res) => {
     try {
       const { pauseJob } = await import("./generationJobProcessor.js");
       await pauseJob(Number(req.params.id));
@@ -1049,7 +1049,7 @@ ${urls.map(url => `  <url>
   });
 
   // Resume a generation job
-  app.post("/api/admin/generation-jobs/:id/resume", isAuthenticated, isAdmin, async (req, res) => {
+  app.post("/api/admin/generation-jobs/:id/resume", isAdmin, async (req, res) => {
     try {
       const { resumeJob } = await import("./generationJobProcessor.js");
       await resumeJob(Number(req.params.id));
@@ -1061,7 +1061,7 @@ ${urls.map(url => `  <url>
   });
 
   // Delete a generation job
-  app.delete("/api/admin/generation-jobs/:id", isAuthenticated, isAdmin, async (req, res) => {
+  app.delete("/api/admin/generation-jobs/:id", isAdmin, async (req, res) => {
     try {
       const { deleteJob } = await import("./generationJobProcessor.js");
       await deleteJob(Number(req.params.id));
