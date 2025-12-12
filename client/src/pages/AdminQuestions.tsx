@@ -139,6 +139,22 @@ export default function AdminQuestions() {
     },
   });
 
+  // Manual job processing (since auto-processor is disabled)
+  const processJobsMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/admin/generation-jobs/process");
+      return await res.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Processing triggered", description: "Generating next batch of questions..." });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/generation-jobs"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/questions/counts"] });
+    },
+    onError: (error: any) => {
+      toast({ title: "Processing failed", description: error.message, variant: "destructive" });
+    },
+  });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -413,7 +429,7 @@ export default function AdminQuestions() {
 
             <div className="flex items-center justify-between pt-4 border-t gap-4">
               <div className="text-sm text-muted-foreground">
-                Questions will be generated 5 at a time every 30 seconds.
+                Questions are generated 5 at a time. Click "Process Jobs" to generate.
               </div>
 
               <Button
@@ -441,11 +457,28 @@ export default function AdminQuestions() {
       {/* Active Jobs */}
       {activeJobs.length > 0 && (
         <Card>
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between gap-4 space-y-0">
             <CardTitle className="text-base flex items-center gap-2">
               <Loader2 className="h-4 w-4 animate-spin" />
               Active Generation Jobs ({activeJobs.length})
             </CardTitle>
+            <Button
+              onClick={() => processJobsMutation.mutate()}
+              disabled={processJobsMutation.isPending}
+              data-testid="button-process-jobs"
+            >
+              {processJobsMutation.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                <>
+                  <Play className="mr-2 h-4 w-4" />
+                  Process Jobs
+                </>
+              )}
+            </Button>
           </CardHeader>
           <CardContent className="space-y-4">
             {activeJobs.map((job) => {

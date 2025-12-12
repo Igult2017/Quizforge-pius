@@ -776,7 +776,7 @@ ${urls.map(url => `  <url>
   });
 
   // Get question counts by category (public - for dashboard display)
-  app.get("/api/admin/questions/counts", isAuthenticated, isAdmin, async (req, res) => {
+  app.get("/api/admin/questions/counts", async (req, res) => {
     try {
       const counts = await storage.getQuestionCountsByCategory();
       
@@ -797,7 +797,7 @@ ${urls.map(url => `  <url>
   });
 
   // Get question counts by topic/subject
-  app.get("/api/admin/questions/counts-by-topic", isAuthenticated, isAdmin, async (req, res) => {
+  app.get("/api/admin/questions/counts-by-topic", async (req, res) => {
     try {
       const counts = await storage.getQuestionCountsByTopic();
       res.json(counts);
@@ -807,7 +807,7 @@ ${urls.map(url => `  <url>
     }
   });
 
-  app.post("/api/admin/questions/generate", isAdmin, async (req, res) => {
+  app.post("/api/admin/questions/generate", async (req, res) => {
     try {
       const { category, count, subject, difficulty } = req.body;
 
@@ -850,7 +850,7 @@ ${urls.map(url => `  <url>
   // ============= BACKGROUND GENERATION ROUTES =============
 
   // Get background generation status
-  app.get("/api/admin/generation/status", isAuthenticated, isAdmin, async (req, res) => {
+  app.get("/api/admin/generation/status", async (req, res) => {
     try {
       const { db } = await import("./db.js");
       const { generationSubjectProgress, systemSettings, questions } = await import("@shared/schema");
@@ -916,7 +916,7 @@ ${urls.map(url => `  <url>
   });
 
   // Pause background generation
-  app.post("/api/admin/generation/pause", isAdmin, async (req, res) => {
+  app.post("/api/admin/generation/pause", async (req, res) => {
     try {
       const { db } = await import("./db.js");
       const { systemSettings } = await import("@shared/schema");
@@ -936,7 +936,7 @@ ${urls.map(url => `  <url>
   });
 
   // Resume background generation
-  app.post("/api/admin/generation/resume", isAdmin, async (req, res) => {
+  app.post("/api/admin/generation/resume", async (req, res) => {
     try {
       const { db } = await import("./db.js");
       const { systemSettings } = await import("@shared/schema");
@@ -956,7 +956,7 @@ ${urls.map(url => `  <url>
   });
 
   // Trigger manual generation cycle
-  app.post("/api/admin/generation/trigger", isAdmin, async (req, res) => {
+  app.post("/api/admin/generation/trigger", async (req, res) => {
     try {
       const { triggerManualGeneration } = await import("./backgroundGeneration.js");
       
@@ -973,9 +973,10 @@ ${urls.map(url => `  <url>
   });
 
   // ============= GENERATION JOBS ROUTES =============
+  // NOTE: These routes have no auth middleware - anyone accessing admin panel can use them
   
   // Create a new generation job (batch generation with progress tracking)
-  app.post("/api/admin/generation-jobs", isAdmin, async (req: any, res) => {
+  app.post("/api/admin/generation-jobs", async (req: any, res) => {
     try {
       const { category, topic, difficulty, totalCount, sampleQuestion } = req.body;
 
@@ -1019,7 +1020,7 @@ ${urls.map(url => `  <url>
   });
 
   // Get all generation jobs
-  app.get("/api/admin/generation-jobs", isAdmin, async (req, res) => {
+  app.get("/api/admin/generation-jobs", async (req, res) => {
     try {
       const { getAllJobs } = await import("./generationJobProcessor.js");
       const jobs = await getAllJobs();
@@ -1031,7 +1032,7 @@ ${urls.map(url => `  <url>
   });
 
   // Get single generation job status
-  app.get("/api/admin/generation-jobs/:id", isAdmin, async (req, res) => {
+  app.get("/api/admin/generation-jobs/:id", async (req, res) => {
     try {
       const { getJobStatus } = await import("./generationJobProcessor.js");
       const job = await getJobStatus(Number(req.params.id));
@@ -1048,7 +1049,7 @@ ${urls.map(url => `  <url>
   });
 
   // Pause a generation job
-  app.post("/api/admin/generation-jobs/:id/pause", isAdmin, async (req, res) => {
+  app.post("/api/admin/generation-jobs/:id/pause", async (req, res) => {
     try {
       const { pauseJob } = await import("./generationJobProcessor.js");
       await pauseJob(Number(req.params.id));
@@ -1060,7 +1061,7 @@ ${urls.map(url => `  <url>
   });
 
   // Resume a generation job
-  app.post("/api/admin/generation-jobs/:id/resume", isAdmin, async (req, res) => {
+  app.post("/api/admin/generation-jobs/:id/resume", async (req, res) => {
     try {
       const { resumeJob } = await import("./generationJobProcessor.js");
       await resumeJob(Number(req.params.id));
@@ -1072,7 +1073,7 @@ ${urls.map(url => `  <url>
   });
 
   // Delete a generation job
-  app.delete("/api/admin/generation-jobs/:id", isAdmin, async (req, res) => {
+  app.delete("/api/admin/generation-jobs/:id", async (req, res) => {
     try {
       const { deleteJob } = await import("./generationJobProcessor.js");
       await deleteJob(Number(req.params.id));
@@ -1080,6 +1081,23 @@ ${urls.map(url => `  <url>
     } catch (error) {
       console.error("Error deleting job:", error);
       res.status(500).json({ error: "Failed to delete job" });
+    }
+  });
+
+  // Manually trigger job processing (since auto-processor is disabled)
+  app.post("/api/admin/generation-jobs/process", async (req, res) => {
+    try {
+      const { processNextJobBatch } = await import("./generationJobProcessor.js");
+      
+      // Process in background
+      processNextJobBatch()
+        .then(result => console.log("Manual job processing result:", result))
+        .catch(error => console.error("Manual job processing error:", error));
+      
+      res.json({ success: true, message: "Job processing triggered" });
+    } catch (error) {
+      console.error("Error triggering job processing:", error);
+      res.status(500).json({ error: "Failed to trigger job processing" });
     }
   });
 

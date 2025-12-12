@@ -103,13 +103,15 @@ app.get("/favicon.ico", (_req, res) => {
       () => {
         log(`Serving on port ${port}`);
         
-        // Start background question generation
-        startBackgroundGeneration().catch((error) => {
-          console.error("Failed to start background generation:", error);
-        });
+        // DISABLED: Background auto-generation - using manual generation only
+        // startBackgroundGeneration().catch((error) => {
+        //   console.error("Failed to start background generation:", error);
+        // });
         
-        // Start generation job processor for manual batch generation
-        startJobProcessor();
+        // DISABLED: Job processor auto-start - triggered manually via admin panel
+        // startJobProcessor();
+        
+        console.log("📋 Manual question generation mode - use admin panel to generate questions");
       }
     );
   } catch (err) {

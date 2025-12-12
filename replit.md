@@ -24,10 +24,18 @@ Admin authentication is Firebase-based. The first user to sign up via Firebase A
 4. **Strict Email Verification** - Users who sign up via email/password **must verify their email before they can log in**. Existing users grandfathered in. Google Sign-In users automatically verified.
 5. **Base64 Service Account Support** - Firebase Admin supports base64-encoded credentials via `FIREBASE_SERVICE_ACCOUNT_KEY_BASE64` for Coolify.
 
+**Updates (Dec 12, 2025)**:
+1. **Manual Question Generation Mode** - Automatic/background question generation has been disabled. Use the admin panel to create generation jobs and manually trigger processing via the "Process Jobs" button.
+2. **No Authorization for Generation Routes** - Generation-related API endpoints no longer require authentication. Anyone who can access the admin panel can generate questions.
+3. **Topic Breakdown Display** - Admin panel now shows collapsible question counts grouped by topic within each category.
+4. **Migration File Updated** - `drizzle/0001_migration.sql` now includes the `generation_jobs` table creation.
+
+**Previous Updates (Nov 20, 2025)**:
+1. Paystack Payment Integration, Google Sign-In Account Merging, Strict Email Verification, Base64 Service Account Support.
+
 **Previous Updates (Nov 19, 2025)**: 
-1. **Automatic Background Question Generation** - System automatically generates all 12,500 questions in the background without user interaction. Runs every 5 minutes, rotating through all subjects until complete. Fully monitored via Admin Panel → Generation.
-2. **Flexible Gemini Model Support** - System automatically detects which Gemini model works with your API key. Set `GEMINI_MODEL` to specify a particular model, or let it auto-detect.
-3. Fixed critical Firebase Admin integration for proper authentication flow.
+1. **Flexible Gemini Model Support** - System automatically detects which Gemini model works with your API key. Set `GEMINI_MODEL` to specify a particular model, or let it auto-detect.
+2. Fixed critical Firebase Admin integration for proper authentication flow.
 
 ### UI/UX Decisions
 - Modern typography with Poppins font for the pricing section and Merriweather for headings.
