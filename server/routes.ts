@@ -682,11 +682,11 @@ ${urls.map(url => `  <url>
       // Always use 50 questions
       const questionCount = 50;
       
-      // Get adaptive and subjects options from request
-      const { adaptive, subjects } = req.body;
+      // Get adaptive, subjects, and topics options from request
+      const { adaptive, subjects, topics } = req.body;
 
       // Get questions - use adaptive selection if enabled
-      console.log(`Quiz request - User: ${user.email}, Category: "${category}", Count: ${questionCount}, FreeTrial: ${isFreeTrialAttempt}, Adaptive: ${adaptive}`);
+      console.log(`Quiz request - User: ${user.email}, Category: "${category}", Count: ${questionCount}, FreeTrial: ${isFreeTrialAttempt}, Adaptive: ${adaptive}, Subjects: ${subjects?.length || 'all'}, Topics: ${topics?.length || 'none'}`);
       
       let questions;
       if (adaptive) {
@@ -695,11 +695,12 @@ ${urls.map(url => `  <url>
           userId,
           category,
           questionCount,
-          subjects || undefined
+          subjects || undefined,
+          topics || undefined
         );
         console.log(`Adaptive questions found: ${questions.length} for category "${category}"`);
       } else {
-        questions = await storage.getRandomQuestions(category, questionCount, subjects || undefined);
+        questions = await storage.getRandomQuestions(category, questionCount, subjects || undefined, topics || undefined);
         console.log(`Random questions found: ${questions.length} for category "${category}"`);
       }
       

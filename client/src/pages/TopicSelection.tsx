@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Header } from "@/components/Header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -32,15 +32,16 @@ export default function TopicSelection() {
   const { isAuthenticated } = useAuth();
   const category = new URLSearchParams(window.location.search).get("category") || "NCLEX";
   
-  const [selectedSubjects, setSelectedSubjects] = useState<Set<string>>(new Set());
+  const [selectedTopics, setSelectedTopics] = useState<Map<string, Set<string>>>(new Map());
   const [expandedSubjects, setExpandedSubjects] = useState<Set<string>>(new Set());
   const [useAdaptive, setUseAdaptive] = useState(true);
+  const checkboxRefs = useRef<Map<string, HTMLButtonElement | null>>(new Map());
 
   const { data: topicsData, isLoading: topicsLoading } = useQuery<Record<string, SubjectInfo[]>>({
     queryKey: ["/api/topics"],
   });
 
-  const { data: performanceData, isLoading: performanceLoading } = useQuery<TopicPerformance[]>({
+  const { data: performanceData } = useQuery<TopicPerformance[]>({
     queryKey: ["/api/auth/user/topic-performance", category],
     enabled: isAuthenticated,
   });
@@ -48,14 +49,62 @@ export default function TopicSelection() {
   const subjects = topicsData?.[category] || [];
   const performanceMap = new Map(performanceData?.map(p => [p.subject, p]));
 
-  const toggleSubject = (subject: string) => {
-    const newSelected = new Set(selectedSubjects);
-    if (newSelected.has(subject)) {
-      newSelected.delete(subject);
+  useEffect(() => {
+    subjects.forEach(subject => {
+      const subjectTopics = selectedTopics.get(subject.subject);
+      const allTopicsCount = subject.topics.length;
+      const selectedCount = subjectTopics?.size || 0;
+      const isIndeterminate = selectedCount > 0 && selectedCount < allTopicsCount;
+      
+      const checkboxEl = checkboxRefs.current.get(subject.subject);
+      if (checkboxEl) {
+        const input = checkboxEl.querySelector('input') || checkboxEl;
+        if ('indeterminate' in input) {
+          (input as HTMLInputElement).indeterminate = isIndeterminate;
+        }
+      }
+    });
+  }, [selectedTopics, subjects]);
+
+  const isSubjectFullySelected = (subject: string, allTopics: string[]) => {
+    const selected = selectedTopics.get(subject);
+    return selected?.size === allTopics.length;
+  };
+
+  const isSubjectPartiallySelected = (subject: string, allTopics: string[]) => {
+    const selected = selectedTopics.get(subject);
+    return selected && selected.size > 0 && selected.size < allTopics.length;
+  };
+
+  const toggleSubject = (subject: string, allTopics: string[]) => {
+    const newSelectedTopics = new Map(selectedTopics);
+    const currentSelected = newSelectedTopics.get(subject);
+    
+    if (currentSelected?.size === allTopics.length) {
+      newSelectedTopics.delete(subject);
     } else {
-      newSelected.add(subject);
+      newSelectedTopics.set(subject, new Set(allTopics));
     }
-    setSelectedSubjects(newSelected);
+    setSelectedTopics(newSelectedTopics);
+  };
+
+  const toggleTopic = (subject: string, topic: string) => {
+    const newSelectedTopics = new Map(selectedTopics);
+    const subjectTopics = newSelectedTopics.get(subject) || new Set();
+    const newSubjectTopics = new Set(subjectTopics);
+    
+    if (newSubjectTopics.has(topic)) {
+      newSubjectTopics.delete(topic);
+    } else {
+      newSubjectTopics.add(topic);
+    }
+    
+    if (newSubjectTopics.size === 0) {
+      newSelectedTopics.delete(subject);
+    } else {
+      newSelectedTopics.set(subject, newSubjectTopics);
+    }
+    setSelectedTopics(newSelectedTopics);
   };
 
   const toggleExpanded = (subject: string) => {
@@ -69,18 +118,22 @@ export default function TopicSelection() {
   };
 
   const selectAll = () => {
-    setSelectedSubjects(new Set(subjects.map(s => s.subject)));
+    const allTopics = new Map<string, Set<string>>();
+    subjects.forEach(s => {
+      allTopics.set(s.subject, new Set(s.topics));
+    });
+    setSelectedTopics(allTopics);
   };
 
   const clearAll = () => {
-    setSelectedSubjects(new Set());
+    setSelectedTopics(new Map());
   };
 
   const getStatusColor = (status: TopicPerformance['status']) => {
     switch (status) {
-      case 'strong': return 'bg-green-500/10 text-green-600 border-green-200';
-      case 'improving': return 'bg-yellow-500/10 text-yellow-600 border-yellow-200';
-      case 'needs_work': return 'bg-red-500/10 text-red-600 border-red-200';
+      case 'strong': return 'bg-green-500/10 text-green-600 border-green-200 dark:text-green-400';
+      case 'improving': return 'bg-yellow-500/10 text-yellow-600 border-yellow-200 dark:text-yellow-400';
+      case 'needs_work': return 'bg-red-500/10 text-red-600 border-red-200 dark:text-red-400';
       default: return 'bg-muted text-muted-foreground';
     }
   };
@@ -94,11 +147,52 @@ export default function TopicSelection() {
     }
   };
 
+  const getTotalSelectedCount = () => {
+    let count = 0;
+    selectedTopics.forEach(topics => {
+      count += topics.size;
+    });
+    return count;
+  };
+
+  const getFullySelectedSubjects = () => {
+    const fullySelected: string[] = [];
+    subjects.forEach(s => {
+      if (isSubjectFullySelected(s.subject, s.topics)) {
+        fullySelected.push(s.subject);
+      }
+    });
+    return fullySelected;
+  };
+
+  const getPartialTopics = () => {
+    const partial: string[] = [];
+    subjects.forEach(s => {
+      const selected = selectedTopics.get(s.subject);
+      if (selected && selected.size > 0 && selected.size < s.topics.length) {
+        selected.forEach(topic => {
+          partial.push(`${s.subject}:${topic}`);
+        });
+      }
+    });
+    return partial;
+  };
+
   const handleStartQuiz = () => {
     const params = new URLSearchParams({ category });
-    if (selectedSubjects.size > 0 && selectedSubjects.size < subjects.length) {
-      params.set("subjects", Array.from(selectedSubjects).join(","));
+    
+    const fullySelectedSubjects = getFullySelectedSubjects();
+    const partialTopics = getPartialTopics();
+    
+    if (fullySelectedSubjects.length > 0 || partialTopics.length > 0) {
+      if (fullySelectedSubjects.length > 0) {
+        params.set("subjects", fullySelectedSubjects.join(","));
+      }
+      if (partialTopics.length > 0) {
+        params.set("topics", partialTopics.join(","));
+      }
     }
+    
     if (useAdaptive) {
       params.set("adaptive", "true");
     }
@@ -125,6 +219,8 @@ export default function TopicSelection() {
     );
   }
 
+  const totalSelected = getTotalSelectedCount();
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -145,7 +241,7 @@ export default function TopicSelection() {
             {category} Practice
           </h1>
           <p className="text-muted-foreground">
-            Choose specific subjects to focus on, or let our adaptive system guide your learning.
+            Choose specific subjects and topics to focus on, or let our adaptive system guide your learning.
           </p>
         </div>
 
@@ -156,7 +252,7 @@ export default function TopicSelection() {
                 <div className="flex items-center justify-between gap-2 flex-wrap">
                   <CardTitle className="flex items-center gap-2">
                     <BookOpen className="h-5 w-5" />
-                    Select Subjects
+                    Select Learning Areas
                   </CardTitle>
                   <div className="flex gap-2">
                     <Button variant="outline" size="sm" onClick={selectAll} data-testid="button-select-all">
@@ -168,34 +264,47 @@ export default function TopicSelection() {
                   </div>
                 </div>
                 <CardDescription>
-                  {selectedSubjects.size === 0 
-                    ? "All subjects will be included (recommended for comprehensive practice)"
-                    : `${selectedSubjects.size} subject${selectedSubjects.size > 1 ? 's' : ''} selected`}
+                  {totalSelected === 0 
+                    ? "All topics will be included (recommended for comprehensive practice)"
+                    : `${totalSelected} topic${totalSelected > 1 ? 's' : ''} selected`}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
                 {subjects.map((subject) => {
                   const performance = performanceMap.get(subject.subject);
                   const isExpanded = expandedSubjects.has(subject.subject);
-                  const isSelected = selectedSubjects.has(subject.subject);
+                  const isFullySelected = isSubjectFullySelected(subject.subject, subject.topics);
+                  const isPartiallySelected = isSubjectPartiallySelected(subject.subject, subject.topics);
+                  const selectedCount = selectedTopics.get(subject.subject)?.size || 0;
 
                   return (
                     <Collapsible key={subject.subject} open={isExpanded}>
                       <div 
                         className={`border rounded-lg p-4 transition-colors ${
-                          isSelected ? 'border-primary bg-primary/5' : 'hover-elevate'
+                          isFullySelected ? 'border-primary bg-primary/5' : 
+                          isPartiallySelected ? 'border-primary/50 bg-primary/[0.02]' : 
+                          'hover-elevate'
                         }`}
                       >
                         <div className="flex items-start gap-3">
                           <Checkbox
-                            checked={isSelected}
-                            onCheckedChange={() => toggleSubject(subject.subject)}
-                            className="mt-1"
+                            ref={(el) => checkboxRefs.current.set(subject.subject, el)}
+                            checked={isFullySelected}
+                            data-indeterminate={isPartiallySelected}
+                            onCheckedChange={() => toggleSubject(subject.subject, subject.topics)}
+                            className={`mt-1 ${isPartiallySelected ? 'data-[state=unchecked]:bg-primary/30' : ''}`}
                             data-testid={`checkbox-subject-${subject.subject.replace(/\s+/g, '-').toLowerCase()}`}
                           />
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between gap-2 flex-wrap">
-                              <h3 className="font-medium">{subject.subject}</h3>
+                              <div>
+                                <h3 className="font-medium">{subject.subject}</h3>
+                                {selectedCount > 0 && selectedCount < subject.topics.length && (
+                                  <span className="text-xs text-muted-foreground">
+                                    {selectedCount} of {subject.topics.length} topics selected
+                                  </span>
+                                )}
+                              </div>
                               <div className="flex items-center gap-2">
                                 {performance && (
                                   <Badge 
@@ -208,9 +317,9 @@ export default function TopicSelection() {
                                 <CollapsibleTrigger asChild>
                                   <Button 
                                     variant="ghost" 
-                                    size="icon" 
-                                    className="h-8 w-8"
+                                    size="icon"
                                     onClick={() => toggleExpanded(subject.subject)}
+                                    data-testid={`button-expand-${subject.subject.replace(/\s+/g, '-').toLowerCase()}`}
                                   >
                                     {isExpanded ? (
                                       <ChevronDown className="h-4 w-4" />
@@ -235,13 +344,27 @@ export default function TopicSelection() {
                         </div>
                         
                         <CollapsibleContent className="pt-3 mt-3 border-t">
-                          <p className="text-sm text-muted-foreground mb-2">Topics covered:</p>
-                          <div className="flex flex-wrap gap-1.5">
-                            {subject.topics.map((topic) => (
-                              <Badge key={topic} variant="secondary" className="text-xs">
-                                {topic}
-                              </Badge>
-                            ))}
+                          <p className="text-sm text-muted-foreground mb-3">Select specific topics:</p>
+                          <div className="grid gap-2 sm:grid-cols-2">
+                            {subject.topics.map((topic) => {
+                              const isTopicSelected = selectedTopics.get(subject.subject)?.has(topic) || false;
+                              return (
+                                <div 
+                                  key={topic} 
+                                  className={`flex items-center gap-2 p-2 rounded-md cursor-pointer transition-colors ${
+                                    isTopicSelected ? 'bg-primary/10' : 'hover-elevate'
+                                  }`}
+                                  onClick={() => toggleTopic(subject.subject, topic)}
+                                >
+                                  <Checkbox
+                                    checked={isTopicSelected}
+                                    onCheckedChange={() => toggleTopic(subject.subject, topic)}
+                                    data-testid={`checkbox-topic-${topic.replace(/\s+/g, '-').toLowerCase()}`}
+                                  />
+                                  <span className="text-sm">{topic}</span>
+                                </div>
+                              );
+                            })}
                           </div>
                         </CollapsibleContent>
                       </div>
@@ -306,7 +429,7 @@ export default function TopicSelection() {
             </Card>
 
             {performanceData && performanceData.some(p => p.status === 'needs_work') && (
-              <Card className="border-orange-200 bg-orange-50 dark:bg-orange-950/20">
+              <Card className="border-orange-200 bg-orange-50 dark:bg-orange-950/20 dark:border-orange-800">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-base text-orange-700 dark:text-orange-400">
                     Areas to Focus On

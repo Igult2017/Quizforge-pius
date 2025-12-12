@@ -46,12 +46,14 @@ export default function Quiz() {
   const [subscriptionError, setSubscriptionError] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Get category, subjects, and adaptive mode from URL params
+  // Get category, subjects, topics, and adaptive mode from URL params
   const searchParams = new URLSearchParams(window.location.search);
   const category = searchParams.get("category") || "NCLEX";
   const subjectsParam = searchParams.get("subjects");
+  const topicsParam = searchParams.get("topics");
   const adaptiveParam = searchParams.get("adaptive");
   const subjects = subjectsParam ? subjectsParam.split(",") : undefined;
+  const topics = topicsParam ? topicsParam.split(",") : undefined;
   const adaptive = adaptiveParam === "true";
 
   // Start quiz mutation
@@ -60,6 +62,7 @@ export default function Quiz() {
       const res = await apiRequest("POST", "/api/quiz/start", {
         category,
         subjects,
+        topics,
         adaptive,
       });
       return await res.json() as QuizAttempt & { updatedFreeTrialStatus?: { nclexFreeTrialUsed: boolean; teasFreeTrialUsed: boolean; hesiFreeTrialUsed: boolean } };

@@ -1,4 +1,4 @@
-import { eq, and, sql, inArray, gte, lte, desc } from "drizzle-orm";
+import { eq, and, or, sql, inArray, gte, lte, desc } from "drizzle-orm";
 import { db } from "./db";
 import {
   users,
@@ -61,7 +61,7 @@ export interface IStorage {
   createQuestion(question: InsertQuestion): Promise<Question>;
   createQuestions(questions: InsertQuestion[]): Promise<Question[]>;
   getQuestionsByCategory(category: string, subject?: string): Promise<Question[]>;
-  getRandomQuestions(category: string, limit: number, subjects?: string[]): Promise<Question[]>;
+  getRandomQuestions(category: string, limit: number, subjects?: string[], topics?: string[]): Promise<Question[]>;
   getQuestionById(id: number): Promise<Question | undefined>;
   getQuestionCountsByCategory(): Promise<{ category: string; count: number }[]>;
   getQuestionCountsByTopic(): Promise<{ category: string; subject: string; count: number }[]>;
@@ -322,14 +322,51 @@ export class PostgresStorage implements IStorage {
     return results;
   }
 
-  async getRandomQuestions(category: string, limit: number, subjects?: string[]): Promise<Question[]> {
+  async getRandomQuestions(category: string, limit: number, subjects?: string[], topics?: string[]): Promise<Question[]> {
+    // Parse topics parameter: format is "subject:topic" pairs
+    const topicFilters: { subject: string; topic: string }[] = [];
+    if (topics && topics.length > 0) {
+      for (const topicStr of topics) {
+        const [subject, topic] = topicStr.split(':');
+        if (subject && topic) {
+          topicFilters.push({ subject, topic });
+        }
+      }
+    }
+
+    console.log(`[getRandomQuestions] category=${category}, subjects=${JSON.stringify(subjects)}, topics=${JSON.stringify(topics)}, topicFilters=${JSON.stringify(topicFilters)}`);
+
+    // Build query conditions
+    const conditions = [eq(questions.category, category)];
+    
+    if (subjects && subjects.length > 0 && topicFilters.length > 0) {
+      // Both fully selected subjects AND individual topics
+      // Get questions from fully selected subjects OR specific topics
+      const subjectConditions = inArray(questions.subject, subjects);
+      const topicConditions = topicFilters.map(tf => 
+        and(eq(questions.subject, tf.subject), eq(questions.topic, tf.topic))
+      );
+      conditions.push(or(subjectConditions, ...topicConditions)!);
+    } else if (subjects && subjects.length > 0) {
+      // Only fully selected subjects
+      conditions.push(inArray(questions.subject, subjects));
+    } else if (topicFilters.length > 0) {
+      // Only individual topics selected
+      const topicConditions = topicFilters.map(tf => 
+        and(eq(questions.subject, tf.subject), eq(questions.topic, tf.topic))
+      );
+      if (topicConditions.length === 1) {
+        conditions.push(topicConditions[0]!);
+      } else {
+        conditions.push(or(...topicConditions)!);
+      }
+    }
+    // If neither subjects nor topics specified, use all questions in category
+
     return await db
       .select()
       .from(questions)
-      .where(and(
-        eq(questions.category, category),
-        subjects && subjects.length > 0 ? inArray(questions.subject, subjects) : sql`1=1`
-      ))
+      .where(and(...conditions))
       .orderBy(sql`RANDOM()`)
       .limit(limit);
   }
@@ -596,6 +633,17 @@ export class PostgresStorage implements IStorage {
     subjects?: string[],
     topics?: string[]
   ): Promise<Question[]> {
+    // Parse topics parameter: format is "subject:topic" pairs
+    const topicFilters: { subject: string; topic: string }[] = [];
+    if (topics && topics.length > 0) {
+      for (const topicStr of topics) {
+        const [subject, topic] = topicStr.split(':');
+        if (subject && topic) {
+          topicFilters.push({ subject, topic });
+        }
+      }
+    }
+
     // Get weak topics for this user
     const weakTopics = await this.getWeakTopics(userId, category);
     
@@ -623,18 +671,38 @@ export class PostgresStorage implements IStorage {
     const remainingCount = count - weakTopicQuestions.length;
     const weakQuestionIds = weakTopicQuestions.map(q => q.id);
     
-    let remainingQuestionsQuery = db
+    // Build filter conditions for remaining questions
+    const filterConditions = [
+      eq(questions.category, category),
+      weakQuestionIds.length > 0 ? sql`${questions.id} NOT IN (${sql.join(weakQuestionIds.map(id => sql`${id}`), sql`, `)})` : sql`1=1`
+    ];
+
+    if (subjects && subjects.length > 0 && topicFilters.length > 0) {
+      // Both fully selected subjects AND individual topics
+      const subjectConditions = inArray(questions.subject, subjects);
+      const topicConditions = topicFilters.map(tf => 
+        and(eq(questions.subject, tf.subject), eq(questions.topic, tf.topic))
+      );
+      filterConditions.push(or(subjectConditions, ...topicConditions)!);
+    } else if (subjects && subjects.length > 0) {
+      filterConditions.push(inArray(questions.subject, subjects));
+    } else if (topicFilters.length > 0) {
+      const topicConditions = topicFilters.map(tf => 
+        and(eq(questions.subject, tf.subject), eq(questions.topic, tf.topic))
+      );
+      if (topicConditions.length === 1) {
+        filterConditions.push(topicConditions[0]!);
+      } else {
+        filterConditions.push(or(...topicConditions)!);
+      }
+    }
+
+    const remainingQuestions = await db
       .select()
       .from(questions)
-      .where(and(
-        eq(questions.category, category),
-        weakQuestionIds.length > 0 ? sql`${questions.id} NOT IN (${sql.join(weakQuestionIds.map(id => sql`${id}`), sql`, `)})` : sql`1=1`,
-        subjects && subjects.length > 0 ? inArray(questions.subject, subjects) : sql`1=1`
-      ))
+      .where(and(...filterConditions))
       .orderBy(sql`RANDOM()`)
       .limit(remainingCount);
-    
-    const remainingQuestions = await remainingQuestionsQuery;
     
     // Combine and shuffle
     const allQuestions = [...weakTopicQuestions, ...remainingQuestions];
