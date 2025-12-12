@@ -1,4 +1,4 @@
-import { neon } from '@neondatabase/serverless';
+import pg from 'pg';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import { fileURLToPath } from 'url';
@@ -14,10 +14,11 @@ if (!DATABASE_URL) {
   process.exit(0);
 }
 
-const sql = neon(DATABASE_URL);
-
 async function runMigration() {
+  const client = new pg.Client({ connectionString: DATABASE_URL });
+  
   try {
+    await client.connect();
     console.log('🔧 Running SQL migration...');
     
     // Read the SQL migration file
@@ -31,16 +32,27 @@ async function runMigration() {
       .filter(s => s.length > 0 && !s.startsWith('--'));
     
     for (const statement of statements) {
-      console.log(`  - Executing: ${statement.substring(0, 50)}...`);
-      await sql(statement);
+      const preview = statement.substring(0, 60).replace(/\n/g, ' ');
+      console.log(`  - Executing: ${preview}...`);
+      try {
+        await client.query(statement);
+      } catch (stmtError: any) {
+        // Ignore "already exists" errors, fail on others
+        if (stmtError.code === '42701' || stmtError.code === '42P07') {
+          console.log(`    (already exists, skipping)`);
+        } else {
+          throw stmtError;
+        }
+      }
     }
     
     console.log('✅ SQL migration completed successfully');
     
-  } catch (error) {
-    console.warn('⚠️  SQL migration encountered an error (continuing anyway):');
-    console.warn(error.message || error);
-    process.exit(0);
+  } catch (error: any) {
+    console.error('❌ SQL migration failed:', error.message || error);
+    process.exit(1);
+  } finally {
+    await client.end();
   }
 }
 
