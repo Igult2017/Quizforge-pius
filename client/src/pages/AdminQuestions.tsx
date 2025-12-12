@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
   SelectContent,
@@ -15,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2, Brain, Database, Plus, CheckCircle2, XCircle, Pause, Play, Trash2, Clock, AlertCircle, ChevronDown, ChevronRight, BookOpen } from "lucide-react";
+import { Loader2, Brain, Database, Plus, CheckCircle2, XCircle, Pause, Play, Trash2, Clock, AlertCircle, ChevronDown, ChevronRight, BookOpen, FileQuestion, Layers } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useToast } from "@/hooks/use-toast";
 
@@ -50,30 +51,28 @@ interface GenerationJob {
 
 export default function AdminQuestions() {
   const { toast } = useToast();
+  const [activeTab, setActiveTab] = useState("database");
   const [category, setCategory] = useState<string>("NCLEX");
   const [totalCount, setTotalCount] = useState<string>("50");
   const [topic, setTopic] = useState<string>("");
   const [difficulty, setDifficulty] = useState<string>("medium");
   const [sampleQuestion, setSampleQuestion] = useState<string>("");
   const [areasTocover, setAreasTocover] = useState<string>("");
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set(["NCLEX", "TEAS", "HESI"]));
 
-  // Fetch question counts
   const { data: questionCounts, isLoading: countsLoading, error: countsError } = useQuery<QuestionCount[]>({
     queryKey: ["/api/admin/questions/counts"],
   });
 
-  // Fetch question counts by topic
   const { data: topicCounts } = useQuery<TopicCount[]>({
     queryKey: ["/api/admin/questions/counts-by-topic"],
   });
 
-  // Fetch generation jobs with auto-refresh
-  const { data: jobs, isLoading: jobsLoading } = useQuery<GenerationJob[]>({
+  const { data: jobs } = useQuery<GenerationJob[]>({
     queryKey: ["/api/admin/generation-jobs"],
-    refetchInterval: 5000, // Refresh every 5 seconds
+    refetchInterval: 5000,
   });
 
-  // Create generation job mutation
   const createJobMutation = useMutation({
     mutationFn: async () => {
       const res = await apiRequest("POST", "/api/admin/generation-jobs", {
@@ -88,14 +87,15 @@ export default function AdminQuestions() {
     },
     onSuccess: (data) => {
       toast({
-        title: "Generation job created!",
-        description: data.message,
+        title: "Generation started!",
+        description: `Creating ${totalCount} questions on "${topic}"`,
       });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/generation-jobs"] });
       setTotalCount("50");
       setTopic("");
       setSampleQuestion("");
       setAreasTocover("");
+      setActiveTab("generate");
     },
     onError: (error: Error) => {
       toast({
@@ -106,7 +106,6 @@ export default function AdminQuestions() {
     },
   });
 
-  // Pause job mutation
   const pauseJobMutation = useMutation({
     mutationFn: async (jobId: number) => {
       const res = await apiRequest("POST", `/api/admin/generation-jobs/${jobId}/pause`);
@@ -118,7 +117,6 @@ export default function AdminQuestions() {
     },
   });
 
-  // Resume job mutation
   const resumeJobMutation = useMutation({
     mutationFn: async (jobId: number) => {
       const res = await apiRequest("POST", `/api/admin/generation-jobs/${jobId}/resume`);
@@ -130,7 +128,6 @@ export default function AdminQuestions() {
     },
   });
 
-  // Delete job mutation
   const deleteJobMutation = useMutation({
     mutationFn: async (jobId: number) => {
       const res = await apiRequest("DELETE", `/api/admin/generation-jobs/${jobId}`);
@@ -165,7 +162,6 @@ export default function AdminQuestions() {
       return;
     }
 
-    // Sample question is required for quality
     if (!sampleQuestion.trim() || sampleQuestion.trim().length < 50) {
       toast({
         title: "Sample question required",
@@ -178,13 +174,23 @@ export default function AdminQuestions() {
     createJobMutation.mutate();
   };
 
-  const getCategoryIcon = (cat: string) => {
+  const toggleCategory = (cat: string) => {
+    const newExpanded = new Set(expandedCategories);
+    if (newExpanded.has(cat)) {
+      newExpanded.delete(cat);
+    } else {
+      newExpanded.add(cat);
+    }
+    setExpandedCategories(newExpanded);
+  };
+
+  const getCategoryColor = (cat: string) => {
     const colors = {
-      NCLEX: "bg-purple-100 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400",
-      TEAS: "bg-orange-100 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400",
-      HESI: "bg-teal-100 dark:bg-teal-900/20 text-teal-600 dark:text-teal-400",
+      NCLEX: { bg: "bg-purple-500", light: "bg-purple-100 dark:bg-purple-900/30", text: "text-purple-600 dark:text-purple-400" },
+      TEAS: { bg: "bg-orange-500", light: "bg-orange-100 dark:bg-orange-900/30", text: "text-orange-600 dark:text-orange-400" },
+      HESI: { bg: "bg-teal-500", light: "bg-teal-100 dark:bg-teal-900/30", text: "text-teal-600 dark:text-teal-400" },
     };
-    return colors[cat as keyof typeof colors] || "bg-gray-100 dark:bg-gray-800 text-gray-600";
+    return colors[cat as keyof typeof colors] || { bg: "bg-gray-500", light: "bg-gray-100 dark:bg-gray-800", text: "text-gray-600" };
   };
 
   const getStatusBadge = (status: string) => {
@@ -204,6 +210,22 @@ export default function AdminQuestions() {
     }
   };
 
+  const totalQuestions = questionCounts?.reduce((sum, c) => sum + c.count, 0) || 0;
+  const activeJobs = jobs?.filter(j => j.status === "running" || j.status === "pending") || [];
+  const completedJobs = jobs?.filter(j => j.status === "completed") || [];
+  const otherJobs = jobs?.filter(j => j.status !== "running" && j.status !== "pending" && j.status !== "completed") || [];
+
+  useEffect(() => {
+    if (activeJobs.length > 0) {
+      const interval = setInterval(() => {
+        queryClient.invalidateQueries({ queryKey: ["/api/admin/generation-jobs"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/admin/questions/counts"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/admin/questions/counts-by-topic"] });
+      }, 5000);
+      return () => clearInterval(interval);
+    }
+  }, [activeJobs.length]);
+
   if (countsLoading) {
     return (
       <div className="flex flex-col items-center justify-center h-full p-12 gap-4">
@@ -218,11 +240,11 @@ export default function AdminQuestions() {
       <div className="p-6">
         <Card className="border-destructive">
           <CardHeader>
-            <CardTitle className="text-destructive">Error loading question counts</CardTitle>
+            <CardTitle className="text-destructive">Error loading questions</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground">
-              {countsError instanceof Error ? countsError.message : "Failed to load question counts. Please refresh the page."}
+              {countsError instanceof Error ? countsError.message : "Failed to load. Please refresh."}
             </p>
           </CardContent>
         </Card>
@@ -230,462 +252,465 @@ export default function AdminQuestions() {
     );
   }
 
-  const totalQuestions = questionCounts?.reduce((sum, c) => sum + c.count, 0) || 0;
-  const activeJobs = jobs?.filter(j => j.status === "running" || j.status === "pending") || [];
-  const completedJobs = jobs?.filter(j => j.status === "completed") || [];
-  const otherJobs = jobs?.filter(j => j.status !== "running" && j.status !== "pending" && j.status !== "completed") || [];
-
-  // Auto-refresh jobs list while processing is active
-  useEffect(() => {
-    if (activeJobs.length > 0) {
-      const interval = setInterval(() => {
-        queryClient.invalidateQueries({ queryKey: ["/api/admin/generation-jobs"] });
-        queryClient.invalidateQueries({ queryKey: ["/api/admin/questions/counts"] });
-      }, 5000); // Refresh every 5 seconds during active processing
-      return () => clearInterval(interval);
-    }
-  }, [activeJobs.length]);
-
   return (
     <div className="p-6 space-y-6 max-w-7xl mx-auto bg-background">
-      <div>
-        <h1 className="text-3xl font-bold mb-2 text-foreground">AI Question Generator</h1>
-        <p className="text-muted-foreground">
-          Generate practice questions using AI. Create batch jobs that process 5 questions at a time.
-        </p>
+      <div className="flex items-center justify-between flex-wrap gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">Question Bank</h1>
+          <p className="text-muted-foreground">
+            Manage and generate practice questions for all exam categories
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="text-right">
+            <div className="text-3xl font-bold text-primary">{totalQuestions.toLocaleString()}</div>
+            <div className="text-sm text-muted-foreground">Total Questions</div>
+          </div>
+        </div>
       </div>
 
-      {/* Question Counts Overview */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {questionCounts?.map((item) => (
-          <Card key={item.category} data-testid={`card-count-${item.category}`}>
-            <CardHeader className="flex flex-row items-center justify-between gap-1 space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{item.category}</CardTitle>
-              <div className={`p-2 rounded-md ${getCategoryIcon(item.category)}`}>
-                <Database className="h-4 w-4" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold" data-testid={`text-count-${item.category}`}>
-                {item.count.toLocaleString()}
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">questions available</p>
-            </CardContent>
-          </Card>
-        ))}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <TabsList className="grid w-full grid-cols-2 max-w-md">
+          <TabsTrigger value="database" className="gap-2" data-testid="tab-database">
+            <Database className="h-4 w-4" />
+            Questions Database
+          </TabsTrigger>
+          <TabsTrigger value="generate" className="gap-2" data-testid="tab-generate">
+            <Brain className="h-4 w-4" />
+            Generate Questions
+          </TabsTrigger>
+        </TabsList>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between gap-1 space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total</CardTitle>
-            <div className="p-2 rounded-md bg-primary/10 text-primary">
-              <Database className="h-4 w-4" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold" data-testid="text-total-questions">
-              {totalQuestions.toLocaleString()}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">total questions</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Topic Breakdown Section */}
-      {topicCounts && topicCounts.length > 0 && (
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <BookOpen className="h-5 w-5 text-primary" />
-              <CardTitle>Questions by Topic</CardTitle>
-            </div>
-            <CardDescription>
-              Detailed breakdown of questions per topic in each category
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
+        {/* Database View Tab */}
+        <TabsContent value="database" className="space-y-6">
+          {/* Summary Cards */}
+          <div className="grid gap-4 md:grid-cols-3">
             {["NCLEX", "TEAS", "HESI"].map((cat) => {
-              const catTopics = topicCounts.filter(t => t.category === cat);
-              const catTotal = catTopics.reduce((sum, t) => sum + t.count, 0);
-              
-              if (catTopics.length === 0) return null;
+              const count = questionCounts?.find(c => c.category === cat)?.count || 0;
+              const catTopics = topicCounts?.filter(t => t.category === cat) || [];
+              const colors = getCategoryColor(cat);
               
               return (
-                <Collapsible key={cat} defaultOpen={false}>
-                  <CollapsibleTrigger asChild>
-                    <Button 
-                      variant="ghost" 
-                      className="w-full justify-between p-3 h-auto"
-                      data-testid={`toggle-topics-${cat}`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className={`p-2 rounded-md ${getCategoryIcon(cat)}`}>
-                          <Database className="h-4 w-4" />
-                        </div>
-                        <span className="font-semibold">{cat}</span>
-                        <Badge variant="secondary">{catTopics.length} topics</Badge>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-muted-foreground">{catTotal.toLocaleString()} questions</span>
-                        <ChevronDown className="h-4 w-4" />
-                      </div>
-                    </Button>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <div className="grid gap-2 pt-2 pl-4">
-                      {catTopics.map((topic, index) => (
-                        <div 
-                          key={`${topic.category}-${topic.subject}-${index}`}
-                          className="flex items-center justify-between p-2 rounded-md bg-muted/50"
-                          data-testid={`topic-row-${topic.category}-${index}`}
-                        >
-                          <span className="text-sm">{topic.subject}</span>
-                          <Badge variant="outline">{topic.count.toLocaleString()}</Badge>
-                        </div>
-                      ))}
+                <Card key={cat} className="overflow-hidden" data-testid={`card-summary-${cat}`}>
+                  <div className={`h-1 ${colors.bg}`} />
+                  <CardHeader className="pb-2">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-lg">{cat}</CardTitle>
+                      <Badge variant="secondary">{catTopics.length} topics</Badge>
                     </div>
-                  </CollapsibleContent>
-                </Collapsible>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-3xl font-bold" data-testid={`count-${cat}`}>
+                      {count.toLocaleString()}
+                    </div>
+                    <p className="text-sm text-muted-foreground">questions available</p>
+                  </CardContent>
+                </Card>
               );
             })}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Batch Generation Form */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <Brain className="h-5 w-5 text-primary" />
-            <CardTitle>Create Batch Generation Job</CardTitle>
           </div>
-          <CardDescription>
-            Request between 5-1000 questions. They will be generated in batches of 5 to prevent timeouts.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="category">Category *</Label>
-                <Select value={category} onValueChange={setCategory}>
-                  <SelectTrigger id="category" data-testid="select-category">
-                    <SelectValue placeholder="Select category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="NCLEX">NCLEX</SelectItem>
-                    <SelectItem value="TEAS">ATI TEAS</SelectItem>
-                    <SelectItem value="HESI">HESI A2</SelectItem>
-                  </SelectContent>
-                </Select>
+
+          {/* Detailed Topic Breakdown */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Layers className="h-5 w-5 text-primary" />
+                <CardTitle>Questions by Topic</CardTitle>
               </div>
+              <CardDescription>
+                Click on a category to see all topics and question counts
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {["NCLEX", "TEAS", "HESI"].map((cat) => {
+                const catTopics = topicCounts?.filter(t => t.category === cat) || [];
+                const catTotal = catTopics.reduce((sum, t) => sum + t.count, 0);
+                const colors = getCategoryColor(cat);
+                const isExpanded = expandedCategories.has(cat);
+                
+                if (catTopics.length === 0) {
+                  return (
+                    <div key={cat} className={`rounded-lg p-4 ${colors.light}`}>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-3 h-3 rounded-full ${colors.bg}`} />
+                          <span className="font-semibold">{cat}</span>
+                        </div>
+                        <span className="text-muted-foreground text-sm">No questions yet</span>
+                      </div>
+                    </div>
+                  );
+                }
+                
+                return (
+                  <div key={cat} className="border rounded-lg overflow-hidden">
+                    <button
+                      onClick={() => toggleCategory(cat)}
+                      className={`w-full p-4 flex items-center justify-between hover-elevate ${colors.light}`}
+                      data-testid={`toggle-${cat}`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={`w-3 h-3 rounded-full ${colors.bg}`} />
+                        <span className="font-semibold text-lg">{cat}</span>
+                        <Badge variant="outline" className="ml-2">
+                          {catTopics.length} {catTopics.length === 1 ? "topic" : "topics"}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <div className="text-right">
+                          <div className="font-bold text-lg">{catTotal.toLocaleString()}</div>
+                          <div className="text-xs text-muted-foreground">questions</div>
+                        </div>
+                        {isExpanded ? (
+                          <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                        ) : (
+                          <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                        )}
+                      </div>
+                    </button>
+                    
+                    {isExpanded && (
+                      <div className="border-t bg-background">
+                        <div className="divide-y">
+                          {catTopics
+                            .sort((a, b) => b.count - a.count)
+                            .map((topic, index) => {
+                              const percentage = catTotal > 0 ? (topic.count / catTotal) * 100 : 0;
+                              return (
+                                <div
+                                  key={`${topic.category}-${topic.subject}-${index}`}
+                                  className="p-4 flex items-center justify-between gap-4"
+                                  data-testid={`topic-${cat}-${index}`}
+                                >
+                                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                                    <FileQuestion className={`h-4 w-4 shrink-0 ${colors.text}`} />
+                                    <span className="font-medium truncate">{topic.subject}</span>
+                                  </div>
+                                  <div className="flex items-center gap-4 shrink-0">
+                                    <div className="w-24 hidden sm:block">
+                                      <Progress value={percentage} className="h-2" />
+                                    </div>
+                                    <div className="text-right min-w-[60px]">
+                                      <div className="font-semibold">{topic.count.toLocaleString()}</div>
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-              <div className="space-y-2">
-                <Label htmlFor="totalCount">Number of Questions * (5-1000)</Label>
-                <Input
-                  id="totalCount"
-                  type="number"
-                  min="5"
-                  max="1000"
-                  value={totalCount}
-                  onChange={(e) => setTotalCount(e.target.value)}
-                  placeholder="50"
-                  required
-                  data-testid="input-total-count"
-                />
+        {/* Generate Tab */}
+        <TabsContent value="generate" className="space-y-6">
+          {/* Active Jobs Banner */}
+          {activeJobs.length > 0 && (
+            <Card className="border-primary/50 bg-primary/5">
+              <CardHeader className="pb-2">
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                    {activeJobs.length} Active Generation {activeJobs.length === 1 ? "Job" : "Jobs"}
+                  </CardTitle>
+                  <Badge variant="outline" className="text-green-600 dark:text-green-400">
+                    Auto-processing
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {activeJobs.map((job) => {
+                  const progress = Math.round((job.generatedCount / job.totalCount) * 100);
+                  const colors = getCategoryColor(job.category);
+                  return (
+                    <div key={job.id} className="bg-background rounded-lg p-4 space-y-3" data-testid={`job-active-${job.id}`}>
+                      <div className="flex items-center justify-between flex-wrap gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <div className={`w-2 h-2 rounded-full ${colors.bg}`} />
+                          <Badge variant="outline">{job.category}</Badge>
+                          <span className="font-medium">{job.topic}</span>
+                          <Badge variant="secondary">{job.difficulty}</Badge>
+                          {getStatusBadge(job.status)}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => pauseJobMutation.mutate(job.id)}
+                            disabled={pauseJobMutation.isPending}
+                            data-testid={`button-pause-${job.id}`}
+                          >
+                            <Pause className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => deleteJobMutation.mutate(job.id)}
+                            disabled={deleteJobMutation.isPending}
+                            data-testid={`button-delete-${job.id}`}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">
+                            {job.generatedCount} / {job.totalCount} questions generated
+                          </span>
+                          <span className="font-medium">{progress}%</span>
+                        </div>
+                        <Progress value={progress} className="h-2" />
+                      </div>
+                      {job.lastError && (
+                        <div className="flex items-center gap-2 text-sm text-destructive">
+                          <AlertCircle className="h-4 w-4" />
+                          <span>{job.lastError}</span>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Paused/Failed Jobs */}
+          {otherJobs.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Paused/Failed Jobs ({otherJobs.length})</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {otherJobs.map((job) => {
+                  const progress = Math.round((job.generatedCount / job.totalCount) * 100);
+                  return (
+                    <div key={job.id} className="border rounded-lg p-4 space-y-3" data-testid={`job-other-${job.id}`}>
+                      <div className="flex items-center justify-between flex-wrap gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <Badge variant="outline">{job.category}</Badge>
+                          <span className="font-medium">{job.topic}</span>
+                          {getStatusBadge(job.status)}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => resumeJobMutation.mutate(job.id)}
+                            disabled={resumeJobMutation.isPending}
+                            data-testid={`button-resume-${job.id}`}
+                          >
+                            <Play className="h-4 w-4 mr-1" />
+                            Resume
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => deleteJobMutation.mutate(job.id)}
+                            data-testid={`button-delete-${job.id}`}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        <div className="flex justify-between text-sm text-muted-foreground">
+                          <span>{job.generatedCount} / {job.totalCount}</span>
+                          <span>{progress}%</span>
+                        </div>
+                        <Progress value={progress} className="h-2" />
+                      </div>
+                    </div>
+                  );
+                })}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Create Job Form */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Plus className="h-5 w-5 text-primary" />
+                <CardTitle>Create New Generation Job</CardTitle>
               </div>
+              <CardDescription>
+                Configure and start a new batch of AI-generated questions
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="category">Exam Category</Label>
+                    <Select value={category} onValueChange={setCategory}>
+                      <SelectTrigger id="category" data-testid="select-category">
+                        <SelectValue placeholder="Select category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="NCLEX">NCLEX</SelectItem>
+                        <SelectItem value="TEAS">ATI TEAS</SelectItem>
+                        <SelectItem value="HESI">HESI A2</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="topic">Topic/Subject *</Label>
-                <Input
-                  id="topic"
-                  value={topic}
-                  onChange={(e) => setTopic(e.target.value)}
-                  placeholder="e.g., Pharmacology, Medical-Surgical, Anatomy"
-                  required
-                  data-testid="input-topic"
-                />
-              </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="totalCount">Number of Questions (5-1000)</Label>
+                    <Input
+                      id="totalCount"
+                      type="number"
+                      min="5"
+                      max="1000"
+                      value={totalCount}
+                      onChange={(e) => setTotalCount(e.target.value)}
+                      placeholder="50"
+                      required
+                      data-testid="input-total-count"
+                    />
+                  </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="difficulty">Difficulty *</Label>
-                <Select value={difficulty} onValueChange={setDifficulty}>
-                  <SelectTrigger id="difficulty" data-testid="select-difficulty">
-                    <SelectValue placeholder="Select difficulty" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="easy">Easy</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="hard">Hard</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="topic">Topic/Subject</Label>
+                    <Input
+                      id="topic"
+                      value={topic}
+                      onChange={(e) => setTopic(e.target.value)}
+                      placeholder="e.g., Pharmacology, Medical-Surgical, Anatomy"
+                      required
+                      data-testid="input-topic"
+                    />
+                  </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="sampleQuestion">Sample Question (Required)</Label>
-              <Textarea
-                id="sampleQuestion"
-                value={sampleQuestion}
-                onChange={(e) => setSampleQuestion(e.target.value)}
-                placeholder="Paste a high-quality sample question here. The AI will match the style, format, complexity, and level of detail of your sample. Include the question, all 4 options, correct answer, and explanation."
-                rows={6}
-                data-testid="textarea-sample-question"
-                required
-              />
-              <p className="text-xs text-muted-foreground">
-                Required: Paste a complete sample question with options and explanation. The AI will generate questions matching this quality and format.
-              </p>
-            </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="difficulty">Difficulty Level</Label>
+                    <Select value={difficulty} onValueChange={setDifficulty}>
+                      <SelectTrigger id="difficulty" data-testid="select-difficulty">
+                        <SelectValue placeholder="Select difficulty" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="easy">Easy</SelectItem>
+                        <SelectItem value="medium">Medium</SelectItem>
+                        <SelectItem value="hard">Hard</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="areasTocover">Specific Areas to Cover (Optional)</Label>
-              <Textarea
-                id="areasTocover"
-                value={areasTocover}
-                onChange={(e) => setAreasTocover(e.target.value)}
-                placeholder="List specific subtopics or areas within the topic that should be covered. One per line or comma-separated.
+                <div className="space-y-2">
+                  <Label htmlFor="sampleQuestion">
+                    Sample Question <span className="text-destructive">*</span>
+                  </Label>
+                  <Textarea
+                    id="sampleQuestion"
+                    value={sampleQuestion}
+                    onChange={(e) => setSampleQuestion(e.target.value)}
+                    placeholder="Paste a complete sample question including:
+- The question text
+- All 4 answer options (A, B, C, D)
+- The correct answer
+- A detailed explanation
 
-Example for Medical-Surgical:
+The AI will match this style, format, and complexity level."
+                    rows={8}
+                    data-testid="textarea-sample-question"
+                    required
+                    className="font-mono text-sm"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Required (min 50 characters). The AI generates questions matching your sample's quality and format.
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="areasTocover">Specific Areas to Cover (Optional)</Label>
+                  <Textarea
+                    id="areasTocover"
+                    value={areasTocover}
+                    onChange={(e) => setAreasTocover(e.target.value)}
+                    placeholder="List subtopics the questions should cover:
 - Cardiac conditions (heart failure, MI)
 - Respiratory conditions (COPD, pneumonia)
 - Diabetes management
 - Post-operative care"
-                rows={5}
-                data-testid="textarea-areas-to-cover"
-              />
-              <p className="text-xs text-muted-foreground">
-                Optional: Specify which subtopics or areas the questions should cover to ensure comprehensive topic coverage.
-              </p>
-            </div>
+                    rows={4}
+                    data-testid="textarea-areas-to-cover"
+                  />
+                </div>
 
-            <div className="flex items-center justify-between pt-4 border-t gap-4">
-              <div className="text-sm text-muted-foreground">
-                Questions are generated automatically in batches of 5. Processing continues until complete.
-              </div>
+                <div className="flex items-center justify-between pt-4 border-t gap-4">
+                  <p className="text-sm text-muted-foreground">
+                    Questions generate automatically in batches of 5 until complete.
+                  </p>
+                  <Button
+                    type="submit"
+                    size="lg"
+                    disabled={createJobMutation.isPending}
+                    data-testid="button-create-job"
+                  >
+                    {createJobMutation.isPending ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Starting...
+                      </>
+                    ) : (
+                      <>
+                        <Play className="mr-2 h-4 w-4" />
+                        Start Generation
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
 
-              <Button
-                type="submit"
-                disabled={createJobMutation.isPending}
-                data-testid="button-create-job"
-              >
-                {createJobMutation.isPending ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Creating...
-                  </>
-                ) : (
-                  <>
-                    <Play className="mr-2 h-4 w-4" />
-                    Start Generation
-                  </>
-                )}
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
-
-      {/* Active Jobs */}
-      {activeJobs.length > 0 && (
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between gap-4 space-y-0">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Active Generation Jobs ({activeJobs.length})
-            </CardTitle>
-            <Badge variant="outline" className="text-green-600 dark:text-green-400">
-              Auto-processing in batches of 5
-            </Badge>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {activeJobs.map((job) => {
-              const progress = Math.round((job.generatedCount / job.totalCount) * 100);
-              return (
-                <div key={job.id} className="border rounded-md p-4 space-y-3" data-testid={`job-active-${job.id}`}>
-                  <div className="flex items-center justify-between flex-wrap gap-2">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <Badge variant="outline">{job.category}</Badge>
-                      <span className="font-medium">{job.topic}</span>
-                      <Badge variant="secondary">{job.difficulty}</Badge>
-                      {getStatusBadge(job.status)}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {job.status === "running" && (
+          {/* Recently Completed */}
+          {completedJobs.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-green-600" />
+                  Recently Completed ({completedJobs.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="divide-y">
+                  {completedJobs.slice(0, 5).map((job) => (
+                    <div key={job.id} className="py-3 flex items-center justify-between" data-testid={`job-completed-${job.id}`}>
+                      <div className="flex items-center gap-3">
+                        <Badge variant="outline">{job.category}</Badge>
+                        <span className="font-medium">{job.topic}</span>
+                        <span className="text-sm text-muted-foreground">
+                          {job.generatedCount} questions
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="text-xs text-muted-foreground">
+                          {job.completedAt ? new Date(job.completedAt).toLocaleDateString() : ""}
+                        </span>
                         <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => pauseJobMutation.mutate(job.id)}
-                          disabled={pauseJobMutation.isPending}
-                          data-testid={`button-pause-${job.id}`}
+                          size="icon"
+                          variant="ghost"
+                          onClick={() => deleteJobMutation.mutate(job.id)}
+                          data-testid={`button-delete-completed-${job.id}`}
                         >
-                          <Pause className="h-4 w-4" />
+                          <Trash2 className="h-4 w-4" />
                         </Button>
-                      )}
-                      {job.status === "pending" && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => pauseJobMutation.mutate(job.id)}
-                          disabled={pauseJobMutation.isPending}
-                          data-testid={`button-pause-${job.id}`}
-                        >
-                          <Pause className="h-4 w-4" />
-                        </Button>
-                      )}
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => deleteJobMutation.mutate(job.id)}
-                        disabled={deleteJobMutation.isPending}
-                        data-testid={`button-delete-${job.id}`}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      </div>
                     </div>
-                  </div>
-                  <div className="space-y-1">
-                    <div className="flex justify-between text-sm">
-                      <span>{job.generatedCount} / {job.totalCount} questions</span>
-                      <span>{progress}%</span>
-                    </div>
-                    <Progress value={progress} className="h-2" />
-                  </div>
-                  {job.lastError && (
-                    <div className="flex items-center gap-2 text-sm text-destructive">
-                      <AlertCircle className="h-4 w-4" />
-                      <span>Last error: {job.lastError}</span>
-                    </div>
-                  )}
+                  ))}
                 </div>
-              );
-            })}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Paused/Failed Jobs */}
-      {otherJobs.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Paused/Failed Jobs ({otherJobs.length})</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {otherJobs.map((job) => {
-              const progress = Math.round((job.generatedCount / job.totalCount) * 100);
-              return (
-                <div key={job.id} className="border rounded-md p-4 space-y-3" data-testid={`job-other-${job.id}`}>
-                  <div className="flex items-center justify-between flex-wrap gap-2">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <Badge variant="outline">{job.category}</Badge>
-                      <span className="font-medium">{job.topic}</span>
-                      <Badge variant="secondary">{job.difficulty}</Badge>
-                      {getStatusBadge(job.status)}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => resumeJobMutation.mutate(job.id)}
-                        disabled={resumeJobMutation.isPending}
-                        data-testid={`button-resume-${job.id}`}
-                      >
-                        <Play className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => deleteJobMutation.mutate(job.id)}
-                        disabled={deleteJobMutation.isPending}
-                        data-testid={`button-delete-${job.id}`}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                  <div className="space-y-1">
-                    <div className="flex justify-between text-sm">
-                      <span>{job.generatedCount} / {job.totalCount} questions</span>
-                      <span>{progress}%</span>
-                    </div>
-                    <Progress value={progress} className="h-2" />
-                  </div>
-                  {job.lastError && (
-                    <div className="flex items-center gap-2 text-sm text-destructive">
-                      <AlertCircle className="h-4 w-4" />
-                      <span>Last error: {job.lastError}</span>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Completed Jobs (last 5) */}
-      {completedJobs.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <CheckCircle2 className="h-4 w-4 text-green-600" />
-              Recently Completed ({completedJobs.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {completedJobs.slice(0, 5).map((job) => (
-                <div key={job.id} className="flex items-center justify-between py-2 border-b last:border-0" data-testid={`job-completed-${job.id}`}>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <Badge variant="outline">{job.category}</Badge>
-                    <span className="text-sm">{job.topic}</span>
-                    <span className="text-xs text-muted-foreground">
-                      {job.generatedCount} questions
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground">
-                      {job.completedAt ? new Date(job.completedAt).toLocaleDateString() : ""}
-                    </span>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      onClick={() => deleteJobMutation.mutate(job.id)}
-                      disabled={deleteJobMutation.isPending}
-                      data-testid={`button-delete-completed-${job.id}`}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Info Card */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">How Batch Generation Works</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2 text-sm text-muted-foreground">
-          <p>
-            1. Create a job with your desired topic, difficulty, and count (5-1000 questions)
-          </p>
-          <p>
-            2. The system generates 5 questions at a time every 30 seconds
-          </p>
-          <p>
-            3. Progress is tracked automatically - you can pause/resume anytime
-          </p>
-          <p>
-            4. If errors occur, the job retries up to 3 times before pausing
-          </p>
-          <p>
-            5. Provide a sample question to guide the AI on your preferred style
-          </p>
-        </CardContent>
-      </Card>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
