@@ -28,12 +28,5 @@ CREATE TABLE IF NOT EXISTS "generation_jobs" (
     "completed_at" timestamp
 );
 
--- Add generation_job_id column to generation_logs table (if table exists)
-DO $$
-BEGIN
-    IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'generation_logs') THEN
-        IF NOT EXISTS (SELECT FROM information_schema.columns WHERE table_name = 'generation_logs' AND column_name = 'generation_job_id') THEN
-            ALTER TABLE generation_logs ADD COLUMN generation_job_id integer REFERENCES generation_jobs(id);
-        END IF;
-    END IF;
-END $$;
+-- Add generation_job_id column to generation_logs table
+ALTER TABLE generation_logs ADD COLUMN IF NOT EXISTS generation_job_id integer REFERENCES generation_jobs(id)
