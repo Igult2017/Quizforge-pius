@@ -14,6 +14,8 @@ import Contact from "./pages/Contact";
 import Exams from "./pages/Exams";
 import About from "./pages/About";
 import Categories from "./pages/Categories";
+import TopicSelection from "./pages/TopicSelection";
+import Performance from "./pages/Performance";
 import Quiz from "./pages/Quiz";
 import Results from "./pages/Results";
 import Admin from "./pages/Admin";
@@ -71,6 +73,8 @@ function App() {
         {isAdmin ? <Redirect to="/admin" /> : <Categories />}
       </Route>
       <Route path="/categories" component={Categories} />
+      <Route path="/topic-selection" component={TopicSelection} />
+      <Route path="/performance" component={Performance} />
       <Route path="/quiz" component={Quiz} />
       <Route path="/results" component={Results} />
       <Route path="/pricing" component={Pricing} />

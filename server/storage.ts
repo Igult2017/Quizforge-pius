@@ -1,4 +1,4 @@
-import { eq, and, sql, inArray } from "drizzle-orm";
+import { eq, and, sql, inArray, gte, lte, desc } from "drizzle-orm";
 import { db } from "./db";
 import {
   users,
@@ -8,6 +8,7 @@ import {
   quizAnswers,
   payments,
   systemSettings,
+  userTopicPerformance,
   type User,
   type UpsertUser,
   type InsertUser,
@@ -21,6 +22,7 @@ import {
   type InsertQuizAnswer,
   type Payment,
   type InsertPayment,
+  type UserTopicPerformance,
 } from "@shared/schema";
 
 export interface IStorage {
@@ -59,7 +61,7 @@ export interface IStorage {
   createQuestion(question: InsertQuestion): Promise<Question>;
   createQuestions(questions: InsertQuestion[]): Promise<Question[]>;
   getQuestionsByCategory(category: string, subject?: string): Promise<Question[]>;
-  getRandomQuestions(category: string, limit: number): Promise<Question[]>;
+  getRandomQuestions(category: string, limit: number, subjects?: string[]): Promise<Question[]>;
   getQuestionById(id: number): Promise<Question | undefined>;
   getQuestionCountsByCategory(): Promise<{ category: string; count: number }[]>;
   getQuestionCountsByTopic(): Promise<{ category: string; subject: string; count: number }[]>;
@@ -81,6 +83,12 @@ export interface IStorage {
   getUserProgressAllCategories(userId: string): Promise<Record<string, { answered: number; total: number; percentage: number }>>;
   getQuizAnswers(attemptId: number): Promise<QuizAnswer[]>;
   updateQuizAnswer(id: number, data: Partial<QuizAnswer>): Promise<void>;
+
+  // User Topic Performance (Adaptive Learning)
+  getUserTopicPerformance(userId: string, category: string): Promise<UserTopicPerformance[]>;
+  updateUserTopicPerformance(userId: string, category: string, subject: string, topic: string | null, isCorrect: boolean): Promise<void>;
+  getWeakTopics(userId: string, category: string, threshold?: number): Promise<UserTopicPerformance[]>;
+  getAdaptiveQuestions(userId: string, category: string, count: number, subjects?: string[], topics?: string[]): Promise<Question[]>;
 
   // Payments
   createPayment(payment: InsertPayment): Promise<Payment>;
@@ -314,11 +322,14 @@ export class PostgresStorage implements IStorage {
     return results;
   }
 
-  async getRandomQuestions(category: string, limit: number): Promise<Question[]> {
+  async getRandomQuestions(category: string, limit: number, subjects?: string[]): Promise<Question[]> {
     return await db
       .select()
       .from(questions)
-      .where(eq(questions.category, category))
+      .where(and(
+        eq(questions.category, category),
+        subjects && subjects.length > 0 ? inArray(questions.subject, subjects) : sql`1=1`
+      ))
       .orderBy(sql`RANDOM()`)
       .limit(limit);
   }
@@ -499,6 +510,142 @@ export class PostgresStorage implements IStorage {
     }
 
     return progress;
+  }
+
+  // User Topic Performance (Adaptive Learning)
+  async getUserTopicPerformance(userId: string, category: string): Promise<UserTopicPerformance[]> {
+    return await db
+      .select()
+      .from(userTopicPerformance)
+      .where(and(
+        eq(userTopicPerformance.userId, userId),
+        eq(userTopicPerformance.category, category)
+      ))
+      .orderBy(desc(userTopicPerformance.totalAttempted));
+  }
+
+  async updateUserTopicPerformance(
+    userId: string,
+    category: string,
+    subject: string,
+    topic: string | null,
+    isCorrect: boolean
+  ): Promise<void> {
+    // Try to find existing record
+    const existing = await db
+      .select()
+      .from(userTopicPerformance)
+      .where(and(
+        eq(userTopicPerformance.userId, userId),
+        eq(userTopicPerformance.category, category),
+        eq(userTopicPerformance.subject, subject),
+        topic ? eq(userTopicPerformance.topic, topic) : sql`${userTopicPerformance.topic} IS NULL`
+      ))
+      .limit(1);
+
+    if (existing.length > 0) {
+      // Update existing record
+      const record = existing[0];
+      const newTotal = record.totalAttempted + 1;
+      const newCorrect = record.correctCount + (isCorrect ? 1 : 0);
+      const newAccuracy = Math.round((newCorrect / newTotal) * 100);
+
+      await db
+        .update(userTopicPerformance)
+        .set({
+          totalAttempted: newTotal,
+          correctCount: newCorrect,
+          accuracy: newAccuracy,
+          lastAttemptedAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .where(eq(userTopicPerformance.id, record.id));
+    } else {
+      // Create new record
+      await db.insert(userTopicPerformance).values({
+        userId,
+        category,
+        subject,
+        topic,
+        totalAttempted: 1,
+        correctCount: isCorrect ? 1 : 0,
+        accuracy: isCorrect ? 100 : 0,
+        lastAttemptedAt: new Date(),
+      });
+    }
+  }
+
+  async getWeakTopics(userId: string, category: string, threshold: number = 70): Promise<UserTopicPerformance[]> {
+    // Get topics where accuracy is below threshold and user has attempted at least 5 questions
+    return await db
+      .select()
+      .from(userTopicPerformance)
+      .where(and(
+        eq(userTopicPerformance.userId, userId),
+        eq(userTopicPerformance.category, category),
+        lte(userTopicPerformance.accuracy, threshold),
+        gte(userTopicPerformance.totalAttempted, 5)
+      ))
+      .orderBy(userTopicPerformance.accuracy);
+  }
+
+  async getAdaptiveQuestions(
+    userId: string,
+    category: string,
+    count: number,
+    subjects?: string[],
+    topics?: string[]
+  ): Promise<Question[]> {
+    // Get weak topics for this user
+    const weakTopics = await this.getWeakTopics(userId, category);
+    
+    // Get questions from weak topics first (at least 5 per weak topic if available)
+    const weakTopicQuestions: Question[] = [];
+    const questionsPerWeakTopic = Math.min(5, Math.floor(count * 0.3 / Math.max(weakTopics.length, 1)));
+    
+    for (const weakTopic of weakTopics) {
+      if (weakTopicQuestions.length >= count * 0.3) break; // Don't use more than 30% for weak topics
+      
+      const topicQuestions = await db
+        .select()
+        .from(questions)
+        .where(and(
+          eq(questions.category, category),
+          eq(questions.subject, weakTopic.subject)
+        ))
+        .orderBy(sql`RANDOM()`)
+        .limit(questionsPerWeakTopic);
+      
+      weakTopicQuestions.push(...topicQuestions);
+    }
+    
+    // Get remaining questions from requested subjects/topics
+    const remainingCount = count - weakTopicQuestions.length;
+    const weakQuestionIds = weakTopicQuestions.map(q => q.id);
+    
+    let remainingQuestionsQuery = db
+      .select()
+      .from(questions)
+      .where(and(
+        eq(questions.category, category),
+        weakQuestionIds.length > 0 ? sql`${questions.id} NOT IN (${sql.join(weakQuestionIds.map(id => sql`${id}`), sql`, `)})` : sql`1=1`,
+        subjects && subjects.length > 0 ? inArray(questions.subject, subjects) : sql`1=1`
+      ))
+      .orderBy(sql`RANDOM()`)
+      .limit(remainingCount);
+    
+    const remainingQuestions = await remainingQuestionsQuery;
+    
+    // Combine and shuffle
+    const allQuestions = [...weakTopicQuestions, ...remainingQuestions];
+    
+    // Shuffle the combined array
+    for (let i = allQuestions.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [allQuestions[i], allQuestions[j]] = [allQuestions[j], allQuestions[i]];
+    }
+    
+    return allQuestions.slice(0, count);
   }
 
   // Payments

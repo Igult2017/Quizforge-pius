@@ -84,7 +84,7 @@ export default function Categories() {
     }
 
     console.log(`Starting ${category} practice`);
-    setLocation(`/quiz?category=${encodeURIComponent(category)}`);
+    setLocation(`/topic-selection?category=${encodeURIComponent(category)}`);
   };
 
   return (

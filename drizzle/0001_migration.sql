@@ -36,3 +36,21 @@ ALTER TABLE generation_logs ALTER COLUMN subject_progress_id DROP NOT NULL;
 
 -- Add areas_to_cover column to generation_jobs
 ALTER TABLE generation_jobs ADD COLUMN IF NOT EXISTS areas_to_cover text;
+
+-- Add topic column to questions table for specific topic tracking
+ALTER TABLE questions ADD COLUMN IF NOT EXISTS topic text;
+
+-- Create user_topic_performance table for adaptive learning
+CREATE TABLE IF NOT EXISTS "user_topic_performance" (
+    "id" serial PRIMARY KEY NOT NULL,
+    "user_id" varchar NOT NULL REFERENCES users(id),
+    "category" text NOT NULL,
+    "subject" text NOT NULL,
+    "topic" text,
+    "total_attempted" integer DEFAULT 0 NOT NULL,
+    "correct_count" integer DEFAULT 0 NOT NULL,
+    "accuracy" integer DEFAULT 0 NOT NULL,
+    "last_attempted_at" timestamp,
+    "created_at" timestamp DEFAULT now() NOT NULL,
+    "updated_at" timestamp DEFAULT now() NOT NULL
+);

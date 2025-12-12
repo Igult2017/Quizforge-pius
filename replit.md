@@ -28,7 +28,11 @@ Admin authentication is Firebase-based. The first user to sign up via Firebase A
 1. **Manual Question Generation Mode** - Automatic/background question generation has been disabled. Use the admin panel to create generation jobs and manually trigger processing via the "Process Jobs" button.
 2. **No Authorization for Generation Routes** - Generation-related API endpoints no longer require authentication. Anyone who can access the admin panel can generate questions.
 3. **Topic Breakdown Display** - Admin panel now shows collapsible question counts grouped by topic within each category.
-4. **Migration File Updated** - `drizzle/0001_migration.sql` now includes the `generation_jobs` table creation.
+4. **Migration File Updated** - `drizzle/0001_migration.sql` now includes the `generation_jobs` and `user_topic_performance` table creation.
+5. **NEW: Personalized Learning System** - Students can now choose specific subjects to focus on before starting a quiz. The system tracks performance by topic and provides recommendations on areas to improve.
+6. **NEW: Adaptive Question Selection** - When enabled, the quiz automatically includes questions from weak areas to reinforce learning. Uses up to 30% of quiz for topics where accuracy is below 70%.
+7. **NEW: Performance Dashboard** - Color-coded dashboard (`/performance`) showing strong areas (green, 80%+), improving areas (yellow, 60-79%), and areas needing work (red, below 60%) with personalized recommendations.
+8. **NEW: Topic Selection Page** - New intermediate page (`/topic-selection`) between categories and quiz, allowing users to select specific subjects and toggle adaptive learning mode.
 
 **Previous Updates (Nov 20, 2025)**:
 1. Paystack Payment Integration, Google Sign-In Account Merging, Strict Email Verification, Base64 Service Account Support.

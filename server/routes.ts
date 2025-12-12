@@ -112,6 +112,152 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ============= TOPIC & PERFORMANCE ENDPOINTS =============
+
+  // Get all available topics organized by category and subject
+  app.get('/api/topics', async (req, res) => {
+    try {
+      const { NCLEX_SUBJECTS, TEAS_SUBJECTS, HESI_SUBJECTS } = await import("./questionTopics");
+      
+      res.json({
+        NCLEX: NCLEX_SUBJECTS.map(s => ({
+          subject: s.name,
+          topics: s.topics,
+          questionCount: s.questionCount,
+        })),
+        TEAS: TEAS_SUBJECTS.map(s => ({
+          subject: s.name,
+          topics: s.topics,
+          questionCount: s.questionCount,
+        })),
+        HESI: HESI_SUBJECTS.map(s => ({
+          subject: s.name,
+          topics: s.topics,
+          questionCount: s.questionCount,
+        })),
+      });
+    } catch (error) {
+      console.error("Get topics error:", error);
+      res.status(500).json({ error: "Failed to get topics" });
+    }
+  });
+
+  // Get user's topic performance for a category
+  app.get('/api/auth/user/topic-performance/:category', isAuthenticated, async (req: any, res) => {
+    try {
+      if (!req.user || !req.user.claims) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+
+      const userId = req.user.claims.sub;
+      const { category } = req.params;
+      
+      if (!["NCLEX", "TEAS", "HESI"].includes(category)) {
+        return res.status(400).json({ error: "Invalid category" });
+      }
+
+      const performance = await storage.getUserTopicPerformance(userId, category);
+      
+      // Get topic configuration for context
+      const { NCLEX_SUBJECTS, TEAS_SUBJECTS, HESI_SUBJECTS } = await import("./questionTopics");
+      const subjectsMap: Record<string, typeof NCLEX_SUBJECTS> = {
+        NCLEX: NCLEX_SUBJECTS,
+        TEAS: TEAS_SUBJECTS,
+        HESI: HESI_SUBJECTS,
+      };
+      
+      // Merge with defined subjects to show all subjects (even unstarted ones)
+      const subjects = subjectsMap[category];
+      const performanceMap = new Map(performance.map(p => [p.subject, p]));
+      
+      const fullPerformance = subjects.map(s => {
+        const existing = performanceMap.get(s.name);
+        return {
+          subject: s.name,
+          topics: s.topics,
+          totalAttempted: existing?.totalAttempted || 0,
+          correctCount: existing?.correctCount || 0,
+          accuracy: existing?.accuracy || 0,
+          lastAttemptedAt: existing?.lastAttemptedAt || null,
+          status: !existing ? 'not_started' : 
+                  existing.accuracy >= 80 ? 'strong' : 
+                  existing.accuracy >= 60 ? 'improving' : 'needs_work',
+        };
+      });
+
+      res.json(fullPerformance);
+    } catch (error: any) {
+      console.error("[TOPIC PERFORMANCE ERROR]", error);
+      res.status(500).json({ error: "Failed to fetch topic performance" });
+    }
+  });
+
+  // Get weak topics with recommendations
+  app.get('/api/auth/user/weak-topics/:category', isAuthenticated, async (req: any, res) => {
+    try {
+      if (!req.user || !req.user.claims) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+
+      const userId = req.user.claims.sub;
+      const { category } = req.params;
+      const threshold = parseInt(req.query.threshold as string) || 70;
+      
+      if (!["NCLEX", "TEAS", "HESI"].includes(category)) {
+        return res.status(400).json({ error: "Invalid category" });
+      }
+
+      const weakTopics = await storage.getWeakTopics(userId, category, threshold);
+      
+      // Add recommendations
+      const recommendations = weakTopics.map(topic => ({
+        ...topic,
+        recommendation: topic.accuracy < 50 
+          ? `Focus intensively on ${topic.subject}. Consider reviewing study materials before continuing practice.`
+          : `Keep practicing ${topic.subject}. You're making progress but need more repetition.`,
+      }));
+
+      res.json({
+        weakTopics: recommendations,
+        overallRecommendation: weakTopics.length === 0 
+          ? "Great job! You're performing well across all topics."
+          : `Focus on these ${weakTopics.length} areas to improve your overall score.`,
+      });
+    } catch (error: any) {
+      console.error("[WEAK TOPICS ERROR]", error);
+      res.status(500).json({ error: "Failed to fetch weak topics" });
+    }
+  });
+
+  // Get adaptive questions for a quiz (includes weak topic questions)
+  app.post('/api/quiz/adaptive', isAuthenticated, async (req: any, res) => {
+    try {
+      if (!req.user || !req.user.claims) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+
+      const userId = req.user.claims.sub;
+      const { category, count = 50, subjects, topics } = req.body;
+      
+      if (!["NCLEX", "TEAS", "HESI"].includes(category)) {
+        return res.status(400).json({ error: "Invalid category" });
+      }
+
+      const questions = await storage.getAdaptiveQuestions(
+        userId,
+        category,
+        Math.min(count, 100), // Cap at 100 questions
+        subjects,
+        topics
+      );
+
+      res.json({ questions, count: questions.length });
+    } catch (error: any) {
+      console.error("[ADAPTIVE QUIZ ERROR]", error);
+      res.status(500).json({ error: "Failed to get adaptive questions" });
+    }
+  });
+
   const server = createServer(app);
   
   // ============= SEO ROUTES =============
@@ -535,11 +681,27 @@ ${urls.map(url => `  <url>
 
       // Always use 50 questions
       const questionCount = 50;
+      
+      // Get adaptive and subjects options from request
+      const { adaptive, subjects } = req.body;
 
-      // Get random questions
-      console.log(`Quiz request - User: ${user.email}, Category: "${category}", Count: ${questionCount}, FreeTrial: ${isFreeTrialAttempt}`);
-      const questions = await storage.getRandomQuestions(category, questionCount);
-      console.log(`Questions found: ${questions.length} for category "${category}"`);
+      // Get questions - use adaptive selection if enabled
+      console.log(`Quiz request - User: ${user.email}, Category: "${category}", Count: ${questionCount}, FreeTrial: ${isFreeTrialAttempt}, Adaptive: ${adaptive}`);
+      
+      let questions;
+      if (adaptive) {
+        // Use adaptive question selection that prioritizes weak topics
+        questions = await storage.getAdaptiveQuestions(
+          userId,
+          category,
+          questionCount,
+          subjects || undefined
+        );
+        console.log(`Adaptive questions found: ${questions.length} for category "${category}"`);
+      } else {
+        questions = await storage.getRandomQuestions(category, questionCount, subjects || undefined);
+        console.log(`Random questions found: ${questions.length} for category "${category}"`);
+      }
       
       if (questions.length === 0) {
         console.error(`No questions available for category "${category}"`);
@@ -603,6 +765,12 @@ ${urls.map(url => `  <url>
         return res.status(404).json({ error: "Question not found" });
       }
 
+      // Get the quiz attempt to get the user ID
+      const attempt = await storage.getQuizAttempt(Number(attemptId));
+      if (!attempt) {
+        return res.status(404).json({ error: "Quiz attempt not found" });
+      }
+
       // Get existing answers for this attempt to find the right one to update
       const answers = await storage.getQuizAnswers(Number(attemptId));
       const existingAnswer = answers.find(a => a.questionId === Number(questionId));
@@ -620,6 +788,22 @@ ${urls.map(url => `  <url>
         isCorrect,
         answeredAt: new Date(),
       });
+
+      // Update user topic performance for adaptive learning (only if not already answered)
+      if (existingAnswer.userAnswer === null && question.subject) {
+        try {
+          await storage.updateUserTopicPerformance(
+            attempt.userId,
+            question.category,
+            question.subject,
+            question.topic || null,
+            isCorrect
+          );
+        } catch (perfError) {
+          console.error("Error updating topic performance:", perfError);
+          // Don't fail the request if performance tracking fails
+        }
+      }
 
       res.json({ success: true });
     } catch (error: any) {

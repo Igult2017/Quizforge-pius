@@ -77,7 +77,23 @@ export const questions = pgTable("questions", {
   explanation: text("explanation"),
   difficulty: text("difficulty"), // "easy", "medium", "hard"
   subject: text("subject"), // e.g., "Pharmacology", "Medical-Surgical"
+  topic: text("topic"), // Specific topic within subject, e.g., "Advance Directives"
   createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// User performance tracking by topic for adaptive learning
+export const userTopicPerformance = pgTable("user_topic_performance", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  category: text("category").notNull(), // "NCLEX", "TEAS", "HESI"
+  subject: text("subject").notNull(), // e.g., "Management of Care"
+  topic: text("topic"), // Specific topic (optional - null means subject-level tracking)
+  totalAttempted: integer("total_attempted").default(0).notNull(),
+  correctCount: integer("correct_count").default(0).notNull(),
+  accuracy: integer("accuracy").default(0).notNull(), // Percentage 0-100
+  lastAttemptedAt: timestamp("last_attempted_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 export const quizAttempts = pgTable("quiz_attempts", {
@@ -219,6 +235,12 @@ export const insertGenerationJobSchema = createInsertSchema(generationJobs).omit
   status: true,
 });
 
+export const insertUserTopicPerformanceSchema = createInsertSchema(userTopicPerformance).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -246,3 +268,6 @@ export type InsertGenerationLog = z.infer<typeof insertGenerationLogSchema>;
 
 export type GenerationJob = typeof generationJobs.$inferSelect;
 export type InsertGenerationJob = z.infer<typeof insertGenerationJobSchema>;
+
+export type UserTopicPerformance = typeof userTopicPerformance.$inferSelect;
+export type InsertUserTopicPerformance = z.infer<typeof insertUserTopicPerformanceSchema>;
