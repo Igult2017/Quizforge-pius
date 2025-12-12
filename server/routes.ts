@@ -807,6 +807,34 @@ ${urls.map(url => `  <url>
     }
   });
 
+  // Delete all questions by topic (admin only)
+  app.delete("/api/admin/questions/by-topic", isAdmin, async (req, res) => {
+    try {
+      const { category, subject } = req.body;
+      
+      if (!category || !subject) {
+        return res.status(400).json({ error: "category and subject are required" });
+      }
+      
+      if (!["NCLEX", "TEAS", "HESI"].includes(category)) {
+        return res.status(400).json({ error: "Invalid category" });
+      }
+      
+      const deletedCount = await storage.deleteQuestionsByTopic(category, subject);
+      
+      console.log(`[ADMIN] Deleted ${deletedCount} questions from ${category} - ${subject}`);
+      
+      res.json({
+        success: true,
+        deletedCount,
+        message: `Deleted ${deletedCount} questions from ${subject}`,
+      });
+    } catch (error) {
+      console.error("Delete questions by topic error:", error);
+      res.status(500).json({ error: "Failed to delete questions" });
+    }
+  });
+
   app.post("/api/admin/questions/generate", async (req, res) => {
     try {
       const { category, count, subject, difficulty } = req.body;

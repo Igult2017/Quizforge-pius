@@ -140,6 +140,34 @@ export default function AdminQuestions() {
     },
   });
 
+  const deleteTopicMutation = useMutation({
+    mutationFn: async ({ category, subject }: { category: string; subject: string }) => {
+      const res = await apiRequest("DELETE", "/api/admin/questions/by-topic", { category, subject });
+      return await res.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Questions deleted",
+        description: data.message,
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/questions/counts"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/questions/counts-by-topic"] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to delete",
+        description: error.message || "Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleDeleteTopic = (category: string, subject: string, count: number) => {
+    if (confirm(`Are you sure you want to delete all ${count} questions in "${subject}"?\n\nThis action cannot be undone.`)) {
+      deleteTopicMutation.mutate({ category, subject });
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -379,7 +407,7 @@ export default function AdminQuestions() {
                               return (
                                 <div
                                   key={`${topic.category}-${topic.subject}-${index}`}
-                                  className="p-4 flex items-center justify-between gap-4"
+                                  className="p-4 flex items-center justify-between gap-4 group"
                                   data-testid={`topic-${cat}-${index}`}
                                 >
                                   <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -393,6 +421,16 @@ export default function AdminQuestions() {
                                     <div className="text-right min-w-[60px]">
                                       <div className="font-semibold">{topic.count.toLocaleString()}</div>
                                     </div>
+                                    <Button
+                                      size="icon"
+                                      variant="ghost"
+                                      className="opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive"
+                                      onClick={() => handleDeleteTopic(topic.category, topic.subject, topic.count)}
+                                      disabled={deleteTopicMutation.isPending}
+                                      data-testid={`button-delete-topic-${cat}-${index}`}
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
                                   </div>
                                 </div>
                               );

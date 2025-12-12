@@ -63,6 +63,7 @@ export interface IStorage {
   getQuestionById(id: number): Promise<Question | undefined>;
   getQuestionCountsByCategory(): Promise<{ category: string; count: number }[]>;
   getQuestionCountsByTopic(): Promise<{ category: string; subject: string; count: number }[]>;
+  deleteQuestionsByTopic(category: string, subject: string): Promise<number>;
 
   // Quiz Attempts
   createQuizAttempt(attempt: InsertQuizAttempt): Promise<QuizAttempt>;
@@ -351,6 +352,15 @@ export class PostgresStorage implements IStorage {
       subject: r.subject || "General",
       count: r.count,
     }));
+  }
+
+  async deleteQuestionsByTopic(category: string, subject: string): Promise<number> {
+    const result = await db
+      .delete(questions)
+      .where(and(eq(questions.category, category), eq(questions.subject, subject)))
+      .returning({ id: questions.id });
+    
+    return result.length;
   }
 
   // Quiz Attempts
