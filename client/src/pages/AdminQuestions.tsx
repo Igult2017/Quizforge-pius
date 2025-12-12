@@ -1,10 +1,13 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -12,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2, Brain, Database, Plus, CheckCircle2, XCircle } from "lucide-react";
+import { Loader2, Brain, Database, Plus, CheckCircle2, XCircle, Pause, Play, Trash2, Clock, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface QuestionCount {
@@ -20,65 +23,133 @@ interface QuestionCount {
   count: number;
 }
 
+interface GenerationJob {
+  id: number;
+  category: string;
+  topic: string;
+  difficulty: string;
+  totalCount: number;
+  generatedCount: number;
+  batchSize: number;
+  sampleQuestion: string | null;
+  status: string;
+  errorCount: number;
+  lastError: string | null;
+  createdAt: string;
+  updatedAt: string;
+  completedAt: string | null;
+}
+
 export default function AdminQuestions() {
   const { toast } = useToast();
   const [category, setCategory] = useState<string>("NCLEX");
-  const [count, setCount] = useState<string>("10");
-  const [subject, setSubject] = useState<string>("");
+  const [totalCount, setTotalCount] = useState<string>("50");
+  const [topic, setTopic] = useState<string>("");
   const [difficulty, setDifficulty] = useState<string>("medium");
-
-  console.log("AdminQuestions component rendered");
+  const [sampleQuestion, setSampleQuestion] = useState<string>("");
 
   // Fetch question counts
   const { data: questionCounts, isLoading: countsLoading, error: countsError } = useQuery<QuestionCount[]>({
     queryKey: ["/api/admin/questions/counts"],
   });
 
-  console.log("Question counts:", { questionCounts, countsLoading, countsError });
+  // Fetch generation jobs with auto-refresh
+  const { data: jobs, isLoading: jobsLoading } = useQuery<GenerationJob[]>({
+    queryKey: ["/api/admin/generation-jobs"],
+    refetchInterval: 5000, // Refresh every 5 seconds
+  });
 
-  // Generate questions mutation
-  const generateMutation = useMutation({
+  // Create generation job mutation
+  const createJobMutation = useMutation({
     mutationFn: async () => {
-      const res = await apiRequest("POST", "/api/admin/questions/generate", {
+      const res = await apiRequest("POST", "/api/admin/generation-jobs", {
         category,
-        count: parseInt(count),
-        subject: subject || undefined,
+        topic,
         difficulty,
+        totalCount: parseInt(totalCount),
+        sampleQuestion: sampleQuestion || undefined,
       });
       return await res.json();
     },
     onSuccess: (data) => {
       toast({
-        title: "Questions generated successfully!",
-        description: `Added ${data.generated} ${category} questions to the database.`,
+        title: "Generation job created!",
+        description: data.message,
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/questions/counts"] });
-      setCount("10");
-      setSubject("");
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/generation-jobs"] });
+      setTotalCount("50");
+      setTopic("");
+      setSampleQuestion("");
     },
     onError: (error: Error) => {
       toast({
-        title: "Generation failed",
-        description: error.message || "Failed to generate questions. Please try again.",
+        title: "Failed to create job",
+        description: error.message || "Please try again.",
         variant: "destructive",
       });
     },
   });
 
-  const handleGenerate = (e: React.FormEvent) => {
+  // Pause job mutation
+  const pauseJobMutation = useMutation({
+    mutationFn: async (jobId: number) => {
+      const res = await apiRequest("POST", `/api/admin/generation-jobs/${jobId}/pause`);
+      return await res.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Job paused" });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/generation-jobs"] });
+    },
+  });
+
+  // Resume job mutation
+  const resumeJobMutation = useMutation({
+    mutationFn: async (jobId: number) => {
+      const res = await apiRequest("POST", `/api/admin/generation-jobs/${jobId}/resume`);
+      return await res.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Job resumed" });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/generation-jobs"] });
+    },
+  });
+
+  // Delete job mutation
+  const deleteJobMutation = useMutation({
+    mutationFn: async (jobId: number) => {
+      const res = await apiRequest("DELETE", `/api/admin/generation-jobs/${jobId}`);
+      return await res.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Job deleted" });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/generation-jobs"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/questions/counts"] });
+    },
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    const numCount = parseInt(count);
-    if (isNaN(numCount) || numCount < 1 || numCount > 100) {
+    const numCount = parseInt(totalCount);
+    if (isNaN(numCount) || numCount < 5 || numCount > 1000) {
       toast({
         title: "Invalid count",
-        description: "Please enter a number between 1 and 100",
+        description: "Please enter a number between 5 and 1000",
         variant: "destructive",
       });
       return;
     }
 
-    generateMutation.mutate();
+    if (!topic.trim()) {
+      toast({
+        title: "Topic required",
+        description: "Please enter a topic/subject for the questions",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    createJobMutation.mutate();
   };
 
   const getCategoryIcon = (cat: string) => {
@@ -88,6 +159,23 @@ export default function AdminQuestions() {
       HESI: "bg-teal-100 dark:bg-teal-900/20 text-teal-600 dark:text-teal-400",
     };
     return colors[cat as keyof typeof colors] || "bg-gray-100 dark:bg-gray-800 text-gray-600";
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "pending":
+        return <Badge variant="secondary" className="gap-1"><Clock className="h-3 w-3" /> Pending</Badge>;
+      case "running":
+        return <Badge variant="default" className="gap-1"><Loader2 className="h-3 w-3 animate-spin" /> Running</Badge>;
+      case "completed":
+        return <Badge className="gap-1 bg-green-600"><CheckCircle2 className="h-3 w-3" /> Completed</Badge>;
+      case "paused":
+        return <Badge variant="outline" className="gap-1"><Pause className="h-3 w-3" /> Paused</Badge>;
+      case "failed":
+        return <Badge variant="destructive" className="gap-1"><XCircle className="h-3 w-3" /> Failed</Badge>;
+      default:
+        return <Badge variant="secondary">{status}</Badge>;
+    }
   };
 
   if (countsLoading) {
@@ -117,13 +205,16 @@ export default function AdminQuestions() {
   }
 
   const totalQuestions = questionCounts?.reduce((sum, c) => sum + c.count, 0) || 0;
+  const activeJobs = jobs?.filter(j => j.status === "running" || j.status === "pending") || [];
+  const completedJobs = jobs?.filter(j => j.status === "completed") || [];
+  const otherJobs = jobs?.filter(j => j.status !== "running" && j.status !== "pending" && j.status !== "completed") || [];
 
   return (
     <div className="p-6 space-y-6 max-w-7xl mx-auto bg-background">
       <div>
         <h1 className="text-3xl font-bold mb-2 text-foreground">AI Question Generator</h1>
         <p className="text-muted-foreground">
-          Generate practice questions using AI and manage your question database
+          Generate practice questions using AI. Create batch jobs that process 5 questions at a time.
         </p>
       </div>
 
@@ -162,19 +253,19 @@ export default function AdminQuestions() {
         </Card>
       </div>
 
-      {/* Generation Form */}
+      {/* Batch Generation Form */}
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
             <Brain className="h-5 w-5 text-primary" />
-            <CardTitle>Generate New Questions</CardTitle>
+            <CardTitle>Create Batch Generation Job</CardTitle>
           </div>
           <CardDescription>
-            Use AI to generate high-quality practice questions. Max 100 questions per batch.
+            Request between 5-1000 questions. They will be generated in batches of 5 to prevent timeouts.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleGenerate} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="category">Category *</Label>
@@ -191,28 +282,29 @@ export default function AdminQuestions() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="count">Number of Questions *</Label>
+                <Label htmlFor="totalCount">Number of Questions * (5-1000)</Label>
                 <Input
-                  id="count"
+                  id="totalCount"
                   type="number"
-                  min="1"
-                  max="100"
-                  value={count}
-                  onChange={(e) => setCount(e.target.value)}
-                  placeholder="10"
+                  min="5"
+                  max="1000"
+                  value={totalCount}
+                  onChange={(e) => setTotalCount(e.target.value)}
+                  placeholder="50"
                   required
-                  data-testid="input-count"
+                  data-testid="input-total-count"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="subject">Subject (Optional)</Label>
+                <Label htmlFor="topic">Topic/Subject *</Label>
                 <Input
-                  id="subject"
-                  value={subject}
-                  onChange={(e) => setSubject(e.target.value)}
-                  placeholder="e.g., Pharmacology, Medical-Surgical"
-                  data-testid="input-subject"
+                  id="topic"
+                  value={topic}
+                  onChange={(e) => setTopic(e.target.value)}
+                  placeholder="e.g., Pharmacology, Medical-Surgical, Anatomy"
+                  required
+                  data-testid="input-topic"
                 />
               </div>
 
@@ -231,36 +323,40 @@ export default function AdminQuestions() {
               </div>
             </div>
 
-            <div className="flex items-center justify-between pt-4 border-t">
+            <div className="space-y-2">
+              <Label htmlFor="sampleQuestion">Sample Question (Optional)</Label>
+              <Textarea
+                id="sampleQuestion"
+                value={sampleQuestion}
+                onChange={(e) => setSampleQuestion(e.target.value)}
+                placeholder="Paste a sample question to guide the AI on style, format, and complexity. The AI will generate similar questions based on this example."
+                rows={4}
+                data-testid="textarea-sample-question"
+              />
+              <p className="text-xs text-muted-foreground">
+                Providing a sample helps the AI match your preferred question style and complexity level.
+              </p>
+            </div>
+
+            <div className="flex items-center justify-between pt-4 border-t gap-4">
               <div className="text-sm text-muted-foreground">
-                {generateMutation.isSuccess && (
-                  <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
-                    <CheckCircle2 className="h-4 w-4" />
-                    <span>Questions generated successfully!</span>
-                  </div>
-                )}
-                {generateMutation.isError && (
-                  <div className="flex items-center gap-2 text-destructive">
-                    <XCircle className="h-4 w-4" />
-                    <span>Generation failed. Please try again.</span>
-                  </div>
-                )}
+                Questions will be generated 5 at a time every 30 seconds.
               </div>
 
               <Button
                 type="submit"
-                disabled={generateMutation.isPending}
-                data-testid="button-generate"
+                disabled={createJobMutation.isPending}
+                data-testid="button-create-job"
               >
-                {generateMutation.isPending ? (
+                {createJobMutation.isPending ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Generating...
+                    Creating...
                   </>
                 ) : (
                   <>
                     <Plus className="mr-2 h-4 w-4" />
-                    Generate Questions
+                    Start Generation Job
                   </>
                 )}
               </Button>
@@ -269,26 +365,201 @@ export default function AdminQuestions() {
         </CardContent>
       </Card>
 
+      {/* Active Jobs */}
+      {activeJobs.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Active Generation Jobs ({activeJobs.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {activeJobs.map((job) => {
+              const progress = Math.round((job.generatedCount / job.totalCount) * 100);
+              return (
+                <div key={job.id} className="border rounded-md p-4 space-y-3" data-testid={`job-active-${job.id}`}>
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Badge variant="outline">{job.category}</Badge>
+                      <span className="font-medium">{job.topic}</span>
+                      <Badge variant="secondary">{job.difficulty}</Badge>
+                      {getStatusBadge(job.status)}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {job.status === "running" && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => pauseJobMutation.mutate(job.id)}
+                          disabled={pauseJobMutation.isPending}
+                          data-testid={`button-pause-${job.id}`}
+                        >
+                          <Pause className="h-4 w-4" />
+                        </Button>
+                      )}
+                      {job.status === "pending" && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => pauseJobMutation.mutate(job.id)}
+                          disabled={pauseJobMutation.isPending}
+                          data-testid={`button-pause-${job.id}`}
+                        >
+                          <Pause className="h-4 w-4" />
+                        </Button>
+                      )}
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => deleteJobMutation.mutate(job.id)}
+                        disabled={deleteJobMutation.isPending}
+                        data-testid={`button-delete-${job.id}`}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-sm">
+                      <span>{job.generatedCount} / {job.totalCount} questions</span>
+                      <span>{progress}%</span>
+                    </div>
+                    <Progress value={progress} className="h-2" />
+                  </div>
+                  {job.lastError && (
+                    <div className="flex items-center gap-2 text-sm text-destructive">
+                      <AlertCircle className="h-4 w-4" />
+                      <span>Last error: {job.lastError}</span>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Paused/Failed Jobs */}
+      {otherJobs.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Paused/Failed Jobs ({otherJobs.length})</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {otherJobs.map((job) => {
+              const progress = Math.round((job.generatedCount / job.totalCount) * 100);
+              return (
+                <div key={job.id} className="border rounded-md p-4 space-y-3" data-testid={`job-other-${job.id}`}>
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Badge variant="outline">{job.category}</Badge>
+                      <span className="font-medium">{job.topic}</span>
+                      <Badge variant="secondary">{job.difficulty}</Badge>
+                      {getStatusBadge(job.status)}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => resumeJobMutation.mutate(job.id)}
+                        disabled={resumeJobMutation.isPending}
+                        data-testid={`button-resume-${job.id}`}
+                      >
+                        <Play className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => deleteJobMutation.mutate(job.id)}
+                        disabled={deleteJobMutation.isPending}
+                        data-testid={`button-delete-${job.id}`}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-sm">
+                      <span>{job.generatedCount} / {job.totalCount} questions</span>
+                      <span>{progress}%</span>
+                    </div>
+                    <Progress value={progress} className="h-2" />
+                  </div>
+                  {job.lastError && (
+                    <div className="flex items-center gap-2 text-sm text-destructive">
+                      <AlertCircle className="h-4 w-4" />
+                      <span>Last error: {job.lastError}</span>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Completed Jobs (last 5) */}
+      {completedJobs.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <CheckCircle2 className="h-4 w-4 text-green-600" />
+              Recently Completed ({completedJobs.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {completedJobs.slice(0, 5).map((job) => (
+                <div key={job.id} className="flex items-center justify-between py-2 border-b last:border-0" data-testid={`job-completed-${job.id}`}>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Badge variant="outline">{job.category}</Badge>
+                    <span className="text-sm">{job.topic}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {job.generatedCount} questions
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground">
+                      {job.completedAt ? new Date(job.completedAt).toLocaleDateString() : ""}
+                    </span>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => deleteJobMutation.mutate(job.id)}
+                      disabled={deleteJobMutation.isPending}
+                      data-testid={`button-delete-completed-${job.id}`}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Info Card */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">About AI Question Generation</CardTitle>
+          <CardTitle className="text-base">How Batch Generation Works</CardTitle>
         </CardHeader>
         <CardContent className="space-y-2 text-sm text-muted-foreground">
           <p>
-            • Questions are generated using Google Gemini AI (gemini-1.5-flash) with nursing exam-specific prompts
+            1. Create a job with your desired topic, difficulty, and count (5-1000 questions)
           </p>
           <p>
-            • Each question includes 4 options, correct answer, and detailed explanation
+            2. The system generates 5 questions at a time every 30 seconds
           </p>
           <p>
-            • Generation typically takes 5-20 seconds depending on the batch size
+            3. Progress is tracked automatically - you can pause/resume anytime
           </p>
           <p>
-            • Questions are automatically saved to the database after generation
+            4. If errors occur, the job retries up to 3 times before pausing
           </p>
           <p>
-            • Optional: Generate for specific subjects when needed, or use comprehensive generation for full coverage
+            5. Provide a sample question to guide the AI on your preferred style
           </p>
         </CardContent>
       </Card>

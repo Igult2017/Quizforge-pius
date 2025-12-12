@@ -100,12 +100,13 @@ interface GenerateQuestionsParams {
   count: number;
   subject?: string;
   difficulty?: "easy" | "medium" | "hard";
+  sampleQuestion?: string; // Optional sample question for style/format guidance
 }
 
 export async function generateQuestions(
   params: GenerateQuestionsParams
 ): Promise<InsertQuestion[]> {
-  const { category, count, subject, difficulty } = params;
+  const { category, count, subject, difficulty, sampleQuestion } = params;
 
   const systemPrompt = `You are an expert nursing exam question writer. Generate high-quality, realistic practice questions for ${category} exams.
 
@@ -136,11 +137,23 @@ Return a JSON array with this exact structure:
   }
 ]`;
 
-  const userPrompt = `Generate ${count} ${difficulty || "medium"} difficulty ${category} questions${
+  let userPrompt = `Generate ${count} ${difficulty || "medium"} difficulty ${category} questions${
     subject ? ` on ${subject}` : ""
   }.
 
 Make questions realistic and clinically relevant. Ensure proper formatting with exactly 4 options per question.`;
+
+  // Add sample question guidance if provided
+  if (sampleQuestion) {
+    userPrompt += `
+
+IMPORTANT: Use the following sample question as a guide for style, format, and complexity. Match the tone, structure, and level of detail in your generated questions:
+
+Sample Question:
+${sampleQuestion}
+
+Generate questions that follow this same style and format.`;
+  }
 
   try {
     const client = getGeminiClient();

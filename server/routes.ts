@@ -961,6 +961,117 @@ ${urls.map(url => `  <url>
     }
   });
 
+  // ============= GENERATION JOBS ROUTES =============
+  
+  // Create a new generation job (batch generation with progress tracking)
+  app.post("/api/admin/generation-jobs", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { category, topic, difficulty, totalCount, sampleQuestion } = req.body;
+
+      // Validation
+      if (!category || !topic || !difficulty || !totalCount) {
+        return res.status(400).json({ error: "category, topic, difficulty, and totalCount are required" });
+      }
+
+      if (!["NCLEX", "TEAS", "HESI"].includes(category)) {
+        return res.status(400).json({ error: "category must be NCLEX, TEAS, or HESI" });
+      }
+
+      if (!["easy", "medium", "hard"].includes(difficulty)) {
+        return res.status(400).json({ error: "difficulty must be easy, medium, or hard" });
+      }
+
+      if (totalCount < 5 || totalCount > 1000) {
+        return res.status(400).json({ error: "totalCount must be between 5 and 1000" });
+      }
+
+      const { createGenerationJob } = await import("./generationJobProcessor.js");
+      
+      const job = await createGenerationJob({
+        category,
+        topic,
+        difficulty,
+        totalCount: Number(totalCount),
+        sampleQuestion: sampleQuestion || undefined,
+        createdBy: req.user?.id,
+      });
+
+      res.json({
+        success: true,
+        job,
+        message: `Started generating ${totalCount} questions. They will be generated in batches of 5.`,
+      });
+    } catch (error: any) {
+      console.error("Error creating generation job:", error);
+      res.status(500).json({ error: error.message || "Failed to create generation job" });
+    }
+  });
+
+  // Get all generation jobs
+  app.get("/api/admin/generation-jobs", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const { getAllJobs } = await import("./generationJobProcessor.js");
+      const jobs = await getAllJobs();
+      res.json(jobs);
+    } catch (error) {
+      console.error("Error fetching generation jobs:", error);
+      res.status(500).json({ error: "Failed to fetch generation jobs" });
+    }
+  });
+
+  // Get single generation job status
+  app.get("/api/admin/generation-jobs/:id", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const { getJobStatus } = await import("./generationJobProcessor.js");
+      const job = await getJobStatus(Number(req.params.id));
+      
+      if (!job) {
+        return res.status(404).json({ error: "Job not found" });
+      }
+      
+      res.json(job);
+    } catch (error) {
+      console.error("Error fetching job status:", error);
+      res.status(500).json({ error: "Failed to fetch job status" });
+    }
+  });
+
+  // Pause a generation job
+  app.post("/api/admin/generation-jobs/:id/pause", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const { pauseJob } = await import("./generationJobProcessor.js");
+      await pauseJob(Number(req.params.id));
+      res.json({ success: true, message: "Job paused" });
+    } catch (error) {
+      console.error("Error pausing job:", error);
+      res.status(500).json({ error: "Failed to pause job" });
+    }
+  });
+
+  // Resume a generation job
+  app.post("/api/admin/generation-jobs/:id/resume", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const { resumeJob } = await import("./generationJobProcessor.js");
+      await resumeJob(Number(req.params.id));
+      res.json({ success: true, message: "Job resumed" });
+    } catch (error) {
+      console.error("Error resuming job:", error);
+      res.status(500).json({ error: "Failed to resume job" });
+    }
+  });
+
+  // Delete a generation job
+  app.delete("/api/admin/generation-jobs/:id", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const { deleteJob } = await import("./generationJobProcessor.js");
+      await deleteJob(Number(req.params.id));
+      res.json({ success: true, message: "Job deleted" });
+    } catch (error) {
+      console.error("Error deleting job:", error);
+      res.status(500).json({ error: "Failed to delete job" });
+    }
+  });
+
   // ============= ADMIN ROUTES =============
   
   // Get all users (admin only)

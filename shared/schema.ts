@@ -121,7 +121,8 @@ export const generationSubjectProgress = pgTable("generation_subject_progress", 
 // Generation logs for audit trail
 export const generationLogs = pgTable("generation_logs", {
   id: serial("id").primaryKey(),
-  subjectProgressId: integer("subject_progress_id").notNull().references(() => generationSubjectProgress.id),
+  subjectProgressId: integer("subject_progress_id").references(() => generationSubjectProgress.id),
+  generationJobId: integer("generation_job_id").references(() => generationJobs.id),
   category: text("category").notNull(),
   subject: text("subject").notNull(),
   questionsRequested: integer("questions_requested").notNull(),
@@ -131,6 +132,25 @@ export const generationLogs = pgTable("generation_logs", {
   errorMessage: text("error_message"),
   durationMs: integer("duration_ms"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Manual generation jobs - for admin batch generation requests
+export const generationJobs = pgTable("generation_jobs", {
+  id: serial("id").primaryKey(),
+  category: text("category").notNull(), // "NCLEX", "TEAS", "HESI"
+  topic: text("topic").notNull(), // The topic/subject to generate questions for
+  difficulty: text("difficulty").notNull(), // "easy", "medium", "hard"
+  totalCount: integer("total_count").notNull(), // Total questions requested (5-1000)
+  generatedCount: integer("generated_count").default(0).notNull(), // How many generated so far
+  batchSize: integer("batch_size").default(5).notNull(), // Questions per API call
+  sampleQuestion: text("sample_question"), // Optional sample question for context
+  status: text("status").default("pending").notNull(), // "pending", "running", "completed", "paused", "failed"
+  errorCount: integer("error_count").default(0).notNull(),
+  lastError: text("last_error"),
+  createdBy: varchar("created_by").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  completedAt: timestamp("completed_at"),
 });
 
 // Upsert user type (for Replit Auth)
@@ -187,6 +207,17 @@ export const insertGenerationLogSchema = createInsertSchema(generationLogs).omit
   createdAt: true,
 });
 
+export const insertGenerationJobSchema = createInsertSchema(generationJobs).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  completedAt: true,
+  generatedCount: true,
+  errorCount: true,
+  lastError: true,
+  status: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -211,3 +242,6 @@ export type InsertGenerationSubjectProgress = z.infer<typeof insertGenerationSub
 
 export type GenerationLog = typeof generationLogs.$inferSelect;
 export type InsertGenerationLog = z.infer<typeof insertGenerationLogSchema>;
+
+export type GenerationJob = typeof generationJobs.$inferSelect;
+export type InsertGenerationJob = z.infer<typeof insertGenerationJobSchema>;

@@ -5,6 +5,7 @@ import { setupVite, serveStatic, log } from "./vite";
 import path from "path";
 import { fileURLToPath } from "url";
 import { startBackgroundGeneration } from "./backgroundGeneration";
+import { startJobProcessor } from "./generationJobProcessor";
 import { storage } from "./storage";
 
 // ES-module-safe __dirname (optional, in case you need it later)
@@ -106,6 +107,9 @@ app.get("/favicon.ico", (_req, res) => {
         startBackgroundGeneration().catch((error) => {
           console.error("Failed to start background generation:", error);
         });
+        
+        // Start generation job processor for manual batch generation
+        startJobProcessor();
       }
     );
   } catch (err) {
