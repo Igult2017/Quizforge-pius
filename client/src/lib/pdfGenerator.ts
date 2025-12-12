@@ -146,18 +146,6 @@ export function generateQuestionsPDF(questions: Question[], options: PDFOptions)
     doc.setFont("helvetica", "bold");
     doc.text(`Question ${index + 1}`, margin, yPos + 8);
     
-    if (q.difficulty) {
-      const diffColors: Record<string, [number, number, number]> = {
-        easy: [34, 139, 34],
-        medium: [255, 165, 0],
-        hard: [220, 20, 60],
-      };
-      const color = diffColors[q.difficulty] || [100, 100, 100];
-      doc.setTextColor(color[0], color[1], color[2]);
-      doc.setFontSize(9);
-      doc.text(q.difficulty.toUpperCase(), pageWidth - margin - 5, yPos + 8, { align: "right" });
-    }
-    
     yPos += 20;
 
     doc.setTextColor(30, 30, 30);
