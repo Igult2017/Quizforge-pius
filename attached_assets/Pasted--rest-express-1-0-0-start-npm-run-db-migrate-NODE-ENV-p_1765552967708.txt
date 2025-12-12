@@ -1,0 +1,60 @@
+> rest-express@1.0.0 start
+> npm run db:migrate && NODE_ENV=production node dist/index.js
+
+
+> rest-express@1.0.0 db:migrate
+> npm run db:sql-migrate
+
+
+> rest-express@1.0.0 db:sql-migrate
+> tsx server/runMigration.ts
+
+🔧 Running SQL migration...
+  - Executing: ALTER TABLE users ADD COLUMN IF NOT EXISTS teas_fr...
+Firebase Admin initialized with base64-encoded service account
+[INIT] Checking system users...
+[INIT] ✓ Anonymous user already exists
+3:20:40 PM [express] Serving on port 3000
+📋 Manual question generation mode - use admin panel to generate questions
+3:20:57 PM [express] GET /api/admin/generation-jobs 304 in 32ms
+📋 Created generation job #1: 50 NCLEX questions on "Medical  surgical "
+3:20:59 PM [express] POST /api/admin/generation-jobs 200 in 6ms
+3:20:59 PM [express] GET /api/admin/generation-jobs 200 in 6ms
+
+📝 Processing generation job #1
+   Topic: Medical  surgical  | Category: NCLEX | Difficulty: hard
+   Progress: 0/50 (generating 5 more)
+🔍 Auto-detecting working Gemini model...
+   Testing: gemini-2.0-flash-exp...
+✓ Found working model: gemini-2.0-flash-exp
+3:21:04 PM [express] GET /api/admin/generation-jobs 200 in 8ms
+3:21:10 PM [express] GET /api/admin/generation-jobs 304 in 6ms
+3:21:15 PM [express] GET /api/admin/generation-jobs 200 in 24ms
+3:21:20 PM [express] GET /api/admin/generation-jobs 304 in 4ms
+3:21:26 PM [express] GET /api/admin/generation-jobs 304 in 5ms
+3:21:56 PM [express] GET /api/admin/generation-jobs 304 in 46ms
+⚠️  SQL migration encountered an error (continuing anyway):
+Error connecting to database: fetch failed
+   ✗ Error generating questions: column "generation_job_id" of relation "generation_logs" does not exist
+Job processor error: error: column "generation_job_id" of relation "generation_logs" does not exist
+    at /app/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async processNextJobBatch (file:///app/dist/index.js:1483:7) {
+  length: 145,
+  severity: 'ERROR',
+  code: '42703',
+  detail: undefined,
+  hint: undefined,
+  position: '61',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_target.c',
+  line: '1065',
+  routine: 'checkInsertTargets'
+}
