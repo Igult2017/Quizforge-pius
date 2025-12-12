@@ -796,6 +796,17 @@ ${urls.map(url => `  <url>
     }
   });
 
+  // Get question counts by topic/subject
+  app.get("/api/admin/questions/counts-by-topic", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const counts = await storage.getQuestionCountsByTopic();
+      res.json(counts);
+    } catch (error) {
+      console.error("Get question counts by topic error:", error);
+      res.status(500).json({ error: "Failed to get question counts by topic" });
+    }
+  });
+
   app.post("/api/admin/questions/generate", isAdmin, async (req, res) => {
     try {
       const { category, count, subject, difficulty } = req.body;

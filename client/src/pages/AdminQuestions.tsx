@@ -15,11 +15,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2, Brain, Database, Plus, CheckCircle2, XCircle, Pause, Play, Trash2, Clock, AlertCircle } from "lucide-react";
+import { Loader2, Brain, Database, Plus, CheckCircle2, XCircle, Pause, Play, Trash2, Clock, AlertCircle, ChevronDown, ChevronRight, BookOpen } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useToast } from "@/hooks/use-toast";
 
 interface QuestionCount {
   category: string;
+  count: number;
+}
+
+interface TopicCount {
+  category: string;
+  subject: string;
   count: number;
 }
 
@@ -51,6 +58,11 @@ export default function AdminQuestions() {
   // Fetch question counts
   const { data: questionCounts, isLoading: countsLoading, error: countsError } = useQuery<QuestionCount[]>({
     queryKey: ["/api/admin/questions/counts"],
+  });
+
+  // Fetch question counts by topic
+  const { data: topicCounts } = useQuery<TopicCount[]>({
+    queryKey: ["/api/admin/questions/counts-by-topic"],
   });
 
   // Fetch generation jobs with auto-refresh
@@ -252,6 +264,67 @@ export default function AdminQuestions() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Topic Breakdown Section */}
+      {topicCounts && topicCounts.length > 0 && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <BookOpen className="h-5 w-5 text-primary" />
+              <CardTitle>Questions by Topic</CardTitle>
+            </div>
+            <CardDescription>
+              Detailed breakdown of questions per topic in each category
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {["NCLEX", "TEAS", "HESI"].map((cat) => {
+              const catTopics = topicCounts.filter(t => t.category === cat);
+              const catTotal = catTopics.reduce((sum, t) => sum + t.count, 0);
+              
+              if (catTopics.length === 0) return null;
+              
+              return (
+                <Collapsible key={cat} defaultOpen={false}>
+                  <CollapsibleTrigger asChild>
+                    <Button 
+                      variant="ghost" 
+                      className="w-full justify-between p-3 h-auto"
+                      data-testid={`toggle-topics-${cat}`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={`p-2 rounded-md ${getCategoryIcon(cat)}`}>
+                          <Database className="h-4 w-4" />
+                        </div>
+                        <span className="font-semibold">{cat}</span>
+                        <Badge variant="secondary">{catTopics.length} topics</Badge>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-muted-foreground">{catTotal.toLocaleString()} questions</span>
+                        <ChevronDown className="h-4 w-4" />
+                      </div>
+                    </Button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <div className="grid gap-2 pt-2 pl-4">
+                      {catTopics.map((topic, index) => (
+                        <div 
+                          key={`${topic.category}-${topic.subject}-${index}`}
+                          className="flex items-center justify-between p-2 rounded-md bg-muted/50"
+                          data-testid={`topic-row-${topic.category}-${index}`}
+                        >
+                          <span className="text-sm">{topic.subject}</span>
+                          <Badge variant="outline">{topic.count.toLocaleString()}</Badge>
+                        </div>
+                      ))}
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
+              );
+            })}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Batch Generation Form */}
       <Card>
