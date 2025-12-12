@@ -28,8 +28,15 @@ async function runMigration() {
     // Split by semicolons and run each statement
     const statements = migrationSQL
       .split(';')
-      .map(s => s.trim())
-      .filter(s => s.length > 0 && !s.startsWith('--'));
+      .map(s => {
+        // Remove comment lines from the statement
+        return s
+          .split('\n')
+          .filter(line => !line.trim().startsWith('--'))
+          .join('\n')
+          .trim();
+      })
+      .filter(s => s.length > 0);
     
     for (const statement of statements) {
       const preview = statement.substring(0, 60).replace(/\n/g, ' ');
