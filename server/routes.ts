@@ -839,13 +839,21 @@ ${urls.map(url => `  <url>
   app.get("/api/admin/questions/by-category/:category", async (req, res) => {
     try {
       const { category } = req.params;
-      const { subject } = req.query;
+      const { subject, limit } = req.query;
       
       if (!["NCLEX", "TEAS", "HESI"].includes(category)) {
         return res.status(400).json({ error: "Invalid category" });
       }
       
-      const questions = await storage.getQuestionsByCategory(category, subject as string | undefined);
+      let questions = await storage.getQuestionsByCategory(category, subject as string | undefined);
+      
+      // Apply limit if specified
+      if (limit) {
+        const limitNum = parseInt(limit as string);
+        if (!isNaN(limitNum) && limitNum > 0) {
+          questions = questions.slice(0, limitNum);
+        }
+      }
       
       res.json({ questions });
     } catch (error) {

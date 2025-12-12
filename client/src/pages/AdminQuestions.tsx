@@ -65,6 +65,7 @@ export default function AdminQuestions() {
   // PDF generation state
   const [pdfCategory, setPdfCategory] = useState<string>("NCLEX");
   const [pdfSubject, setPdfSubject] = useState<string>("");
+  const [pdfQuestionCount, setPdfQuestionCount] = useState<string>("");
   const [pdfIncludeAnswers, setPdfIncludeAnswers] = useState(true);
   const [pdfGenerating, setPdfGenerating] = useState(false);
   const [pdfProgress, setPdfProgress] = useState(0);
@@ -188,15 +189,17 @@ export default function AdminQuestions() {
   };
 
   // Download existing questions as PDF
-  const handleDownloadPDF = async (cat: string, subject?: string) => {
+  const handleDownloadPDF = async (cat: string, subject?: string, limit?: number) => {
     setPdfGenerating(true);
     setPdfProgress(10);
     setPdfProgressMessage("Fetching questions...");
     
     try {
-      const url = subject 
-        ? `/api/admin/questions/by-category/${cat}?subject=${encodeURIComponent(subject)}`
-        : `/api/admin/questions/by-category/${cat}`;
+      const params = new URLSearchParams();
+      if (subject) params.append("subject", subject);
+      if (limit && limit > 0) params.append("limit", limit.toString());
+      
+      const url = `/api/admin/questions/by-category/${cat}${params.toString() ? `?${params.toString()}` : ""}`;
       
       const response = await fetch(url, { credentials: "include" });
       
@@ -945,13 +948,13 @@ The AI will match this style, format, and complexity level."
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Subject (optional)</Label>
+                  <Label>Subject/Topic (optional)</Label>
                   <Select value={pdfSubject || "__all__"} onValueChange={(val) => setPdfSubject(val === "__all__" ? "" : val)}>
                     <SelectTrigger data-testid="select-pdf-subject">
                       <SelectValue placeholder="All subjects" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="__all__">All subjects</SelectItem>
+                      <SelectItem value="__all__">All subjects in {pdfCategory}</SelectItem>
                       {topicCounts
                         ?.filter(t => t.category === pdfCategory)
                         .map(t => (
@@ -962,6 +965,24 @@ The AI will match this style, format, and complexity level."
                       }
                     </SelectContent>
                   </Select>
+                  <p className="text-xs text-muted-foreground">
+                    Select a specific topic or download all questions in the category
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Number of Questions (optional)</Label>
+                  <Input
+                    type="number"
+                    placeholder="Leave empty for all questions"
+                    value={pdfQuestionCount}
+                    onChange={(e) => setPdfQuestionCount(e.target.value)}
+                    min="1"
+                    data-testid="input-pdf-question-count"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Leave empty to download all available questions
+                  </p>
                 </div>
 
                 <div className="flex items-center gap-2 pt-2">
@@ -979,7 +1000,10 @@ The AI will match this style, format, and complexity level."
                 <Button
                   className="w-full"
                   size="lg"
-                  onClick={() => handleDownloadPDF(pdfCategory, pdfSubject || undefined)}
+                  onClick={() => {
+                    const limit = pdfQuestionCount ? parseInt(pdfQuestionCount) : undefined;
+                    handleDownloadPDF(pdfCategory, pdfSubject || undefined, limit);
+                  }}
                   disabled={pdfGenerating}
                   data-testid="button-download-pdf"
                 >
