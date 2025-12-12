@@ -143,7 +143,8 @@ export const generationJobs = pgTable("generation_jobs", {
   totalCount: integer("total_count").notNull(), // Total questions requested (5-1000)
   generatedCount: integer("generated_count").default(0).notNull(), // How many generated so far
   batchSize: integer("batch_size").default(5).notNull(), // Questions per API call
-  sampleQuestion: text("sample_question"), // Optional sample question for context
+  sampleQuestion: text("sample_question"), // Sample question for quality guidance (required at API level)
+  areasTocover: text("areas_to_cover"), // Specific areas/subtopics to cover (comma-separated or newline-separated)
   status: text("status").default("pending").notNull(), // "pending", "running", "completed", "paused", "failed"
   errorCount: integer("error_count").default(0).notNull(),
   lastError: text("last_error"),

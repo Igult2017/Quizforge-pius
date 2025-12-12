@@ -978,11 +978,16 @@ ${urls.map(url => `  <url>
   // Create a new generation job (batch generation with progress tracking)
   app.post("/api/admin/generation-jobs", async (req: any, res) => {
     try {
-      const { category, topic, difficulty, totalCount, sampleQuestion } = req.body;
+      const { category, topic, difficulty, totalCount, sampleQuestion, areasTocover } = req.body;
 
       // Validation
       if (!category || !topic || !difficulty || !totalCount) {
         return res.status(400).json({ error: "category, topic, difficulty, and totalCount are required" });
+      }
+
+      // Sample question is required for quality control
+      if (!sampleQuestion || sampleQuestion.trim().length < 50) {
+        return res.status(400).json({ error: "A sample question is required (minimum 50 characters) to ensure quality generation" });
       }
 
       if (!["NCLEX", "TEAS", "HESI"].includes(category)) {
@@ -1004,7 +1009,8 @@ ${urls.map(url => `  <url>
         topic,
         difficulty,
         totalCount: Number(totalCount),
-        sampleQuestion: sampleQuestion || undefined,
+        sampleQuestion: sampleQuestion.trim(),
+        areasTocover: areasTocover?.trim() || undefined,
         createdBy: req.user?.id,
       });
 

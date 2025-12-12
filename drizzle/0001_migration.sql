@@ -32,4 +32,7 @@ CREATE TABLE IF NOT EXISTS "generation_jobs" (
 ALTER TABLE generation_logs ADD COLUMN IF NOT EXISTS generation_job_id integer REFERENCES generation_jobs(id);
 
 -- Make subject_progress_id nullable (required for manual generation jobs)
-ALTER TABLE generation_logs ALTER COLUMN subject_progress_id DROP NOT NULL
+ALTER TABLE generation_logs ALTER COLUMN subject_progress_id DROP NOT NULL;
+
+-- Add areas_to_cover column to generation_jobs
+ALTER TABLE generation_jobs ADD COLUMN IF NOT EXISTS areas_to_cover text;

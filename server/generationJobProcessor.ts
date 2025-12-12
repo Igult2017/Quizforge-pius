@@ -75,6 +75,7 @@ export async function processNextJobBatch(): Promise<{ processed: boolean; jobId
         subject: job.topic,
         difficulty: job.difficulty as "easy" | "medium" | "hard",
         sampleQuestion: job.sampleQuestion || undefined,
+        areasTocover: job.areasTocover || undefined,
       });
 
       // Save to database
@@ -193,7 +194,8 @@ export async function createGenerationJob(params: {
   topic: string;
   difficulty: string;
   totalCount: number;
-  sampleQuestion?: string;
+  sampleQuestion: string;
+  areasTocover?: string;
   createdBy?: string;
 }) {
   const [job] = await db
@@ -204,7 +206,8 @@ export async function createGenerationJob(params: {
       difficulty: params.difficulty,
       totalCount: params.totalCount,
       batchSize: BATCH_SIZE,
-      sampleQuestion: params.sampleQuestion || null,
+      sampleQuestion: params.sampleQuestion,
+      areasTocover: params.areasTocover || null,
       createdBy: params.createdBy || null,
     })
     .returning();

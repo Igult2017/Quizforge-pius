@@ -100,23 +100,47 @@ interface GenerateQuestionsParams {
   count: number;
   subject?: string;
   difficulty?: "easy" | "medium" | "hard";
-  sampleQuestion?: string; // Optional sample question for style/format guidance
+  sampleQuestion?: string; // Sample question for style/format guidance
+  areasTocover?: string; // Specific areas/subtopics to cover
 }
 
 export async function generateQuestions(
   params: GenerateQuestionsParams
 ): Promise<InsertQuestion[]> {
-  const { category, count, subject, difficulty, sampleQuestion } = params;
+  const { category, count, subject, difficulty, sampleQuestion, areasTocover } = params;
 
-  const systemPrompt = `You are an expert nursing exam question writer. Generate high-quality, realistic practice questions for ${category} exams.
+  // Build a more comprehensive system prompt
+  let systemPrompt = `You are an expert nursing exam question writer with decades of experience creating ${category} exam questions. Generate high-quality, realistic practice questions that accurately reflect the style, difficulty, and clinical relevance of actual ${category} exams.
 
-Requirements:
-- Each question must have exactly 4 answer options
-- Only ONE option should be correct
-- Include a detailed explanation for the correct answer
-- Questions should test critical thinking, not just memorization
-- Use proper medical terminology
-- Follow NCLEX/TEAS/HESI question format standards
+QUALITY REQUIREMENTS:
+- Each question must have exactly 4 answer options (A, B, C, D)
+- Only ONE option should be correct - the others should be plausible but clearly incorrect
+- Include a detailed, educational explanation for why the correct answer is right AND why other options are wrong
+- Questions must test critical thinking and clinical judgment, not just memorization
+- Use proper medical terminology and current nursing standards
+- Follow official ${category} question format standards
+- Avoid trivial or surface-level questions - focus on clinical application`;
+
+  // If sample question provided, emphasize matching its quality
+  if (sampleQuestion) {
+    systemPrompt += `
+
+CRITICAL - MATCH THIS QUALITY STANDARD:
+You MUST generate questions that match the quality, style, complexity, and format of this reference question:
+
+"""
+${sampleQuestion}
+"""
+
+Analyze this sample carefully and ensure your generated questions:
+1. Match the same question structure and phrasing style
+2. Have similar complexity and depth of clinical reasoning required
+3. Use the same level of detail in answer options
+4. Provide equally thorough explanations
+5. Target the same cognitive level (application/analysis)`;
+  }
+
+  systemPrompt += `
 
 CRITICAL JSON FORMATTING RULES:
 1. Return ONLY valid JSON - no extra text before or after
@@ -137,23 +161,24 @@ Return a JSON array with this exact structure:
   }
 ]`;
 
-  let userPrompt = `Generate ${count} ${difficulty || "medium"} difficulty ${category} questions${
-    subject ? ` on ${subject}` : ""
-  }.
+  let userPrompt = `Generate ${count} ${difficulty || "medium"} difficulty ${category} questions on the topic: "${subject || 'General Nursing'}".
 
-Make questions realistic and clinically relevant. Ensure proper formatting with exactly 4 options per question.`;
+Each question should be clinically relevant and test practical nursing knowledge.`;
 
-  // Add sample question guidance if provided
-  if (sampleQuestion) {
+  // Add specific areas to cover if provided
+  if (areasTocover) {
     userPrompt += `
 
-IMPORTANT: Use the following sample question as a guide for style, format, and complexity. Match the tone, structure, and level of detail in your generated questions:
+IMPORTANT - COVER THESE SPECIFIC AREAS:
+The questions MUST cover the following specific areas/subtopics. Distribute questions across these areas:
+${areasTocover}
 
-Sample Question:
-${sampleQuestion}
-
-Generate questions that follow this same style and format.`;
+Make sure to generate questions that specifically address these areas rather than general questions on the topic.`;
   }
+
+  userPrompt += `
+
+Ensure proper formatting with exactly 4 options per question. Each question should be unique and test different aspects of the topic.`;
 
   try {
     const client = getGeminiClient();

@@ -39,6 +39,7 @@ interface GenerationJob {
   generatedCount: number;
   batchSize: number;
   sampleQuestion: string | null;
+  areasTocover: string | null;
   status: string;
   errorCount: number;
   lastError: string | null;
@@ -54,6 +55,7 @@ export default function AdminQuestions() {
   const [topic, setTopic] = useState<string>("");
   const [difficulty, setDifficulty] = useState<string>("medium");
   const [sampleQuestion, setSampleQuestion] = useState<string>("");
+  const [areasTocover, setAreasTocover] = useState<string>("");
 
   // Fetch question counts
   const { data: questionCounts, isLoading: countsLoading, error: countsError } = useQuery<QuestionCount[]>({
@@ -79,7 +81,8 @@ export default function AdminQuestions() {
         topic,
         difficulty,
         totalCount: parseInt(totalCount),
-        sampleQuestion: sampleQuestion || undefined,
+        sampleQuestion: sampleQuestion,
+        areasTocover: areasTocover || undefined,
       });
       return await res.json();
     },
@@ -92,6 +95,7 @@ export default function AdminQuestions() {
       setTotalCount("50");
       setTopic("");
       setSampleQuestion("");
+      setAreasTocover("");
     },
     onError: (error: Error) => {
       toast({
@@ -172,6 +176,16 @@ export default function AdminQuestions() {
       toast({
         title: "Topic required",
         description: "Please enter a topic/subject for the questions",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Sample question is required for quality
+    if (!sampleQuestion.trim() || sampleQuestion.trim().length < 50) {
+      toast({
+        title: "Sample question required",
+        description: "Please provide a sample question (minimum 50 characters) to ensure quality generation",
         variant: "destructive",
       });
       return;
@@ -413,17 +427,39 @@ export default function AdminQuestions() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="sampleQuestion">Sample Question (Optional)</Label>
+              <Label htmlFor="sampleQuestion">Sample Question (Required)</Label>
               <Textarea
                 id="sampleQuestion"
                 value={sampleQuestion}
                 onChange={(e) => setSampleQuestion(e.target.value)}
-                placeholder="Paste a sample question to guide the AI on style, format, and complexity. The AI will generate similar questions based on this example."
-                rows={4}
+                placeholder="Paste a high-quality sample question here. The AI will match the style, format, complexity, and level of detail of your sample. Include the question, all 4 options, correct answer, and explanation."
+                rows={6}
                 data-testid="textarea-sample-question"
+                required
               />
               <p className="text-xs text-muted-foreground">
-                Providing a sample helps the AI match your preferred question style and complexity level.
+                Required: Paste a complete sample question with options and explanation. The AI will generate questions matching this quality and format.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="areasTocover">Specific Areas to Cover (Optional)</Label>
+              <Textarea
+                id="areasTocover"
+                value={areasTocover}
+                onChange={(e) => setAreasTocover(e.target.value)}
+                placeholder="List specific subtopics or areas within the topic that should be covered. One per line or comma-separated.
+
+Example for Medical-Surgical:
+- Cardiac conditions (heart failure, MI)
+- Respiratory conditions (COPD, pneumonia)
+- Diabetes management
+- Post-operative care"
+                rows={5}
+                data-testid="textarea-areas-to-cover"
+              />
+              <p className="text-xs text-muted-foreground">
+                Optional: Specify which subtopics or areas the questions should cover to ensure comprehensive topic coverage.
               </p>
             </div>
 
