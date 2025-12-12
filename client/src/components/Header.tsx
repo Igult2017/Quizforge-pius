@@ -110,10 +110,10 @@ export function Header({
             </>
           ) : (
             <>
-              <Button variant="ghost" onClick={onSignIn} data-testid="button-signin">
+              <Button variant="ghost" onClick={onSignIn || (() => setLocation("/login"))} data-testid="button-signin">
                 Sign In
               </Button>
-              <Button onClick={onGetStarted} data-testid="button-getstarted">
+              <Button onClick={onGetStarted || (() => setLocation("/signup"))} data-testid="button-getstarted">
                 Get Started
               </Button>
             </>
