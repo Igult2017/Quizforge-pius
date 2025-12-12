@@ -58,7 +58,7 @@ export interface IStorage {
   // Questions
   createQuestion(question: InsertQuestion): Promise<Question>;
   createQuestions(questions: InsertQuestion[]): Promise<Question[]>;
-  getQuestionsByCategory(category: string): Promise<Question[]>;
+  getQuestionsByCategory(category: string, subject?: string): Promise<Question[]>;
   getRandomQuestions(category: string, limit: number): Promise<Question[]>;
   getQuestionById(id: number): Promise<Question | undefined>;
   getQuestionCountsByCategory(): Promise<{ category: string; count: number }[]>;
@@ -299,7 +299,14 @@ export class PostgresStorage implements IStorage {
     return newQuestions;
   }
 
-  async getQuestionsByCategory(category: string): Promise<Question[]> {
+  async getQuestionsByCategory(category: string, subject?: string): Promise<Question[]> {
+    if (subject) {
+      const results = await db
+        .select()
+        .from(questions)
+        .where(and(eq(questions.category, category), eq(questions.subject, subject)));
+      return results;
+    }
     const results = await db
       .select()
       .from(questions)

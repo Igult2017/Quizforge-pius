@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -16,9 +17,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2, Brain, Database, Plus, CheckCircle2, XCircle, Pause, Play, Trash2, Clock, AlertCircle, ChevronDown, ChevronRight, BookOpen, FileQuestion, Layers } from "lucide-react";
+import { Loader2, Brain, Database, Plus, CheckCircle2, XCircle, Pause, Play, Trash2, Clock, AlertCircle, ChevronDown, ChevronRight, BookOpen, FileQuestion, Layers, Download, FileText, Sparkles } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useToast } from "@/hooks/use-toast";
+import { generateQuestionsPDF, generateQuestionsFromAPI } from "@/lib/pdfGenerator";
 
 interface QuestionCount {
   category: string;
@@ -59,6 +61,23 @@ export default function AdminQuestions() {
   const [sampleQuestion, setSampleQuestion] = useState<string>("");
   const [areasTocover, setAreasTocover] = useState<string>("");
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set(["NCLEX", "TEAS", "HESI"]));
+  
+  // PDF generation state
+  const [pdfCategory, setPdfCategory] = useState<string>("NCLEX");
+  const [pdfSubject, setPdfSubject] = useState<string>("");
+  const [pdfIncludeAnswers, setPdfIncludeAnswers] = useState(true);
+  const [pdfGenerating, setPdfGenerating] = useState(false);
+  const [pdfProgress, setPdfProgress] = useState(0);
+  const [pdfProgressMessage, setPdfProgressMessage] = useState("");
+  
+  // Generate-to-PDF state
+  const [genPdfCategory, setGenPdfCategory] = useState<string>("NCLEX");
+  const [genPdfTopic, setGenPdfTopic] = useState("");
+  const [genPdfCount, setGenPdfCount] = useState("10");
+  const [genPdfSample, setGenPdfSample] = useState("");
+  const [genPdfAreas, setGenPdfAreas] = useState("");
+  const [genPdfIncludeAnswers, setGenPdfIncludeAnswers] = useState(true);
+  const [genPdfGenerating, setGenPdfGenerating] = useState(false);
 
   const { data: questionCounts, isLoading: countsLoading, error: countsError } = useQuery<QuestionCount[]>({
     queryKey: ["/api/admin/questions/counts"],
@@ -165,6 +184,134 @@ export default function AdminQuestions() {
   const handleDeleteTopic = (category: string, subject: string, count: number) => {
     if (confirm(`Are you sure you want to delete all ${count} questions in "${subject}"?\n\nThis action cannot be undone.`)) {
       deleteTopicMutation.mutate({ category, subject });
+    }
+  };
+
+  // Download existing questions as PDF
+  const handleDownloadPDF = async (cat: string, subject?: string) => {
+    setPdfGenerating(true);
+    setPdfProgress(10);
+    setPdfProgressMessage("Fetching questions...");
+    
+    try {
+      const url = subject 
+        ? `/api/admin/questions/by-category/${cat}?subject=${encodeURIComponent(subject)}`
+        : `/api/admin/questions/by-category/${cat}`;
+      
+      const response = await fetch(url, { credentials: "include" });
+      
+      if (!response.ok) {
+        throw new Error("Failed to fetch questions");
+      }
+      
+      const data = await response.json();
+      
+      if (!data.questions || data.questions.length === 0) {
+        toast({
+          title: "No questions found",
+          description: `No questions available for ${subject || cat}`,
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      setPdfProgress(50);
+      setPdfProgressMessage("Generating PDF...");
+      
+      generateQuestionsPDF(data.questions, {
+        title: subject ? `${subject} Practice Questions` : `${cat} Practice Questions`,
+        category: cat,
+        subject: subject,
+        includeAnswers: pdfIncludeAnswers,
+      });
+      
+      setPdfProgress(100);
+      setPdfProgressMessage("PDF downloaded!");
+      
+      toast({
+        title: "PDF Downloaded",
+        description: `Downloaded ${data.questions.length} questions`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Download failed",
+        description: error.message || "Failed to download PDF",
+        variant: "destructive",
+      });
+    } finally {
+      setTimeout(() => {
+        setPdfGenerating(false);
+        setPdfProgress(0);
+        setPdfProgressMessage("");
+      }, 1000);
+    }
+  };
+
+  // Generate new questions directly to PDF
+  const handleGenerateToPDF = async () => {
+    if (!genPdfTopic.trim()) {
+      toast({
+        title: "Topic required",
+        description: "Please enter a topic for the questions",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (!genPdfSample.trim() || genPdfSample.trim().length < 50) {
+      toast({
+        title: "Sample question required",
+        description: "Please provide a sample question (minimum 50 characters)",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    const count = parseInt(genPdfCount);
+    if (isNaN(count) || count < 1 || count > 50) {
+      toast({
+        title: "Invalid count",
+        description: "Please enter a number between 1 and 50",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setGenPdfGenerating(true);
+    
+    try {
+      await generateQuestionsFromAPI(
+        genPdfCategory,
+        genPdfTopic,
+        count,
+        genPdfSample,
+        genPdfAreas,
+        genPdfIncludeAnswers,
+        (progress, message) => {
+          setPdfProgress(progress);
+          setPdfProgressMessage(message);
+        }
+      );
+      
+      toast({
+        title: "PDF Generated",
+        description: `Generated and downloaded ${count} questions on "${genPdfTopic}"`,
+      });
+      
+      // Reset form
+      setGenPdfTopic("");
+      setGenPdfSample("");
+      setGenPdfAreas("");
+    } catch (error: any) {
+      toast({
+        title: "Generation failed",
+        description: error.message || "Failed to generate questions",
+        variant: "destructive",
+      });
+    } finally {
+      setGenPdfGenerating(false);
+      setPdfProgress(0);
+      setPdfProgressMessage("");
     }
   };
 
@@ -298,14 +445,18 @@ export default function AdminQuestions() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 max-w-md">
+        <TabsList className="grid w-full grid-cols-3 max-w-xl">
           <TabsTrigger value="database" className="gap-2" data-testid="tab-database">
             <Database className="h-4 w-4" />
-            Questions Database
+            Database
           </TabsTrigger>
           <TabsTrigger value="generate" className="gap-2" data-testid="tab-generate">
             <Brain className="h-4 w-4" />
-            Generate Questions
+            Generate
+          </TabsTrigger>
+          <TabsTrigger value="pdf" className="gap-2" data-testid="tab-pdf">
+            <FileText className="h-4 w-4" />
+            PDF Export
           </TabsTrigger>
         </TabsList>
 
@@ -747,6 +898,250 @@ The AI will match this style, format, and complexity level."
               </CardContent>
             </Card>
           )}
+        </TabsContent>
+
+        {/* PDF Export Tab */}
+        <TabsContent value="pdf" className="space-y-6">
+          {/* Progress indicator */}
+          {(pdfGenerating || genPdfGenerating) && (
+            <Card className="border-primary">
+              <CardContent className="pt-6">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">{pdfProgressMessage}</span>
+                    <span className="text-sm text-muted-foreground">{pdfProgress}%</span>
+                  </div>
+                  <Progress value={pdfProgress} className="h-2" />
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          <div className="grid gap-6 md:grid-cols-2">
+            {/* Download from Database */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <Download className="h-5 w-5 text-primary" />
+                  <CardTitle>Download from Database</CardTitle>
+                </div>
+                <CardDescription>
+                  Export existing questions from the database as a PDF
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Category</Label>
+                  <Select value={pdfCategory} onValueChange={setPdfCategory}>
+                    <SelectTrigger data-testid="select-pdf-category">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="NCLEX">NCLEX</SelectItem>
+                      <SelectItem value="TEAS">TEAS</SelectItem>
+                      <SelectItem value="HESI">HESI</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Subject (optional)</Label>
+                  <Select value={pdfSubject} onValueChange={setPdfSubject}>
+                    <SelectTrigger data-testid="select-pdf-subject">
+                      <SelectValue placeholder="All subjects" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">All subjects</SelectItem>
+                      {topicCounts
+                        ?.filter(t => t.category === pdfCategory)
+                        .map(t => (
+                          <SelectItem key={t.subject} value={t.subject}>
+                            {t.subject} ({t.count})
+                          </SelectItem>
+                        ))
+                      }
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex items-center gap-2 pt-2">
+                  <Checkbox
+                    id="include-answers"
+                    checked={pdfIncludeAnswers}
+                    onCheckedChange={(checked) => setPdfIncludeAnswers(checked as boolean)}
+                    data-testid="checkbox-include-answers"
+                  />
+                  <Label htmlFor="include-answers" className="cursor-pointer">
+                    Include answers and explanations
+                  </Label>
+                </div>
+
+                <Button
+                  className="w-full"
+                  size="lg"
+                  onClick={() => handleDownloadPDF(pdfCategory, pdfSubject || undefined)}
+                  disabled={pdfGenerating}
+                  data-testid="button-download-pdf"
+                >
+                  {pdfGenerating ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <Download className="mr-2 h-4 w-4" />
+                      Download PDF
+                    </>
+                  )}
+                </Button>
+
+                {/* Quick download buttons for each category */}
+                <div className="pt-4 border-t space-y-2">
+                  <Label className="text-muted-foreground text-xs">Quick Download by Category</Label>
+                  <div className="flex gap-2 flex-wrap">
+                    {["NCLEX", "TEAS", "HESI"].map(cat => {
+                      const count = questionCounts?.find(c => c.category === cat)?.count || 0;
+                      return (
+                        <Button
+                          key={cat}
+                          variant="outline"
+                          size="sm"
+                          disabled={count === 0 || pdfGenerating}
+                          onClick={() => handleDownloadPDF(cat)}
+                          data-testid={`button-quick-download-${cat}`}
+                        >
+                          {cat} ({count})
+                        </Button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Generate to PDF */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <Sparkles className="h-5 w-5 text-primary" />
+                  <CardTitle>Generate to PDF</CardTitle>
+                </div>
+                <CardDescription>
+                  Generate new questions from AI directly to PDF (not saved to database)
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Category</Label>
+                  <Select value={genPdfCategory} onValueChange={setGenPdfCategory}>
+                    <SelectTrigger data-testid="select-gen-pdf-category">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="NCLEX">NCLEX</SelectItem>
+                      <SelectItem value="TEAS">TEAS</SelectItem>
+                      <SelectItem value="HESI">HESI</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Topic / Subject *</Label>
+                  <Input
+                    value={genPdfTopic}
+                    onChange={(e) => setGenPdfTopic(e.target.value)}
+                    placeholder="e.g., Cardiac Medications, Lab Values"
+                    data-testid="input-gen-pdf-topic"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Number of Questions (1-50)</Label>
+                  <Input
+                    type="number"
+                    min="1"
+                    max="50"
+                    value={genPdfCount}
+                    onChange={(e) => setGenPdfCount(e.target.value)}
+                    data-testid="input-gen-pdf-count"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Sample Question *</Label>
+                  <Textarea
+                    value={genPdfSample}
+                    onChange={(e) => setGenPdfSample(e.target.value)}
+                    placeholder="Provide a sample question to guide the AI generation quality..."
+                    rows={3}
+                    data-testid="textarea-gen-pdf-sample"
+                  />
+                  <p className="text-xs text-muted-foreground">Minimum 50 characters</p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Areas to Cover (optional)</Label>
+                  <Textarea
+                    value={genPdfAreas}
+                    onChange={(e) => setGenPdfAreas(e.target.value)}
+                    placeholder="List specific topics or areas to cover..."
+                    rows={2}
+                    data-testid="textarea-gen-pdf-areas"
+                  />
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="gen-include-answers"
+                    checked={genPdfIncludeAnswers}
+                    onCheckedChange={(checked) => setGenPdfIncludeAnswers(checked as boolean)}
+                    data-testid="checkbox-gen-include-answers"
+                  />
+                  <Label htmlFor="gen-include-answers" className="cursor-pointer">
+                    Include answers and explanations
+                  </Label>
+                </div>
+
+                <Button
+                  className="w-full"
+                  size="lg"
+                  onClick={handleGenerateToPDF}
+                  disabled={genPdfGenerating}
+                  data-testid="button-generate-pdf"
+                >
+                  {genPdfGenerating ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="mr-2 h-4 w-4" />
+                      Generate PDF
+                    </>
+                  )}
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Legal Notice */}
+          <Card className="bg-muted/50">
+            <CardContent className="pt-6">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
+                <div className="space-y-1">
+                  <p className="font-medium">Legal Notice</p>
+                  <p className="text-sm text-muted-foreground">
+                    All generated PDFs include a footer stating: "FOR EDUCATIONAL USE ONLY - NOT TO BE REPRODUCED OR DISTRIBUTED". 
+                    These materials are intended solely for personal study and exam preparation. 
+                    Reproduction or distribution without permission is prohibited.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>

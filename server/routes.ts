@@ -835,6 +835,81 @@ ${urls.map(url => `  <url>
     }
   });
 
+  // Get questions by category for PDF download
+  app.get("/api/admin/questions/by-category/:category", isAdmin, async (req, res) => {
+    try {
+      const { category } = req.params;
+      const { subject } = req.query;
+      
+      if (!["NCLEX", "TEAS", "HESI"].includes(category)) {
+        return res.status(400).json({ error: "Invalid category" });
+      }
+      
+      const questions = await storage.getQuestionsByCategory(category, subject as string | undefined);
+      
+      res.json({ questions });
+    } catch (error) {
+      console.error("Get questions by category error:", error);
+      res.status(500).json({ error: "Failed to get questions" });
+    }
+  });
+
+  // Generate questions directly for PDF (not saved to database)
+  app.post("/api/admin/generate-for-pdf", isAdmin, async (req, res) => {
+    try {
+      const { category, topic, count, sampleQuestion, areasTocover } = req.body;
+      
+      if (!category || !topic || !count) {
+        return res.status(400).json({ error: "category, topic, and count are required" });
+      }
+      
+      if (!["NCLEX", "TEAS", "HESI"].includes(category)) {
+        return res.status(400).json({ error: "category must be NCLEX, TEAS, or HESI" });
+      }
+      
+      if (count < 1 || count > 50) {
+        return res.status(400).json({ error: "count must be between 1 and 50" });
+      }
+      
+      if (!sampleQuestion || sampleQuestion.length < 50) {
+        return res.status(400).json({ error: "Sample question is required (minimum 50 characters)" });
+      }
+      
+      console.log(`[PDF] Generating ${count} ${category} questions for PDF on topic: ${topic}`);
+      
+      const generatedQuestions = await generateQuestions({
+        category,
+        count: Number(count),
+        subject: topic,
+        difficulty: "medium",
+        sampleQuestion,
+        areasTocover,
+      });
+      
+      // Format questions with IDs for PDF generation
+      const formattedQuestions = generatedQuestions.map((q, index) => ({
+        id: index + 1,
+        category: q.category,
+        question: q.question,
+        options: q.options,
+        correctAnswer: q.correctAnswer,
+        explanation: q.explanation,
+        difficulty: q.difficulty,
+        subject: q.subject,
+      }));
+      
+      console.log(`[PDF] Successfully generated ${formattedQuestions.length} questions for PDF`);
+      
+      res.json({
+        success: true,
+        questions: formattedQuestions,
+      });
+    } catch (error: any) {
+      console.error("[PDF] Error generating questions:", error);
+      res.status(500).json({ error: error.message || "Failed to generate questions for PDF" });
+    }
+  });
+
   app.post("/api/admin/questions/generate", async (req, res) => {
     try {
       const { category, count, subject, difficulty } = req.body;
