@@ -15,6 +15,7 @@ interface QuizResult {
   totalQuestions: number;
   correctAnswers: number;
   incorrectAnswers: number;
+  skippedAnswers: number;
   isFreeTrialAttempt: boolean;
   questions: {
     id: number;
@@ -104,7 +105,7 @@ export default function Results() {
             totalQuestions={results.totalQuestions}
             correctAnswers={results.correctAnswers}
             incorrectAnswers={results.incorrectAnswers}
-            skippedAnswers={results.totalQuestions - results.correctAnswers - results.incorrectAnswers}
+            skippedAnswers={results.skippedAnswers}
           />
 
           {results.isFreeTrialAttempt && (
