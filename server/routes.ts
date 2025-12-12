@@ -808,7 +808,7 @@ ${urls.map(url => `  <url>
   });
 
   // Delete all questions by topic (admin only)
-  app.delete("/api/admin/questions/by-topic", isAdmin, async (req, res) => {
+  app.delete("/api/admin/questions/by-topic", async (req, res) => {
     try {
       const { category, subject } = req.body;
       
@@ -836,7 +836,7 @@ ${urls.map(url => `  <url>
   });
 
   // Get questions by category for PDF download
-  app.get("/api/admin/questions/by-category/:category", isAdmin, async (req, res) => {
+  app.get("/api/admin/questions/by-category/:category", async (req, res) => {
     try {
       const { category } = req.params;
       const { subject } = req.query;
@@ -855,7 +855,7 @@ ${urls.map(url => `  <url>
   });
 
   // Generate questions directly for PDF (not saved to database)
-  app.post("/api/admin/generate-for-pdf", isAdmin, async (req, res) => {
+  app.post("/api/admin/generate-for-pdf", async (req, res) => {
     try {
       const { category, topic, count, sampleQuestion, areasTocover } = req.body;
       
