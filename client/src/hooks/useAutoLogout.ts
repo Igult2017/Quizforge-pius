@@ -1,25 +1,18 @@
 import { useEffect, useRef, useCallback } from "react";
 import { logout } from "@/lib/firebase";
-import { useToast } from "@/hooks/use-toast";
 
 const INACTIVITY_TIMEOUT = 10 * 60 * 1000; // 10 minutes in milliseconds
 
 export function useAutoLogout(isAuthenticated: boolean) {
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const { toast } = useToast();
 
   const handleLogout = useCallback(async () => {
     try {
       await logout();
-      toast({
-        title: "Session Expired",
-        description: "You have been logged out due to inactivity.",
-        variant: "destructive",
-      });
     } catch (error) {
       console.error("[AutoLogout] Failed to logout:", error);
     }
-  }, [toast]);
+  }, []);
 
   const resetTimer = useCallback(() => {
     if (timeoutRef.current) {
