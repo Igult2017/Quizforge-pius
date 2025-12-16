@@ -313,6 +313,7 @@ export default function Quiz() {
           <QuizNavigation
             currentQuestion={currentQuestion + 1}
             totalQuestions={questions.length}
+            answeredCount={answers.filter(a => a !== null).length}
             onPrevious={handlePrevious}
             onNext={handleNext}
             onSubmit={handleSubmit}

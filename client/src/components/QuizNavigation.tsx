@@ -5,6 +5,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 interface QuizNavigationProps {
   currentQuestion: number;
   totalQuestions: number;
+  answeredCount: number;
   onPrevious: () => void;
   onNext: () => void;
   onSubmit: () => void;
@@ -16,6 +17,7 @@ interface QuizNavigationProps {
 export function QuizNavigation({
   currentQuestion,
   totalQuestions,
+  answeredCount,
   onPrevious,
   onNext,
   onSubmit,
@@ -23,15 +25,16 @@ export function QuizNavigation({
   canGoNext,
   isLastQuestion,
 }: QuizNavigationProps) {
-  const progress = (currentQuestion / totalQuestions) * 100;
+  // Progress based on questions answered, not current position
+  const progress = (answeredCount / totalQuestions) * 100;
 
   return (
     <div className="space-y-4">
       <div className="space-y-2">
         <div className="flex justify-between text-sm">
-          <span className="text-muted-foreground">Progress</span>
+          <span className="text-muted-foreground">Question {currentQuestion} of {totalQuestions}</span>
           <span className="font-mono font-semibold" data-testid="text-progress">
-            {currentQuestion}/{totalQuestions}
+            {answeredCount}/{totalQuestions} answered
           </span>
         </div>
         <Progress value={progress} className="h-2" />

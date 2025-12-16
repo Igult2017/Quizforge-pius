@@ -6,6 +6,7 @@ export default function QuizNavigationExample() {
       <QuizNavigation
         currentQuestion={15}
         totalQuestions={50}
+        answeredCount={14}
         onPrevious={() => console.log("Previous clicked")}
         onNext={() => console.log("Next clicked")}
         onSubmit={() => console.log("Submit clicked")}
