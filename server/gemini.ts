@@ -461,7 +461,7 @@ Ensure proper formatting with exactly 4 options per question. Each question shou
           correctAnswer: q.correctAnswer,
           explanation: q.explanation,
           difficulty: q.difficulty || difficulty || "medium",
-          subject: q.subject || subject,
+          subject: subject, // Always use admin-specified subject, not Gemini's override
           topic: q.topic || null, // Store the specific topic/unit
         });
         validatedQuestions.push(validated);
