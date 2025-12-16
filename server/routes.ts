@@ -1415,11 +1415,15 @@ ${urls.map(url => `  <url>
   // Create a new generation job (batch generation with progress tracking)
   app.post("/api/admin/generation-jobs", async (req: any, res) => {
     try {
-      const { category, topic, difficulty, totalCount, sampleQuestion, areasTocover } = req.body;
+      // subject = main subject area (e.g., "English", "Math" for TEAS; "Pharmacology" for NCLEX)
+      // topic = specific topic (optional, used if areasTocover is not provided)
+      // areasTocover = comma-separated list of specific topics/units within the subject
+      const { category, subject, topic, difficulty, totalCount, sampleQuestion, areasTocover } = req.body;
 
-      // Validation
-      if (!category || !topic || !difficulty || !totalCount) {
-        return res.status(400).json({ error: "category, topic, difficulty, and totalCount are required" });
+      // Validation - subject is now the primary field, topic is for backwards compatibility
+      const mainSubject = subject || topic;
+      if (!category || !mainSubject || !difficulty || !totalCount) {
+        return res.status(400).json({ error: "category, subject, difficulty, and totalCount are required" });
       }
 
       // Sample question is required for quality control
@@ -1448,7 +1452,8 @@ ${urls.map(url => `  <url>
       
       const result = await createGenerationJob({
         category,
-        topic,
+        subject: mainSubject.trim(), // Main subject area for Gemini context
+        topic: topic?.trim(), // Optional specific topic
         difficulty,
         totalCount: Number(totalCount),
         sampleQuestion: sampleQuestion.trim(),

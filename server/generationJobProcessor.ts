@@ -72,11 +72,11 @@ export async function processNextJobBatch(): Promise<{ processed: boolean; jobId
         throw new Error("Job is missing required sampleQuestion or areasTocover fields");
       }
       
-      // Generate questions
+      // Generate questions - use job.subject if available, fallback to job.topic for backwards compatibility
       const generatedQuestions = await generateQuestions({
         category: job.category as "NCLEX" | "TEAS" | "HESI",
         count: batchSize,
-        subject: job.topic,
+        subject: job.subject || job.topic, // Use dedicated subject field, fallback to topic for old jobs
         difficulty: job.difficulty as "easy" | "medium" | "hard",
         sampleQuestion: job.sampleQuestion,
         areasTocover: job.areasTocover,
@@ -236,11 +236,12 @@ export type GenerationJobResult = {
 
 export async function createGenerationJob(params: {
   category: string;
-  topic: string; // This is the main SUBJECT (e.g., "Medical-Surgical", "Management of Care")
+  subject: string; // Main subject area (e.g., "English", "Math" for TEAS; "Pharmacology" for NCLEX)
+  topic?: string; // Optional: specific topic if not using areasTocover
   difficulty: string;
   totalCount: number;
   sampleQuestion: string;
-  areasTocover?: string; // These are the specific UNITS/TOPICS within the subject
+  areasTocover?: string; // Specific UNITS/TOPICS within the subject (comma-separated)
   createdBy?: string;
 }): Promise<GenerationJobResult> {
   // Check if multiple topics are provided - if so, split into separate jobs for equal distribution
@@ -278,17 +279,18 @@ export async function createGenerationJob(params: {
           .insert(generationJobs)
           .values({
             category: params.category,
-            topic: params.topic, // Main SUBJECT (e.g., "Medical-Surgical") - passed to Gemini as "subject"
+            subject: params.subject, // Main subject area (e.g., "English", "Math") - passed to Gemini for context
+            topic: topicName, // Specific topic/unit (e.g., "Sentence Structure") - stored in question.topic
             difficulty: params.difficulty,
             totalCount: topicCount,
             batchSize: BATCH_SIZE,
             sampleQuestion: params.sampleQuestion,
-            areasTocover: topicName, // Specific UNIT/TOPIC - passed to Gemini as "areasTocover", stored as question.topic
+            areasTocover: topicName, // Also pass as areasTocover for Gemini prompt
             createdBy: params.createdBy || null,
           })
           .returning();
         
-        console.log(`   ✓ Job #${job.id}: ${topicCount} questions for topic "${topicName}"`);
+        console.log(`   ✓ Job #${job.id}: ${topicCount} questions for "${params.subject}" - "${topicName}"`);
         jobs.push(job);
         distribution.push({ topic: topicName, count: topicCount, jobId: job.id });
       }
@@ -309,11 +311,13 @@ export async function createGenerationJob(params: {
   }
   
   // Single topic or no areasTocover: create one job as before
+  const singleTopic = params.areasTocover || params.topic || params.subject;
   const [job] = await db
     .insert(generationJobs)
     .values({
       category: params.category,
-      topic: params.topic,
+      subject: params.subject, // Main subject area for Gemini context
+      topic: singleTopic, // Specific topic or fallback to subject
       difficulty: params.difficulty,
       totalCount: params.totalCount,
       batchSize: BATCH_SIZE,
@@ -323,7 +327,7 @@ export async function createGenerationJob(params: {
     })
     .returning();
 
-  console.log(`📋 Created generation job #${job.id}: ${params.totalCount} ${params.category} questions on "${params.topic}"`);
+  console.log(`📋 Created generation job #${job.id}: ${params.totalCount} ${params.category} questions on "${params.subject}" - "${singleTopic}"`);
   
   // Start automatic continuous processing (runs in background)
   setTimeout(() => runContinuousProcessing(), 1000);

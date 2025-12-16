@@ -37,6 +37,7 @@ interface TopicCount {
 interface GenerationJob {
   id: number;
   category: string;
+  subject: string | null;
   topic: string;
   difficulty: string;
   totalCount: number;
@@ -57,7 +58,7 @@ export default function AdminQuestions() {
   const [activeTab, setActiveTab] = useState("database");
   const [category, setCategory] = useState<string>("NCLEX");
   const [totalCount, setTotalCount] = useState<string>("50");
-  const [topic, setTopic] = useState<string>("");
+  const [subject, setSubject] = useState<string>(""); // Main subject area (e.g., "English", "Math" for TEAS)
   const [difficulty, setDifficulty] = useState<string>("medium");
   const [sampleQuestion, setSampleQuestion] = useState<string>("");
   const [sampleImages, setSampleImages] = useState<string[]>([]);
@@ -100,7 +101,7 @@ export default function AdminQuestions() {
     mutationFn: async () => {
       const res = await apiRequest("POST", "/api/admin/generation-jobs", {
         category,
-        topic,
+        subject, // Main subject area for Gemini context (e.g., "English", "Math" for TEAS)
         difficulty,
         totalCount: parseInt(totalCount),
         sampleQuestion: sampleQuestion,
@@ -112,11 +113,11 @@ export default function AdminQuestions() {
     onSuccess: (data) => {
       toast({
         title: "Generation started!",
-        description: `Creating ${totalCount} questions on "${topic}"`,
+        description: `Creating ${totalCount} questions on "${subject}"`,
       });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/generation-jobs"] });
       setTotalCount("50");
-      setTopic("");
+      setSubject("");
       setSampleQuestion("");
       setSampleImages([]);
       setAreasTocover("");
@@ -345,10 +346,10 @@ export default function AdminQuestions() {
       return;
     }
 
-    if (!topic.trim()) {
+    if (!subject.trim()) {
       toast({
-        title: "Topic required",
-        description: "Please enter a topic/subject for the questions",
+        title: "Subject required",
+        description: "Please enter the main subject area (e.g., English, Math for TEAS; Pharmacology for NCLEX)",
         variant: "destructive",
       });
       return;
@@ -791,15 +792,18 @@ export default function AdminQuestions() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="topic">Topic/Subject</Label>
+                    <Label htmlFor="subject">Subject Area</Label>
                     <Input
-                      id="topic"
-                      value={topic}
-                      onChange={(e) => setTopic(e.target.value)}
-                      placeholder="e.g., Pharmacology, Medical-Surgical, Anatomy"
+                      id="subject"
+                      value={subject}
+                      onChange={(e) => setSubject(e.target.value)}
+                      placeholder="e.g., English, Math, Science (for TEAS); Pharmacology (for NCLEX)"
                       required
-                      data-testid="input-topic"
+                      data-testid="input-subject"
                     />
+                    <p className="text-xs text-muted-foreground">
+                      Main subject area used to guide AI context. For TEAS: use English, Math, Science, etc.
+                    </p>
                   </div>
 
                   <div className="space-y-2">

@@ -154,7 +154,8 @@ export const generationLogs = pgTable("generation_logs", {
 export const generationJobs = pgTable("generation_jobs", {
   id: serial("id").primaryKey(),
   category: text("category").notNull(), // "NCLEX", "TEAS", "HESI"
-  topic: text("topic").notNull(), // The topic/subject to generate questions for
+  subject: text("subject"), // NEW: Main subject area (e.g., "English", "Math" for TEAS; "Pharmacology" for NCLEX) - used for Gemini context
+  topic: text("topic").notNull(), // Specific topic/unit within subject (e.g., "Sentence Structure") - stored in question.topic
   difficulty: text("difficulty").notNull(), // "easy", "medium", "hard"
   totalCount: integer("total_count").notNull(), // Total questions requested (5-1000)
   generatedCount: integer("generated_count").default(0).notNull(), // How many generated so far
