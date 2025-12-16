@@ -115,27 +115,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // ============= TOPIC & PERFORMANCE ENDPOINTS =============
 
-  // Get all available topics organized by category and subject
+  // Get all available topics organized by category and subject (DYNAMIC from database)
   app.get('/api/topics', async (req, res) => {
     try {
-      const { NCLEX_SUBJECTS, TEAS_SUBJECTS, HESI_SUBJECTS } = await import("./questionTopics");
+      // Query database for actual subjects/topics that have questions
+      const questionStats = await storage.getDistinctSubjectsAndTopics();
+      
+      // Group by category -> subject -> topics with counts
+      const categoryMap: Record<string, Map<string, { topics: Set<string>, count: number }>> = {
+        NCLEX: new Map(),
+        TEAS: new Map(),
+        HESI: new Map(),
+      };
+      
+      for (const row of questionStats) {
+        const category = row.category;
+        const subject = row.subject || 'General';
+        const topic = row.topic;
+        const count = row.count;
+        
+        if (!categoryMap[category]) continue;
+        
+        if (!categoryMap[category].has(subject)) {
+          categoryMap[category].set(subject, { topics: new Set(), count: 0 });
+        }
+        
+        const subjectData = categoryMap[category].get(subject)!;
+        subjectData.count += count;
+        
+        if (topic) {
+          subjectData.topics.add(topic);
+        }
+      }
+      
+      // Convert to response format
+      const formatCategory = (category: string) => {
+        const subjects = categoryMap[category];
+        return Array.from(subjects.entries()).map(([subject, data]) => ({
+          subject,
+          topics: Array.from(data.topics).sort(),
+          questionCount: data.count,
+        })).sort((a, b) => a.subject.localeCompare(b.subject));
+      };
       
       res.json({
-        NCLEX: NCLEX_SUBJECTS.map(s => ({
-          subject: s.name,
-          topics: s.topics,
-          questionCount: s.questionCount,
-        })),
-        TEAS: TEAS_SUBJECTS.map(s => ({
-          subject: s.name,
-          topics: s.topics,
-          questionCount: s.questionCount,
-        })),
-        HESI: HESI_SUBJECTS.map(s => ({
-          subject: s.name,
-          topics: s.topics,
-          questionCount: s.questionCount,
-        })),
+        NCLEX: formatCategory('NCLEX'),
+        TEAS: formatCategory('TEAS'),
+        HESI: formatCategory('HESI'),
       });
     } catch (error) {
       console.error("Get topics error:", error);
@@ -159,23 +185,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const performance = await storage.getUserTopicPerformance(userId, category);
       
-      // Get topic configuration for context
-      const { NCLEX_SUBJECTS, TEAS_SUBJECTS, HESI_SUBJECTS } = await import("./questionTopics");
-      const subjectsMap: Record<string, typeof NCLEX_SUBJECTS> = {
-        NCLEX: NCLEX_SUBJECTS,
-        TEAS: TEAS_SUBJECTS,
-        HESI: HESI_SUBJECTS,
-      };
+      // Get dynamic subjects/topics from database
+      const questionStats = await storage.getDistinctSubjectsAndTopics();
+      const categoryStats = questionStats.filter(s => s.category === category);
       
-      // Merge with defined subjects to show all subjects (even unstarted ones)
-      const subjects = subjectsMap[category];
+      // Group by subject
+      const subjectTopicsMap = new Map<string, Set<string>>();
+      for (const stat of categoryStats) {
+        const subject = stat.subject || 'General';
+        if (!subjectTopicsMap.has(subject)) {
+          subjectTopicsMap.set(subject, new Set());
+        }
+        if (stat.topic) {
+          subjectTopicsMap.get(subject)!.add(stat.topic);
+        }
+      }
+      
+      // Build performance map
       const performanceMap = new Map(performance.map(p => [p.subject, p]));
       
-      const fullPerformance = subjects.map(s => {
-        const existing = performanceMap.get(s.name);
+      // Merge with all subjects from database
+      const fullPerformance = Array.from(subjectTopicsMap.entries()).map(([subject, topicsSet]) => {
+        const existing = performanceMap.get(subject);
         return {
-          subject: s.name,
-          topics: s.topics,
+          subject,
+          topics: Array.from(topicsSet).sort(),
           totalAttempted: existing?.totalAttempted || 0,
           correctCount: existing?.correctCount || 0,
           accuracy: existing?.accuracy || 0,
@@ -184,7 +218,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   existing.accuracy >= 80 ? 'strong' : 
                   existing.accuracy >= 60 ? 'improving' : 'needs_work',
         };
-      });
+      }).sort((a, b) => a.subject.localeCompare(b.subject));
 
       res.json(fullPerformance);
     } catch (error: any) {

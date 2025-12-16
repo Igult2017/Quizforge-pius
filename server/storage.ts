@@ -66,6 +66,7 @@ export interface IStorage {
   getQuestionById(id: number): Promise<Question | undefined>;
   getQuestionCountsByCategory(): Promise<{ category: string; count: number }[]>;
   getQuestionCountsByTopic(): Promise<{ category: string; subject: string; count: number }[]>;
+  getDistinctSubjectsAndTopics(): Promise<{ category: string; subject: string | null; topic: string | null; count: number }[]>;
   deleteQuestionsByTopic(category: string, subject: string): Promise<number>;
 
   // Quiz Attempts
@@ -440,6 +441,21 @@ export class PostgresStorage implements IStorage {
       subject: r.subject || "General",
       count: r.count,
     }));
+  }
+
+  async getDistinctSubjectsAndTopics(): Promise<{ category: string; subject: string | null; topic: string | null; count: number }[]> {
+    const results = await db
+      .select({
+        category: questions.category,
+        subject: questions.subject,
+        topic: questions.topic,
+        count: sql<number>`count(*)::int`,
+      })
+      .from(questions)
+      .groupBy(questions.category, questions.subject, questions.topic)
+      .orderBy(questions.category, questions.subject, questions.topic);
+    
+    return results;
   }
 
   async deleteQuestionsByTopic(category: string, subject: string): Promise<number> {
