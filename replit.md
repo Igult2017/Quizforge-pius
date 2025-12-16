@@ -33,6 +33,7 @@ Admin authentication is Firebase-based. The first user to sign up via Firebase A
 6. **Equal Topic Distribution** - When generating questions with multiple units/topics (comma-separated), the system automatically splits into separate jobs with equal question counts. Example: 1000 questions with 4 topics = 4 jobs of 250 questions each. Each job focuses on a single topic ensuring guaranteed distribution.
 7. **Enhanced Math Explanations** - Math question explanations now MUST include: (1) The exact formula being applied, (2) Step-by-step calculation with actual numbers, (3) Concept explanation of why/when to use the method, (4) Specific error explanation for each wrong answer option.
 8. **Fixed Quiz Progress Display** - Progress now shows "Question X of Y" (current position) AND "Z/Y answered" (actual answered count). Previously showed viewing position which was confusing when on the last question.
+9. **Proper Math Symbol Rendering** - Quiz questions, options, and explanations now render proper mathematical symbols using KaTeX. Expressions like `500 * 2^(t/3)` display as `500 × 2^{t/3}` with proper superscripts. Asterisks become multiplication signs (×), exponents render as superscripts, fractions render as proper fractions, and Greek letters (pi, theta) render as symbols.
 
 **Updates (Dec 12, 2025)**:
 1. **Manual Question Generation Mode** - Automatic/background question generation has been disabled. Use the admin panel to create generation jobs and manually trigger processing via the "Process Jobs" button.

@@ -51,31 +51,48 @@ interface AsciiMathPart {
 }
 
 function parseAsciiMath(text: string): AsciiMathPart[] {
-  const patterns = [
-    { regex: /sqrt\(([^)]+)\)/g, replace: (m: string, p1: string) => `\\sqrt{${p1}}` },
-    { regex: /(\d+)\/(\d+)/g, replace: (m: string, p1: string, p2: string) => `\\frac{${p1}}{${p2}}` },
-    { regex: /(\w)\^(\d+)/g, replace: (m: string, p1: string, p2: string) => `${p1}^{${p2}}` },
-    { regex: /(\w)\^{([^}]+)}/g, replace: (m: string, p1: string, p2: string) => `${p1}^{${p2}}` },
-    { regex: /pi\b/g, replace: () => `\\pi` },
-    { regex: /theta\b/g, replace: () => `\\theta` },
-    { regex: />=/g, replace: () => `\\geq` },
-    { regex: /<=/g, replace: () => `\\leq` },
-    { regex: /!=/g, replace: () => `\\neq` },
-    { regex: /infinity/g, replace: () => `\\infty` },
-    { regex: /\+-/g, replace: () => `\\pm` },
-  ];
-  
-  let result = text;
-  let hasMath = false;
-  
-  for (const pattern of patterns) {
-    if (pattern.regex.test(result)) {
-      hasMath = true;
-      result = result.replace(pattern.regex, pattern.replace as any);
-    }
+  // Check if text contains math-like patterns
+  const mathIndicators = /[\^*\/]|sqrt|pi\b|theta\b|>=|<=|!=|\+-|infinity|\d+\s*[+\-*/]\s*\d+/;
+  if (!mathIndicators.test(text)) {
+    return [{ content: text, isMath: false }];
   }
+
+  // Convert ASCII math notation to LaTeX
+  let result = text;
   
-  if (hasMath && result !== text) {
+  // Handle exponents with parentheses: 2^(t/3) -> 2^{t/3}
+  result = result.replace(/\^(\([^)]+\))/g, (m, p1) => `^{${p1.slice(1, -1)}}`);
+  
+  // Handle simple exponents: x^2 -> x^{2}
+  result = result.replace(/\^(\d+)/g, '^{$1}');
+  result = result.replace(/\^(\w)/g, '^{$1}');
+  
+  // Handle square roots: sqrt(x) -> \sqrt{x}
+  result = result.replace(/sqrt\(([^)]+)\)/g, '\\sqrt{$1}');
+  
+  // Handle fractions in parentheses: (a/b) -> \frac{a}{b}
+  result = result.replace(/\((\w+)\/(\w+)\)/g, '\\frac{$1}{$2}');
+  
+  // Handle simple fractions: a/b -> \frac{a}{b} (only for single letters/numbers)
+  result = result.replace(/(\d+)\/(\d+)/g, '\\frac{$1}{$2}');
+  
+  // Handle multiplication: * -> \times
+  result = result.replace(/\s*\*\s*/g, ' \\times ');
+  
+  // Handle Greek letters
+  result = result.replace(/\bpi\b/g, '\\pi');
+  result = result.replace(/\btheta\b/g, '\\theta');
+  
+  // Handle comparison operators
+  result = result.replace(/>=/g, '\\geq');
+  result = result.replace(/<=/g, '\\leq');
+  result = result.replace(/!=/g, '\\neq');
+  
+  // Handle special symbols
+  result = result.replace(/infinity/g, '\\infty');
+  result = result.replace(/\+-/g, '\\pm');
+  
+  if (result !== text) {
     return [{ content: result, isMath: true }];
   }
   

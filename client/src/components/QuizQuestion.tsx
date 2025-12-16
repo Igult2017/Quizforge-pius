@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { MathRenderer } from "./MathRenderer";
 
 interface QuizQuestionProps {
   questionNumber: number;
@@ -28,7 +29,9 @@ export function QuizQuestion({
             Question {questionNumber} of {totalQuestions}
           </Badge>
         </div>
-        <CardTitle className="text-lg leading-relaxed">{question}</CardTitle>
+        <CardTitle className="text-lg leading-relaxed">
+          <MathRenderer text={question} />
+        </CardTitle>
       </CardHeader>
       <CardContent>
         <RadioGroup value={selectedAnswer || ""} onValueChange={onAnswerSelect}>
@@ -55,7 +58,7 @@ export function QuizQuestion({
                     className="flex-1 cursor-pointer leading-relaxed"
                   >
                     <span className="font-semibold mr-2">{optionLabel}.</span>
-                    {option}
+                    <MathRenderer text={option} />
                   </Label>
                 </div>
               );

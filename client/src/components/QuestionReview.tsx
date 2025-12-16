@@ -7,6 +7,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { MathRenderer } from "./MathRenderer";
 
 interface ReviewQuestion {
   question: string;
@@ -58,12 +59,12 @@ export function QuestionReview({ questions }: QuestionReviewProps) {
                           {isCorrect ? "Correct" : "Incorrect"}
                         </Badge>
                       </div>
-                      <div className="text-sm line-clamp-1">{q.question}</div>
+                      <div className="text-sm line-clamp-1"><MathRenderer text={q.question} /></div>
                     </div>
                   </div>
                 </AccordionTrigger>
                 <AccordionContent className="pt-4 space-y-4">
-                  <div className="text-sm leading-relaxed">{q.question}</div>
+                  <div className="text-sm leading-relaxed"><MathRenderer text={q.question} /></div>
                   <div className="space-y-2">
                     {q.options.map((option, optIdx) => {
                       const label = optionLabel(option);
@@ -90,7 +91,7 @@ export function QuestionReview({ questions }: QuestionReviewProps) {
                             )}
                             <span className="text-sm">
                               <span className="font-semibold mr-2">{label}.</span>
-                              {option}
+                              <MathRenderer text={option} />
                             </span>
                           </div>
                         </div>
@@ -100,7 +101,7 @@ export function QuestionReview({ questions }: QuestionReviewProps) {
                   {q.explanation && (
                     <div className="p-4 bg-primary/5 rounded-lg border-l-4 border-l-primary">
                       <div className="font-semibold text-sm mb-1">Explanation</div>
-                      <div className="text-sm text-muted-foreground">{q.explanation}</div>
+                      <div className="text-sm text-muted-foreground"><MathRenderer text={q.explanation} /></div>
                     </div>
                   )}
                 </AccordionContent>
