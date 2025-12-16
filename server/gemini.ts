@@ -127,12 +127,71 @@ function getSubjectContext(category: string, subject?: string): { expertise: str
   const categoryUpper = (category || "").toUpperCase();
   
   // =====================
-  // MATH SUBJECTS (all exams)
+  // HELPER: Check if subject is English-related (comprehensive list)
   // =====================
-  if (subjectLower.includes("math") || subjectLower.includes("algebra") || 
-      subjectLower.includes("arithmetic") || subjectLower.includes("geometry") ||
-      subjectLower.includes("calculus") || subjectLower.includes("statistics") ||
-      subjectLower.includes("numeracy")) {
+  const isEnglishRelated = () => {
+    const englishKeywords = [
+      "english", "grammar", "language", "writing", "vocabulary", "spelling", "punctuation",
+      "sentence", "verb", "noun", "pronoun", "adjective", "adverb", "preposition", "conjunction",
+      "subject-verb", "agreement", "tense", "plural", "singular", "capitalization", "apostrophe",
+      "comma", "semicolon", "colon", "quotation", "parts of speech", "clause", "phrase",
+      "modifier", "syntax", "usage", "convention", "word choice", "context clue", "prefix",
+      "suffix", "root word", "antonym", "synonym", "homophone", "contraction", "possessive",
+      "active voice", "passive voice", "parallel", "fragment", "run-on", "comma splice"
+    ];
+    return englishKeywords.some(keyword => subjectLower.includes(keyword));
+  };
+  
+  // =====================
+  // HELPER: Check if subject is Math-related (comprehensive list)
+  // =====================
+  const isMathRelated = () => {
+    const mathKeywords = [
+      "math", "algebra", "arithmetic", "geometry", "calculus", "statistics", "numeracy",
+      "equation", "inequality", "fraction", "decimal", "percent", "ratio", "proportion",
+      "exponent", "polynomial", "linear", "quadratic", "variable", "coefficient", "factor",
+      "square root", "cube", "pythagorean", "area", "perimeter", "volume", "circumference",
+      "triangle", "rectangle", "circle", "angle", "slope", "intercept", "graph", "coordinate",
+      "function", "expression", "solve", "simplify", "calculate", "computation", "number",
+      "integer", "prime", "composite", "order of operations", "absolute value", "scientific notation"
+    ];
+    return mathKeywords.some(keyword => subjectLower.includes(keyword));
+  };
+  
+  // =====================
+  // HELPER: Check if subject is Reading-related (comprehensive list)
+  // =====================
+  const isReadingRelated = () => {
+    const readingKeywords = [
+      "reading", "comprehension", "passage", "literature", "inference", "main idea",
+      "author's purpose", "supporting detail", "summary", "conclusion", "theme",
+      "tone", "mood", "point of view", "narrative", "expository", "persuasive",
+      "informational text", "fiction", "nonfiction", "context", "text structure",
+      "compare contrast", "cause effect", "sequence", "problem solution"
+    ];
+    return readingKeywords.some(keyword => subjectLower.includes(keyword));
+  };
+  
+  // =====================
+  // HELPER: Check if subject is Science-related (comprehensive list)
+  // =====================
+  const isScienceRelated = () => {
+    const scienceKeywords = [
+      "science", "biology", "chemistry", "physics", "anatomy", "physiology",
+      "cell", "organism", "ecosystem", "evolution", "genetics", "dna", "rna",
+      "atom", "molecule", "element", "compound", "reaction", "chemical",
+      "force", "motion", "energy", "wave", "light", "sound", "electricity",
+      "organ", "system", "tissue", "muscle", "bone", "heart", "lung", "brain",
+      "digestion", "respiration", "circulation", "nervous", "immune", "endocrine",
+      "mitosis", "meiosis", "photosynthesis", "metabolism"
+    ];
+    return scienceKeywords.some(keyword => subjectLower.includes(keyword));
+  };
+  
+  // =====================
+  // MATH SUBJECTS (all exams) - Check first to catch math-specific topics
+  // =====================
+  if (isMathRelated() && !isEnglishRelated() && !isReadingRelated()) {
     return {
       expertise: "mathematics educator and standardized test question writer",
       focus: "mathematical problem-solving, algebraic reasoning, numerical computation, and quantitative analysis",
@@ -155,8 +214,7 @@ Example of a GOOD math explanation:
   // =====================
   // READING/COMPREHENSION SUBJECTS (all exams)
   // =====================
-  if (subjectLower.includes("reading") || subjectLower.includes("comprehension") ||
-      subjectLower.includes("passage") || subjectLower.includes("literature")) {
+  if (isReadingRelated() && !isMathRelated()) {
     return {
       expertise: "reading and literacy assessment specialist",
       focus: "reading comprehension, textual analysis, inference making, and critical reading skills",
@@ -165,12 +223,9 @@ Example of a GOOD math explanation:
   }
   
   // =====================
-  // ENGLISH/GRAMMAR SUBJECTS (all exams)
+  // ENGLISH/GRAMMAR SUBJECTS (all exams) - Comprehensive keyword matching
   // =====================
-  if (subjectLower.includes("english") || subjectLower.includes("grammar") ||
-      subjectLower.includes("language") || subjectLower.includes("writing") ||
-      subjectLower.includes("vocabulary") || subjectLower.includes("spelling") ||
-      subjectLower.includes("punctuation")) {
+  if (isEnglishRelated() && !isMathRelated()) {
     return {
       expertise: "English language arts and grammar specialist",
       focus: "grammar rules, sentence structure, vocabulary usage, punctuation, and language conventions",
@@ -182,9 +237,7 @@ Example of a GOOD math explanation:
   // SCIENCE SUBJECTS (TEAS/HESI academic science)
   // =====================
   if ((categoryUpper === "TEAS" || categoryUpper === "HESI") && 
-      (subjectLower.includes("science") || subjectLower.includes("biology") ||
-       subjectLower.includes("chemistry") || subjectLower.includes("physics") ||
-       subjectLower.includes("anatomy") || subjectLower.includes("physiology"))) {
+      isScienceRelated() && !isMathRelated() && !isEnglishRelated() && !isReadingRelated()) {
     return {
       expertise: "science educator and assessment specialist",
       focus: "scientific concepts, laboratory procedures, biological systems, chemical processes, and scientific reasoning",
