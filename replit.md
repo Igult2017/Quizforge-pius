@@ -31,6 +31,8 @@ Admin authentication is Firebase-based. The first user to sign up via Firebase A
 4. **Image Paste/Upload Support** - Sample questions now support pasting screenshots (Ctrl+V) and uploading images via Add Image button for visual reference.
 5. **Topic-Level Question Storage** - Questions are now stored with both `subject` (e.g., "Management of Care") AND `topic` (e.g., "Advance Directives"). This enables granular topic selection when students take quizzes.
 6. **Equal Topic Distribution** - When generating questions with multiple units/topics (comma-separated), the system automatically splits into separate jobs with equal question counts. Example: 1000 questions with 4 topics = 4 jobs of 250 questions each. Each job focuses on a single topic ensuring guaranteed distribution.
+7. **Enhanced Math Explanations** - Math question explanations now MUST include: (1) The exact formula being applied, (2) Step-by-step calculation with actual numbers, (3) Concept explanation of why/when to use the method, (4) Specific error explanation for each wrong answer option.
+8. **Fixed Quiz Progress Display** - Progress now shows "Question X of Y" (current position) AND "Z/Y answered" (actual answered count). Previously showed viewing position which was confusing when on the last question.
 
 **Updates (Dec 12, 2025)**:
 1. **Manual Question Generation Mode** - Automatic/background question generation has been disabled. Use the admin panel to create generation jobs and manually trigger processing via the "Process Jobs" button.

@@ -122,7 +122,7 @@ function getExamDescription(category: string): { name: string; description: stri
   return exams[category] || exams.NCLEX;
 }
 
-function getSubjectContext(category: string, subject?: string): { expertise: string; focus: string; terminology: string } {
+function getSubjectContext(category: string, subject?: string): { expertise: string; focus: string; terminology: string; mathExplanationRules?: string } {
   const subjectLower = (subject || "").toLowerCase();
   
   if (subjectLower.includes("math") || subjectLower.includes("algebra") || 
@@ -131,7 +131,19 @@ function getSubjectContext(category: string, subject?: string): { expertise: str
     return {
       expertise: "mathematics educator and standardized test question writer",
       focus: "mathematical problem-solving, algebraic reasoning, numerical computation, and quantitative analysis",
-      terminology: "Use proper mathematical notation. For fractions use a/b format, for exponents use ^ (e.g., x^2), for square roots use sqrt(), and for other mathematical symbols describe them clearly. Include step-by-step solution approaches."
+      terminology: "Use proper mathematical notation. For fractions use a/b format, for exponents use ^ (e.g., x^2), for square roots use sqrt(), and for other mathematical symbols describe them clearly.",
+      mathExplanationRules: `MATH EXPLANATION REQUIREMENTS - CRITICAL:
+Every math question explanation MUST include ALL of the following:
+1. STATE THE FORMULA: Write out the exact formula or mathematical concept being applied (e.g., "Area of a circle = pi * r^2" or "To convert fractions to decimals, divide numerator by denominator")
+2. SHOW THE CALCULATION: Demonstrate the actual step-by-step arithmetic with real numbers from the problem:
+   - Step 1: [substitute values into formula]
+   - Step 2: [perform operation]
+   - Step 3: [simplify to get answer]
+3. EXPLAIN THE CONCEPT: Briefly explain WHY this formula/method works and when to use it
+4. EXPLAIN WRONG ANSWERS: For each incorrect option, explain the specific mathematical error that would lead to that answer (e.g., "Option B (24) results from forgetting to square the radius" or "Option C comes from adding instead of multiplying")
+
+Example of a GOOD math explanation:
+"To find the area of a circle with radius 5, we use the formula: Area = pi * r^2. Substituting: Area = 3.14159 * 5^2 = 3.14159 * 25 = 78.54. The area is approximately 78.5 square units. Option A (31.4) incorrectly uses the circumference formula (2 * pi * r). Option C (25) forgot to multiply by pi. Option D (157) incorrectly used diameter instead of radius."`
     };
   }
   
@@ -194,7 +206,8 @@ QUALITY REQUIREMENTS:
 - Questions must test critical thinking and problem-solving, not just memorization
 - ${subjectContext.terminology}
 - Follow official ${category} question format standards
-- Avoid trivial or surface-level questions - focus on practical application`;
+- Avoid trivial or surface-level questions - focus on practical application
+${subjectContext.mathExplanationRules ? `\n${subjectContext.mathExplanationRules}` : ''}`;
 
   // If sample question provided, emphasize matching its quality
   if (sampleQuestion) {
