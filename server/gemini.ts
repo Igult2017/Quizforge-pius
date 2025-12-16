@@ -124,14 +124,19 @@ function getExamDescription(category: string): { name: string; description: stri
 
 function getSubjectContext(category: string, subject?: string): { expertise: string; focus: string; terminology: string; mathExplanationRules?: string } {
   const subjectLower = (subject || "").toLowerCase();
+  const categoryUpper = (category || "").toUpperCase();
   
+  // =====================
+  // MATH SUBJECTS (all exams)
+  // =====================
   if (subjectLower.includes("math") || subjectLower.includes("algebra") || 
       subjectLower.includes("arithmetic") || subjectLower.includes("geometry") ||
-      subjectLower.includes("calculus") || subjectLower.includes("statistics")) {
+      subjectLower.includes("calculus") || subjectLower.includes("statistics") ||
+      subjectLower.includes("numeracy")) {
     return {
       expertise: "mathematics educator and standardized test question writer",
       focus: "mathematical problem-solving, algebraic reasoning, numerical computation, and quantitative analysis",
-      terminology: "Use proper mathematical notation. For fractions use a/b format, for exponents use ^ (e.g., x^2), for square roots use sqrt(), and for other mathematical symbols describe them clearly.",
+      terminology: "Use proper mathematical notation. For fractions use a/b format, for exponents use ^ (e.g., x^2), for square roots use sqrt(), and for other mathematical symbols describe them clearly. CRITICAL: Generate ONLY math questions - no grammar, reading passages, or nursing/health content.",
       mathExplanationRules: `MATH EXPLANATION REQUIREMENTS - CRITICAL:
 Every math question explanation MUST include ALL of the following:
 1. STATE THE FORMULA: Write out the exact formula or mathematical concept being applied (e.g., "Area of a circle = pi * r^2" or "To convert fractions to decimals, divide numerator by denominator")
@@ -147,39 +152,216 @@ Example of a GOOD math explanation:
     };
   }
   
+  // =====================
+  // READING/COMPREHENSION SUBJECTS (all exams)
+  // =====================
   if (subjectLower.includes("reading") || subjectLower.includes("comprehension") ||
       subjectLower.includes("passage") || subjectLower.includes("literature")) {
     return {
       expertise: "reading and literacy assessment specialist",
       focus: "reading comprehension, textual analysis, inference making, and critical reading skills",
-      terminology: "Use clear, academic language. Include varied passage types and question formats that test different reading skills. CRITICAL: DO NOT include any math calculations, formulas, equations, or numerical problem-solving. This is READING only - focus on passages, vocabulary in context, main ideas, inferences, and author's purpose."
+      terminology: "Use clear, academic language. Include varied passage types and question formats that test different reading skills. CRITICAL: DO NOT include any math calculations, formulas, equations, or numerical problem-solving. This is READING only - focus on passages, vocabulary in context, main ideas, inferences, and author's purpose. NO nursing/clinical content unless specifically in the passage."
     };
   }
   
+  // =====================
+  // ENGLISH/GRAMMAR SUBJECTS (all exams)
+  // =====================
   if (subjectLower.includes("english") || subjectLower.includes("grammar") ||
       subjectLower.includes("language") || subjectLower.includes("writing") ||
-      subjectLower.includes("vocabulary")) {
+      subjectLower.includes("vocabulary") || subjectLower.includes("spelling") ||
+      subjectLower.includes("punctuation")) {
     return {
       expertise: "English language arts and grammar specialist",
       focus: "grammar rules, sentence structure, vocabulary usage, punctuation, and language conventions",
-      terminology: "Use proper grammatical terminology and provide clear examples of correct and incorrect usage. CRITICAL: DO NOT include any math calculations, formulas, equations, or numerical problem-solving. This is ENGLISH/GRAMMAR only - focus on parts of speech, sentence structure, punctuation, spelling, vocabulary, and writing conventions."
+      terminology: "Use proper grammatical terminology and provide clear examples of correct and incorrect usage. CRITICAL: DO NOT include any math calculations, formulas, equations, or numerical problem-solving. This is ENGLISH/GRAMMAR only - focus on parts of speech, sentence structure, punctuation, spelling, vocabulary, and writing conventions. NO nursing/clinical/health content."
     };
   }
   
+  // =====================
+  // SCIENCE SUBJECTS (TEAS/HESI academic science)
+  // =====================
+  if ((categoryUpper === "TEAS" || categoryUpper === "HESI") && 
+      (subjectLower.includes("science") || subjectLower.includes("biology") ||
+       subjectLower.includes("chemistry") || subjectLower.includes("physics") ||
+       subjectLower.includes("anatomy") || subjectLower.includes("physiology"))) {
+    return {
+      expertise: "science educator and assessment specialist",
+      focus: "scientific concepts, laboratory procedures, biological systems, chemical processes, and scientific reasoning",
+      terminology: "Use proper scientific terminology and notation. Focus on academic science concepts appropriate for pre-nursing students. CRITICAL: DO NOT include grammar questions, reading comprehension passages, or pure math problems. Science questions may involve some calculations but should focus primarily on conceptual understanding."
+    };
+  }
+  
+  // =====================
+  // NCLEX NURSING SUBJECTS
+  // =====================
+  if (categoryUpper === "NCLEX") {
+    // Management of Care
+    if (subjectLower.includes("management") || subjectLower.includes("care environment") ||
+        subjectLower.includes("delegation") || subjectLower.includes("prioritization") ||
+        subjectLower.includes("leadership") || subjectLower.includes("advocacy") ||
+        subjectLower.includes("advance directive") || subjectLower.includes("legal") ||
+        subjectLower.includes("ethical") || subjectLower.includes("informed consent")) {
+      return {
+        expertise: "registered nurse educator specializing in nursing management and leadership",
+        focus: "nursing management, delegation, prioritization, client advocacy, legal/ethical issues, advance directives, informed consent, and care coordination",
+        terminology: "Use proper nursing terminology. Focus on clinical decision-making, delegation principles, and nursing leadership. CRITICAL: DO NOT include pure math problems, grammar questions, or reading comprehension passages. Questions should be clinical nursing scenarios."
+      };
+    }
+    
+    // Safety and Infection Control
+    if (subjectLower.includes("safety") || subjectLower.includes("infection") ||
+        subjectLower.includes("aseptic") || subjectLower.includes("isolation") ||
+        subjectLower.includes("standard precaution") || subjectLower.includes("error prevention")) {
+      return {
+        expertise: "registered nurse educator specializing in patient safety and infection control",
+        focus: "patient safety, infection control, standard precautions, isolation techniques, error prevention, and safe medication administration",
+        terminology: "Use proper nursing and infection control terminology. Focus on clinical safety scenarios and infection prevention. CRITICAL: DO NOT include pure math problems, grammar questions, or reading comprehension passages."
+      };
+    }
+    
+    // Pharmacology
+    if (subjectLower.includes("pharmacol") || subjectLower.includes("medication") ||
+        subjectLower.includes("drug") || subjectLower.includes("dosage")) {
+      return {
+        expertise: "registered nurse educator specializing in pharmacology and medication administration",
+        focus: "medication actions, side effects, nursing implications, drug interactions, patient education, and safe medication administration",
+        terminology: "Use proper pharmacological terminology. Include drug classifications, mechanisms of action, and nursing considerations. Dosage calculations may be included but focus on clinical application."
+      };
+    }
+    
+    // Medical-Surgical Nursing
+    if (subjectLower.includes("medical") || subjectLower.includes("surgical") ||
+        subjectLower.includes("med-surg") || subjectLower.includes("adult health")) {
+      return {
+        expertise: "registered nurse educator specializing in medical-surgical nursing",
+        focus: "adult health conditions, surgical care, disease processes, nursing interventions, and patient assessment",
+        terminology: "Use proper medical-surgical nursing terminology. Focus on clinical scenarios involving adult patients with acute and chronic conditions. CRITICAL: DO NOT include pure math problems, grammar questions, or reading comprehension passages."
+      };
+    }
+    
+    // Pediatrics
+    if (subjectLower.includes("pediatric") || subjectLower.includes("child") ||
+        subjectLower.includes("infant") || subjectLower.includes("adolescent") ||
+        subjectLower.includes("newborn") || subjectLower.includes("neonatal")) {
+      return {
+        expertise: "registered nurse educator specializing in pediatric nursing",
+        focus: "pediatric health conditions, growth and development, family-centered care, and age-appropriate nursing interventions",
+        terminology: "Use proper pediatric nursing terminology. Focus on clinical scenarios involving infants, children, and adolescents. CRITICAL: DO NOT include pure math problems, grammar questions, or reading comprehension passages."
+      };
+    }
+    
+    // Obstetrics/Maternity
+    if (subjectLower.includes("obstetric") || subjectLower.includes("maternity") ||
+        subjectLower.includes("pregnancy") || subjectLower.includes("labor") ||
+        subjectLower.includes("postpartum") || subjectLower.includes("antepartum") ||
+        subjectLower.includes("prenatal")) {
+      return {
+        expertise: "registered nurse educator specializing in obstetric and maternity nursing",
+        focus: "pregnancy, labor and delivery, postpartum care, newborn care, and women's health",
+        terminology: "Use proper obstetric nursing terminology. Focus on clinical scenarios involving pregnant women, laboring patients, and postpartum care. CRITICAL: DO NOT include pure math problems, grammar questions, or reading comprehension passages."
+      };
+    }
+    
+    // Mental Health/Psychiatric
+    if (subjectLower.includes("mental health") || subjectLower.includes("psych") ||
+        subjectLower.includes("behavioral") || subjectLower.includes("therapeutic communication")) {
+      return {
+        expertise: "registered nurse educator specializing in psychiatric and mental health nursing",
+        focus: "mental health conditions, therapeutic communication, crisis intervention, and psychiatric nursing interventions",
+        terminology: "Use proper psychiatric nursing terminology. Focus on clinical scenarios involving mental health conditions and therapeutic interventions. CRITICAL: DO NOT include pure math problems, grammar questions, or reading comprehension passages."
+      };
+    }
+    
+    // Physiological Integrity (general)
+    if (subjectLower.includes("physiological") || subjectLower.includes("basic care") ||
+        subjectLower.includes("comfort") || subjectLower.includes("reduction of risk") ||
+        subjectLower.includes("physiological adaptation")) {
+      return {
+        expertise: "registered nurse educator specializing in physiological nursing care",
+        focus: "basic care and comfort, physiological adaptation, risk reduction, and nursing interventions for physiological needs",
+        terminology: "Use proper nursing terminology. Focus on clinical scenarios involving patient physiological needs and nursing care. CRITICAL: DO NOT include pure math problems, grammar questions, or reading comprehension passages."
+      };
+    }
+    
+    // Health Promotion
+    if (subjectLower.includes("health promotion") || subjectLower.includes("prevention") ||
+        subjectLower.includes("wellness") || subjectLower.includes("screening") ||
+        subjectLower.includes("immunization") || subjectLower.includes("lifestyle")) {
+      return {
+        expertise: "registered nurse educator specializing in health promotion and disease prevention",
+        focus: "health promotion, disease prevention, wellness education, screenings, and lifestyle modifications",
+        terminology: "Use proper nursing terminology. Focus on patient education and health promotion activities. CRITICAL: DO NOT include pure math problems, grammar questions, or reading comprehension passages."
+      };
+    }
+    
+    // Psychosocial Integrity
+    if (subjectLower.includes("psychosocial") || subjectLower.includes("coping") ||
+        subjectLower.includes("grief") || subjectLower.includes("cultural") ||
+        subjectLower.includes("spiritual") || subjectLower.includes("family dynamics")) {
+      return {
+        expertise: "registered nurse educator specializing in psychosocial nursing care",
+        focus: "psychosocial support, coping mechanisms, grief and loss, cultural considerations, and family dynamics",
+        terminology: "Use proper nursing terminology. Focus on clinical scenarios involving patient psychosocial needs. CRITICAL: DO NOT include pure math problems, grammar questions, or reading comprehension passages."
+      };
+    }
+  }
+  
+  // =====================
+  // HESI SPECIFIC SUBJECTS
+  // =====================
+  if (categoryUpper === "HESI") {
+    // HESI A&P
+    if (subjectLower.includes("anatomy") || subjectLower.includes("physiology") ||
+        subjectLower.includes("a&p") || subjectLower.includes("body system")) {
+      return {
+        expertise: "anatomy and physiology educator for health sciences",
+        focus: "human body systems, anatomical structures, physiological processes, and their clinical relevance",
+        terminology: "Use proper anatomical and physiological terminology. Focus on structure-function relationships. CRITICAL: DO NOT include grammar questions, reading passages, or pure math problems."
+      };
+    }
+    
+    // HESI Biology
+    if (subjectLower.includes("biology") || subjectLower.includes("cell") ||
+        subjectLower.includes("genetics") || subjectLower.includes("microbiology")) {
+      return {
+        expertise: "biology educator for health sciences admissions",
+        focus: "cellular biology, genetics, microbiology, and biological processes relevant to health sciences",
+        terminology: "Use proper biological terminology. CRITICAL: DO NOT include grammar questions, reading passages, or pure math problems."
+      };
+    }
+    
+    // HESI Chemistry
+    if (subjectLower.includes("chemistry") || subjectLower.includes("chemical") ||
+        subjectLower.includes("organic") || subjectLower.includes("biochemistry")) {
+      return {
+        expertise: "chemistry educator for health sciences admissions",
+        focus: "chemical principles, reactions, organic chemistry basics, and biochemistry relevant to health sciences",
+        terminology: "Use proper chemistry terminology and notation. CRITICAL: DO NOT include grammar questions, reading passages, or unrelated math problems."
+      };
+    }
+  }
+  
+  // =====================
+  // GENERAL SCIENCE (fallback)
+  // =====================
   if (subjectLower.includes("science") || subjectLower.includes("biology") ||
       subjectLower.includes("chemistry") || subjectLower.includes("physics") ||
       subjectLower.includes("anatomy") || subjectLower.includes("physiology")) {
     return {
       expertise: "science educator and assessment specialist",
       focus: "scientific concepts, laboratory procedures, biological systems, chemical processes, and scientific reasoning",
-      terminology: "Use proper scientific terminology and notation. Include diagrams descriptions where helpful. Note: While science may involve some calculations, focus primarily on conceptual understanding rather than pure math problems."
+      terminology: "Use proper scientific terminology and notation. CRITICAL: DO NOT include grammar questions, reading passages, or pure math problems unrelated to science."
     };
   }
   
+  // =====================
+  // DEFAULT FALLBACK
+  // =====================
   return {
     expertise: "professional exam question writer and subject matter expert",
-    focus: "critical thinking, practical application, and conceptual understanding",
-    terminology: "Use appropriate professional and academic terminology for the subject area."
+    focus: "critical thinking, practical application, and conceptual understanding specific to the requested subject",
+    terminology: "Use appropriate professional and academic terminology for the subject area. CRITICAL: Stay strictly within the specified subject - do NOT mix in content from other subjects like math, grammar, or unrelated topics."
   };
 }
 
