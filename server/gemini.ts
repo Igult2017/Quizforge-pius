@@ -152,7 +152,7 @@ Example of a GOOD math explanation:
     return {
       expertise: "reading and literacy assessment specialist",
       focus: "reading comprehension, textual analysis, inference making, and critical reading skills",
-      terminology: "Use clear, academic language. Include varied passage types and question formats that test different reading skills."
+      terminology: "Use clear, academic language. Include varied passage types and question formats that test different reading skills. CRITICAL: DO NOT include any math calculations, formulas, equations, or numerical problem-solving. This is READING only - focus on passages, vocabulary in context, main ideas, inferences, and author's purpose."
     };
   }
   
@@ -162,7 +162,7 @@ Example of a GOOD math explanation:
     return {
       expertise: "English language arts and grammar specialist",
       focus: "grammar rules, sentence structure, vocabulary usage, punctuation, and language conventions",
-      terminology: "Use proper grammatical terminology and provide clear examples of correct and incorrect usage."
+      terminology: "Use proper grammatical terminology and provide clear examples of correct and incorrect usage. CRITICAL: DO NOT include any math calculations, formulas, equations, or numerical problem-solving. This is ENGLISH/GRAMMAR only - focus on parts of speech, sentence structure, punctuation, spelling, vocabulary, and writing conventions."
     };
   }
   
@@ -172,7 +172,7 @@ Example of a GOOD math explanation:
     return {
       expertise: "science educator and assessment specialist",
       focus: "scientific concepts, laboratory procedures, biological systems, chemical processes, and scientific reasoning",
-      terminology: "Use proper scientific terminology and notation. Include diagrams descriptions where helpful."
+      terminology: "Use proper scientific terminology and notation. Include diagrams descriptions where helpful. Note: While science may involve some calculations, focus primarily on conceptual understanding rather than pure math problems."
     };
   }
   
