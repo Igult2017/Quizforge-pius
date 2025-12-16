@@ -1161,6 +1161,10 @@ ${urls.map(url => `  <url>
         return res.status(400).json({ error: "Sample question is required (minimum 50 characters)" });
       }
       
+      if (!areasTocover || areasTocover.trim().length < 10) {
+        return res.status(400).json({ error: "Topics/units to cover are required (minimum 10 characters)" });
+      }
+      
       console.log(`[PDF] Generating ${count} ${category} questions for PDF on topic: ${topic}`);
       
       const generatedQuestions = await generateQuestions({
@@ -1198,7 +1202,7 @@ ${urls.map(url => `  <url>
 
   app.post("/api/admin/questions/generate", async (req, res) => {
     try {
-      const { category, count, subject, difficulty } = req.body;
+      const { category, count, subject, difficulty, sampleQuestion, areasTocover } = req.body;
 
       if (!category || !count) {
         return res.status(400).json({ error: "category and count are required" });
@@ -1212,6 +1216,14 @@ ${urls.map(url => `  <url>
         return res.status(400).json({ error: "count must be between 1 and 100" });
       }
 
+      if (!sampleQuestion || sampleQuestion.trim().length < 50) {
+        return res.status(400).json({ error: "Sample question is required (minimum 50 characters)" });
+      }
+
+      if (!areasTocover || areasTocover.trim().length < 10) {
+        return res.status(400).json({ error: "Topics/units to cover are required (minimum 10 characters)" });
+      }
+
       console.log(`Generating ${count} ${category} questions...`);
       
       // Generate questions using Gemini AI
@@ -1220,6 +1232,8 @@ ${urls.map(url => `  <url>
         count: Number(count),
         subject,
         difficulty,
+        sampleQuestion: sampleQuestion.trim(),
+        areasTocover: areasTocover.trim(),
       });
 
       // Save to database
@@ -1379,6 +1393,11 @@ ${urls.map(url => `  <url>
         return res.status(400).json({ error: "A sample question is required (minimum 50 characters) to ensure quality generation" });
       }
 
+      // Areas to cover (topics/units) is required
+      if (!areasTocover || areasTocover.trim().length < 10) {
+        return res.status(400).json({ error: "Topics/units to cover are required (minimum 10 characters) to ensure proper question coverage" });
+      }
+
       if (!["NCLEX", "TEAS", "HESI"].includes(category)) {
         return res.status(400).json({ error: "category must be NCLEX, TEAS, or HESI" });
       }
@@ -1399,7 +1418,7 @@ ${urls.map(url => `  <url>
         difficulty,
         totalCount: Number(totalCount),
         sampleQuestion: sampleQuestion.trim(),
-        areasTocover: areasTocover?.trim() || undefined,
+        areasTocover: areasTocover.trim(),
         createdBy: req.user?.id,
       });
 

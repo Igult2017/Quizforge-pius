@@ -21,6 +21,7 @@ import { Loader2, Brain, Database, Plus, CheckCircle2, XCircle, Pause, Play, Tra
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useToast } from "@/hooks/use-toast";
 import { generateQuestionsPDF, generateQuestionsFromAPI } from "@/lib/pdfGenerator";
+import { MathTextarea } from "@/components/MathRenderer";
 
 interface QuestionCount {
   category: string;
@@ -59,6 +60,7 @@ export default function AdminQuestions() {
   const [topic, setTopic] = useState<string>("");
   const [difficulty, setDifficulty] = useState<string>("medium");
   const [sampleQuestion, setSampleQuestion] = useState<string>("");
+  const [sampleImages, setSampleImages] = useState<string[]>([]);
   const [areasTocover, setAreasTocover] = useState<string>("");
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set(["NCLEX", "TEAS", "HESI"]));
   
@@ -76,6 +78,7 @@ export default function AdminQuestions() {
   const [genPdfTopic, setGenPdfTopic] = useState("");
   const [genPdfCount, setGenPdfCount] = useState("10");
   const [genPdfSample, setGenPdfSample] = useState("");
+  const [genPdfSampleImages, setGenPdfSampleImages] = useState<string[]>([]);
   const [genPdfAreas, setGenPdfAreas] = useState("");
   const [genPdfIncludeAnswers, setGenPdfIncludeAnswers] = useState(true);
   const [genPdfGenerating, setGenPdfGenerating] = useState(false);
@@ -101,6 +104,7 @@ export default function AdminQuestions() {
         difficulty,
         totalCount: parseInt(totalCount),
         sampleQuestion: sampleQuestion,
+        sampleImages: sampleImages.length > 0 ? sampleImages : undefined,
         areasTocover: areasTocover || undefined,
       });
       return await res.json();
@@ -114,6 +118,7 @@ export default function AdminQuestions() {
       setTotalCount("50");
       setTopic("");
       setSampleQuestion("");
+      setSampleImages([]);
       setAreasTocover("");
       setActiveTab("generate");
     },
@@ -269,6 +274,15 @@ export default function AdminQuestions() {
       });
       return;
     }
+
+    if (!genPdfAreas.trim() || genPdfAreas.trim().length < 10) {
+      toast({
+        title: "Topics/Units required",
+        description: "Please specify the topics or units to cover (minimum 10 characters)",
+        variant: "destructive",
+      });
+      return;
+    }
     
     const count = parseInt(genPdfCount);
     if (isNaN(count) || count < 1 || count > 50) {
@@ -344,6 +358,15 @@ export default function AdminQuestions() {
       toast({
         title: "Sample question required",
         description: "Please provide a sample question (minimum 50 characters) to ensure quality generation",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!areasTocover.trim() || areasTocover.trim().length < 10) {
+      toast({
+        title: "Topics/Units required",
+        description: "Please specify the topics or units to cover (minimum 10 characters)",
         variant: "destructive",
       });
       return;
@@ -798,41 +821,54 @@ export default function AdminQuestions() {
                   <Label htmlFor="sampleQuestion">
                     Sample Question <span className="text-destructive">*</span>
                   </Label>
-                  <Textarea
-                    id="sampleQuestion"
+                  <MathTextarea
                     value={sampleQuestion}
-                    onChange={(e) => setSampleQuestion(e.target.value)}
+                    onChange={setSampleQuestion}
+                    images={sampleImages}
+                    onImagesChange={setSampleImages}
                     placeholder="Paste a complete sample question including:
-- The question text
+- The question text (use $ for inline math, e.g., $x^2 + 2x + 1$)
 - All 4 answer options (A, B, C, D)
 - The correct answer
 - A detailed explanation
 
+For math symbols, use LaTeX notation: $\frac{1}{2}$, $\sqrt{x}$, $x^2$
+You can also paste screenshots (Ctrl+V) or use Add Image.
+
 The AI will match this style, format, and complexity level."
-                    rows={8}
                     data-testid="textarea-sample-question"
-                    required
                     className="font-mono text-sm"
                   />
                   <p className="text-xs text-muted-foreground">
-                    Required (min 50 characters). The AI generates questions matching your sample's quality and format.
+                    Required (min 50 characters). Use $ for math, paste screenshots, or click Add Image.
                   </p>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="areasTocover">Specific Areas to Cover (Optional)</Label>
+                  <Label htmlFor="areasTocover">
+                    Topics/Units to Cover <span className="text-destructive">*</span>
+                  </Label>
                   <Textarea
                     id="areasTocover"
                     value={areasTocover}
                     onChange={(e) => setAreasTocover(e.target.value)}
-                    placeholder="List subtopics the questions should cover:
-- Cardiac conditions (heart failure, MI)
-- Respiratory conditions (COPD, pneumonia)
-- Diabetes management
-- Post-operative care"
-                    rows={4}
+                    placeholder="List the specific topics, units, or subtopics the questions should cover:
+
+For Math (TEAS):
+- Algebraic expressions and equations
+- Fractions, decimals, and percentages
+- Ratios and proportions
+
+For Science (TEAS):
+- Cell structure and function
+- Human anatomy systems"
+                    rows={6}
                     data-testid="textarea-areas-to-cover"
+                    required
                   />
+                  <p className="text-xs text-muted-foreground">
+                    Required (min 10 characters). Specify the exact topics/units for targeted question generation.
+                  </p>
                 </div>
 
                 <div className="flex items-center justify-between pt-4 border-t gap-4">
@@ -1094,25 +1130,28 @@ The AI will match this style, format, and complexity level."
 
                 <div className="space-y-2">
                   <Label>Sample Question *</Label>
-                  <Textarea
+                  <MathTextarea
                     value={genPdfSample}
-                    onChange={(e) => setGenPdfSample(e.target.value)}
-                    placeholder="Provide a sample question to guide the AI generation quality..."
-                    rows={3}
+                    onChange={setGenPdfSample}
+                    images={genPdfSampleImages}
+                    onImagesChange={setGenPdfSampleImages}
+                    placeholder="Provide a sample question. Use $ for math: $x^2$, $\frac{1}{2}$. Paste screenshots or use Add Image."
                     data-testid="textarea-gen-pdf-sample"
                   />
-                  <p className="text-xs text-muted-foreground">Minimum 50 characters</p>
+                  <p className="text-xs text-muted-foreground">Minimum 50 characters. Use $ for math, paste screenshots, or click Add Image.</p>
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Areas to Cover (optional)</Label>
+                  <Label>Topics/Units to Cover *</Label>
                   <Textarea
                     value={genPdfAreas}
                     onChange={(e) => setGenPdfAreas(e.target.value)}
-                    placeholder="List specific topics or areas to cover..."
-                    rows={2}
+                    placeholder="List specific topics, units, or areas to cover (required)"
+                    rows={3}
                     data-testid="textarea-gen-pdf-areas"
+                    required
                   />
+                  <p className="text-xs text-muted-foreground">Minimum 10 characters. Required for targeted generation.</p>
                 </div>
 
                 <div className="flex items-center gap-2">

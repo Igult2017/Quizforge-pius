@@ -100,8 +100,75 @@ interface GenerateQuestionsParams {
   count: number;
   subject?: string;
   difficulty?: "easy" | "medium" | "hard";
-  sampleQuestion?: string; // Sample question for style/format guidance
-  areasTocover?: string; // Specific areas/subtopics to cover
+  sampleQuestion: string; // Sample question for style/format guidance (required)
+  areasTocover: string; // Specific areas/subtopics to cover (required)
+}
+
+function getExamDescription(category: string): { name: string; description: string } {
+  const exams: Record<string, { name: string; description: string }> = {
+    NCLEX: {
+      name: "NCLEX (National Council Licensure Examination)",
+      description: "nursing licensure exam covering patient care, safety, health promotion, and clinical nursing practice"
+    },
+    TEAS: {
+      name: "ATI TEAS (Test of Essential Academic Skills)",
+      description: "academic skills assessment covering Reading, Mathematics, Science, and English Language Usage - this is NOT a health-focused exam but an academic aptitude test"
+    },
+    HESI: {
+      name: "HESI A2 (Health Education Systems Admission Assessment)",
+      description: "health sciences admission exam covering academic subjects and basic health sciences"
+    }
+  };
+  return exams[category] || exams.NCLEX;
+}
+
+function getSubjectContext(category: string, subject?: string): { expertise: string; focus: string; terminology: string } {
+  const subjectLower = (subject || "").toLowerCase();
+  
+  if (subjectLower.includes("math") || subjectLower.includes("algebra") || 
+      subjectLower.includes("arithmetic") || subjectLower.includes("geometry") ||
+      subjectLower.includes("calculus") || subjectLower.includes("statistics")) {
+    return {
+      expertise: "mathematics educator and standardized test question writer",
+      focus: "mathematical problem-solving, algebraic reasoning, numerical computation, and quantitative analysis",
+      terminology: "Use proper mathematical notation. For fractions use a/b format, for exponents use ^ (e.g., x^2), for square roots use sqrt(), and for other mathematical symbols describe them clearly. Include step-by-step solution approaches."
+    };
+  }
+  
+  if (subjectLower.includes("reading") || subjectLower.includes("comprehension") ||
+      subjectLower.includes("passage") || subjectLower.includes("literature")) {
+    return {
+      expertise: "reading and literacy assessment specialist",
+      focus: "reading comprehension, textual analysis, inference making, and critical reading skills",
+      terminology: "Use clear, academic language. Include varied passage types and question formats that test different reading skills."
+    };
+  }
+  
+  if (subjectLower.includes("english") || subjectLower.includes("grammar") ||
+      subjectLower.includes("language") || subjectLower.includes("writing") ||
+      subjectLower.includes("vocabulary")) {
+    return {
+      expertise: "English language arts and grammar specialist",
+      focus: "grammar rules, sentence structure, vocabulary usage, punctuation, and language conventions",
+      terminology: "Use proper grammatical terminology and provide clear examples of correct and incorrect usage."
+    };
+  }
+  
+  if (subjectLower.includes("science") || subjectLower.includes("biology") ||
+      subjectLower.includes("chemistry") || subjectLower.includes("physics") ||
+      subjectLower.includes("anatomy") || subjectLower.includes("physiology")) {
+    return {
+      expertise: "science educator and assessment specialist",
+      focus: "scientific concepts, laboratory procedures, biological systems, chemical processes, and scientific reasoning",
+      terminology: "Use proper scientific terminology and notation. Include diagrams descriptions where helpful."
+    };
+  }
+  
+  return {
+    expertise: "professional exam question writer and subject matter expert",
+    focus: "critical thinking, practical application, and conceptual understanding",
+    terminology: "Use appropriate professional and academic terminology for the subject area."
+  };
 }
 
 export async function generateQuestions(
@@ -109,17 +176,25 @@ export async function generateQuestions(
 ): Promise<InsertQuestion[]> {
   const { category, count, subject, difficulty, sampleQuestion, areasTocover } = params;
 
-  // Build a more comprehensive system prompt
-  let systemPrompt = `You are an expert nursing exam question writer with decades of experience creating ${category} exam questions. Generate high-quality, realistic practice questions that accurately reflect the style, difficulty, and clinical relevance of actual ${category} exams.
+  const examInfo = getExamDescription(category);
+  const subjectContext = getSubjectContext(category, subject);
+
+  let systemPrompt = `You are an expert ${subjectContext.expertise} with decades of experience creating ${examInfo.name} exam questions. 
+
+EXAM CONTEXT:
+${examInfo.name} is a ${examInfo.description}.
+
+SUBJECT FOCUS: ${subject || "General"}
+Your questions must focus on: ${subjectContext.focus}
 
 QUALITY REQUIREMENTS:
 - Each question must have exactly 4 answer options (A, B, C, D)
 - Only ONE option should be correct - the others should be plausible but clearly incorrect
 - Include a detailed, educational explanation for why the correct answer is right AND why other options are wrong
-- Questions must test critical thinking and clinical judgment, not just memorization
-- Use proper medical terminology and current nursing standards
+- Questions must test critical thinking and problem-solving, not just memorization
+- ${subjectContext.terminology}
 - Follow official ${category} question format standards
-- Avoid trivial or surface-level questions - focus on clinical application`;
+- Avoid trivial or surface-level questions - focus on practical application`;
 
   // If sample question provided, emphasize matching its quality
   if (sampleQuestion) {
@@ -161,24 +236,17 @@ Return a JSON array with this exact structure:
   }
 ]`;
 
-  let userPrompt = `Generate ${count} ${difficulty || "medium"} difficulty ${category} questions on the topic: "${subject || 'General Nursing'}".
+  let userPrompt = `Generate ${count} ${difficulty || "medium"} difficulty ${category} questions on the topic: "${subject || 'General'}".
 
-Each question should be clinically relevant and test practical nursing knowledge.`;
+Each question should test practical knowledge and critical thinking skills relevant to the subject area.
 
-  // Add specific areas to cover if provided
-  if (areasTocover) {
-    userPrompt += `
-
-IMPORTANT - COVER THESE SPECIFIC AREAS:
-The questions MUST cover the following specific areas/subtopics. Distribute questions across these areas:
+MANDATORY - COVER THESE SPECIFIC AREAS/UNITS:
+The questions MUST cover the following specific areas, units, or subtopics. Distribute questions evenly across these areas:
 ${areasTocover}
 
-Make sure to generate questions that specifically address these areas rather than general questions on the topic.`;
-  }
+Make sure to generate questions that specifically address these areas rather than general questions on the topic.
 
-  userPrompt += `
-
-Ensure proper formatting with exactly 4 options per question. Each question should be unique and test different aspects of the topic.`;
+Ensure proper formatting with exactly 4 options per question. Each question should be unique and test different aspects of the specified areas.`;
 
   try {
     const client = getGeminiClient();

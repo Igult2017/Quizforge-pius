@@ -4,6 +4,7 @@ import { generationSubjectProgress, generationLogs, systemSettings } from "@shar
 import { eq, and, sql, asc, or } from "drizzle-orm";
 import { generateQuestions } from "./gemini";
 import { storage } from "./storage";
+import { getSubjectsForCategory, type SubjectArea } from "./questionTopics";
 
 // Configuration
 const BATCH_SIZE = 10; // Questions per batch (reduced further to avoid JSON parsing errors)
@@ -132,6 +133,25 @@ async function getNextSubject() {
 }
 
 /**
+ * Get sample question and areas to cover for a subject from questionTopics
+ */
+function getSubjectDetails(category: string, subjectName: string): { sampleQuestion: string; areasTocover: string } {
+  const subjects = getSubjectsForCategory(category as "NCLEX" | "TEAS" | "HESI");
+  const subjectData = subjects.find(s => s.name === subjectName);
+  
+  if (subjectData && subjectData.topics.length > 0) {
+    const areas = subjectData.topics.join("\n");
+    const sampleQuestion = `Generate a well-structured ${category} ${subjectName} question that tests understanding of concepts related to ${subjectData.topics.slice(0, 3).join(", ")}. The question should have 4 answer options with clear explanations.`;
+    return { sampleQuestion, areasTocover: areas };
+  }
+  
+  return { 
+    sampleQuestion: `Generate a well-structured ${category} ${subjectName} question with 4 answer options and detailed explanations.`,
+    areasTocover: subjectName 
+  };
+}
+
+/**
  * Generate questions for a subject
  */
 async function generateForSubject(subject: any) {
@@ -151,11 +171,16 @@ async function generateForSubject(subject: any) {
     const remaining = subject.targetCount - subject.generatedCount;
     const questionsToGenerate = Math.min(BATCH_SIZE, remaining);
     
+    // Get subject details including sample question and areas to cover
+    const subjectDetails = getSubjectDetails(subject.category, subject.subject);
+    
     // Generate questions
     const questions = await generateQuestions({
       category: subject.category,
       subject: subject.subject,
       count: questionsToGenerate,
+      sampleQuestion: subjectDetails.sampleQuestion,
+      areasTocover: subjectDetails.areasTocover,
     });
     
     // Save to database
