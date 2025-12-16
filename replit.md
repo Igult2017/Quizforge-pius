@@ -24,6 +24,12 @@ Admin authentication is Firebase-based. The first user to sign up via Firebase A
 4. **Strict Email Verification** - Users who sign up via email/password **must verify their email before they can log in**. Existing users grandfathered in. Google Sign-In users automatically verified.
 5. **Base64 Service Account Support** - Firebase Admin supports base64-encoded credentials via `FIREBASE_SERVICE_ACCOUNT_KEY_BASE64` for Coolify.
 
+**Updates (Dec 16, 2025)**:
+1. **Subject-Aware Question Generation** - Gemini prompts are now subject-aware and adapt terminology based on subject (Math, Science, Reading, English). No longer hardcoded to nursing/health topics, making TEAS Math, Science, Reading questions accurate.
+2. **Required Sample Questions and Topics** - Both sampleQuestion and areasTocover are now required fields (not optional) for question generation, ensuring quality AI output.
+3. **KaTeX Math Rendering** - Added MathRenderer and MathTextarea components for LaTeX/KaTeX math notation support. Use $ for inline math ($x^2$) and $$ for block math.
+4. **Image Paste/Upload Support** - Sample questions now support pasting screenshots (Ctrl+V) and uploading images via Add Image button for visual reference.
+
 **Updates (Dec 12, 2025)**:
 1. **Manual Question Generation Mode** - Automatic/background question generation has been disabled. Use the admin panel to create generation jobs and manually trigger processing via the "Process Jobs" button.
 2. **No Authorization for Generation Routes** - Generation-related API endpoints no longer require authentication. Anyone who can access the admin panel can generate questions.
