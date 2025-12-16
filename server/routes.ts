@@ -1412,7 +1412,7 @@ ${urls.map(url => `  <url>
 
       const { createGenerationJob } = await import("./generationJobProcessor.js");
       
-      const job = await createGenerationJob({
+      const result = await createGenerationJob({
         category,
         topic,
         difficulty,
@@ -1422,11 +1422,24 @@ ${urls.map(url => `  <url>
         createdBy: req.user?.id,
       });
 
-      res.json({
-        success: true,
-        job,
-        message: `Started generating ${totalCount} questions. They will be generated in batches of 5.`,
-      });
+      // If distributed across multiple topics, return all job info
+      if (result.isDistributed && result.allJobs) {
+        res.json({
+          success: true,
+          job: result.job,
+          isDistributed: true,
+          allJobs: result.allJobs,
+          distribution: result.distribution,
+          message: `Creating ${totalCount} questions distributed equally across ${result.allJobs.length} topics. Each topic will get ~${Math.floor(totalCount / result.allJobs.length)} questions.`,
+        });
+      } else {
+        res.json({
+          success: true,
+          job: result.job,
+          isDistributed: false,
+          message: `Started generating ${totalCount} questions. They will be generated in batches of 5.`,
+        });
+      }
     } catch (error: any) {
       console.error("Error creating generation job:", error);
       res.status(500).json({ error: error.message || "Failed to create generation job" });

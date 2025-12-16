@@ -237,7 +237,33 @@ Return a JSON array with this exact structure:
   }
 ]`;
 
-  let userPrompt = `Generate ${count} ${difficulty || "medium"} difficulty ${category} questions on the subject: "${subject || 'General'}".
+  // Detect if single topic or multiple topics
+  const topicList = areasTocover.split(/[,;\n]+/).map(t => t.trim()).filter(t => t.length > 0);
+  const isSingleTopic = topicList.length === 1;
+  
+  let userPrompt: string;
+  
+  if (isSingleTopic) {
+    // Single topic mode - all questions focus on this one topic
+    const singleTopic = topicList[0];
+    userPrompt = `Generate ${count} ${difficulty || "medium"} difficulty ${category} questions on the subject: "${subject || 'General'}".
+
+Each question should test practical knowledge and critical thinking skills relevant to the subject area.
+
+FOCUS TOPIC: "${singleTopic}"
+ALL ${count} questions MUST be specifically about this topic. Cover different aspects, scenarios, and applications within this topic.
+
+IMPORTANT FOR EACH QUESTION:
+- Set "subject" to the main subject area: "${subject || 'General'}"
+- Set "topic" to EXACTLY: "${singleTopic}"
+- Every question must have topic set to "${singleTopic}" - do NOT use any other topic name
+
+Generate diverse questions that thoroughly cover different aspects of "${singleTopic}".
+
+Ensure proper formatting with exactly 4 options per question. Each question should be unique and test different aspects of this specific topic.`;
+  } else {
+    // Multiple topics mode - distribute evenly
+    userPrompt = `Generate ${count} ${difficulty || "medium"} difficulty ${category} questions on the subject: "${subject || 'General'}".
 
 Each question should test practical knowledge and critical thinking skills relevant to the subject area.
 
@@ -253,6 +279,7 @@ IMPORTANT FOR EACH QUESTION:
 Make sure to generate questions that specifically address these areas rather than general questions on the topic.
 
 Ensure proper formatting with exactly 4 options per question. Each question should be unique and test different aspects of the specified areas.`;
+  }
 
   try {
     const client = getGeminiClient();

@@ -67,14 +67,19 @@ export async function processNextJobBatch(): Promise<{ processed: boolean; jobId
     console.log(`   Progress: ${job.generatedCount}/${job.totalCount} (generating ${batchSize} more)`);
 
     try {
+      // Ensure required fields are present
+      if (!job.sampleQuestion || !job.areasTocover) {
+        throw new Error("Job is missing required sampleQuestion or areasTocover fields");
+      }
+      
       // Generate questions
       const generatedQuestions = await generateQuestions({
         category: job.category as "NCLEX" | "TEAS" | "HESI",
         count: batchSize,
         subject: job.topic,
         difficulty: job.difficulty as "easy" | "medium" | "hard",
-        sampleQuestion: job.sampleQuestion || undefined,
-        areasTocover: job.areasTocover || undefined,
+        sampleQuestion: job.sampleQuestion,
+        areasTocover: job.areasTocover,
       });
 
       // Save to database
@@ -211,15 +216,99 @@ export function stopJobProcessor() {
   console.log("📋 Stopping job processor...");
 }
 
+// Helper function to parse topics from areasTocover string
+function parseTopics(areasTocover: string): string[] {
+  // Split by comma, semicolon, or newline and clean up
+  const topics = areasTocover
+    .split(/[,;\n]+/)
+    .map(t => t.trim())
+    .filter(t => t.length > 0);
+  return topics;
+}
+
+// Return type for createGenerationJob - can return single job or multiple jobs
+export type GenerationJobResult = {
+  job: typeof generationJobs.$inferSelect;
+  isDistributed: boolean;
+  allJobs?: typeof generationJobs.$inferSelect[];
+  distribution?: { topic: string; count: number; jobId: number }[];
+};
+
 export async function createGenerationJob(params: {
   category: string;
-  topic: string;
+  topic: string; // This is the main SUBJECT (e.g., "Medical-Surgical", "Management of Care")
   difficulty: string;
   totalCount: number;
   sampleQuestion: string;
-  areasTocover?: string;
+  areasTocover?: string; // These are the specific UNITS/TOPICS within the subject
   createdBy?: string;
-}) {
+}): Promise<GenerationJobResult> {
+  // Check if multiple topics are provided - if so, split into separate jobs for equal distribution
+  if (params.areasTocover) {
+    const topics = parseTopics(params.areasTocover);
+    
+    if (topics.length > 1) {
+      // Ensure we have enough questions for all topics (at least 1 per topic)
+      if (params.totalCount < topics.length) {
+        throw new Error(
+          `Cannot distribute ${params.totalCount} questions across ${topics.length} topics. ` +
+          `Please request at least ${topics.length} questions (1 per topic) or reduce the number of topics.`
+        );
+      }
+      
+      // Multiple topics: create separate jobs with equal distribution
+      const questionsPerTopic = Math.floor(params.totalCount / topics.length);
+      let remainder = params.totalCount % topics.length;
+      
+      console.log(`\n📋 EQUAL DISTRIBUTION MODE: ${params.totalCount} questions ÷ ${topics.length} topics = ${questionsPerTopic} each`);
+      if (remainder > 0) {
+        console.log(`   (${remainder} extra questions distributed across first ${remainder} topics)`);
+      }
+      
+      const jobs = [];
+      const distribution = [];
+      
+      for (let i = 0; i < topics.length; i++) {
+        const topicName = topics[i];
+        // Distribute remainder across topics (1 extra question to first N topics where N = remainder)
+        const hasExtraQuestion = i < remainder;
+        const topicCount = questionsPerTopic + (hasExtraQuestion ? 1 : 0);
+        
+        const [job] = await db
+          .insert(generationJobs)
+          .values({
+            category: params.category,
+            topic: params.topic, // Main SUBJECT (e.g., "Medical-Surgical") - passed to Gemini as "subject"
+            difficulty: params.difficulty,
+            totalCount: topicCount,
+            batchSize: BATCH_SIZE,
+            sampleQuestion: params.sampleQuestion,
+            areasTocover: topicName, // Specific UNIT/TOPIC - passed to Gemini as "areasTocover", stored as question.topic
+            createdBy: params.createdBy || null,
+          })
+          .returning();
+        
+        console.log(`   ✓ Job #${job.id}: ${topicCount} questions for topic "${topicName}"`);
+        jobs.push(job);
+        distribution.push({ topic: topicName, count: topicCount, jobId: job.id });
+      }
+      
+      console.log(`📋 Created ${jobs.length} generation jobs for equal distribution\n`);
+      
+      // Start automatic continuous processing (runs in background)
+      setTimeout(() => runContinuousProcessing(), 1000);
+      
+      // Return all jobs with distribution info
+      return {
+        job: jobs[0],
+        isDistributed: true,
+        allJobs: jobs,
+        distribution
+      };
+    }
+  }
+  
+  // Single topic or no areasTocover: create one job as before
   const [job] = await db
     .insert(generationJobs)
     .values({
@@ -239,7 +328,10 @@ export async function createGenerationJob(params: {
   // Start automatic continuous processing (runs in background)
   setTimeout(() => runContinuousProcessing(), 1000);
 
-  return job;
+  return {
+    job,
+    isDistributed: false
+  };
 }
 
 export async function getJobStatus(jobId: number) {

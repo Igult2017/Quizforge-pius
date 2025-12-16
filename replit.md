@@ -30,6 +30,7 @@ Admin authentication is Firebase-based. The first user to sign up via Firebase A
 3. **KaTeX Math Rendering** - Added MathRenderer and MathTextarea components for LaTeX/KaTeX math notation support. Use $ for inline math ($x^2$) and $$ for block math.
 4. **Image Paste/Upload Support** - Sample questions now support pasting screenshots (Ctrl+V) and uploading images via Add Image button for visual reference.
 5. **Topic-Level Question Storage** - Questions are now stored with both `subject` (e.g., "Management of Care") AND `topic` (e.g., "Advance Directives"). This enables granular topic selection when students take quizzes.
+6. **Equal Topic Distribution** - When generating questions with multiple units/topics (comma-separated), the system automatically splits into separate jobs with equal question counts. Example: 1000 questions with 4 topics = 4 jobs of 250 questions each. Each job focuses on a single topic ensuring guaranteed distribution.
 
 **Updates (Dec 12, 2025)**:
 1. **Manual Question Generation Mode** - Automatic/background question generation has been disabled. Use the admin panel to create generation jobs and manually trigger processing via the "Process Jobs" button.
