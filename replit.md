@@ -29,6 +29,7 @@ Admin authentication is Firebase-based. The first user to sign up via Firebase A
 2. **Required Sample Questions and Topics** - Both sampleQuestion and areasTocover are now required fields (not optional) for question generation, ensuring quality AI output.
 3. **KaTeX Math Rendering** - Added MathRenderer and MathTextarea components for LaTeX/KaTeX math notation support. Use $ for inline math ($x^2$) and $$ for block math.
 4. **Image Paste/Upload Support** - Sample questions now support pasting screenshots (Ctrl+V) and uploading images via Add Image button for visual reference.
+5. **Topic-Level Question Storage** - Questions are now stored with both `subject` (e.g., "Management of Care") AND `topic` (e.g., "Advance Directives"). This enables granular topic selection when students take quizzes.
 
 **Updates (Dec 12, 2025)**:
 1. **Manual Question Generation Mode** - Automatic/background question generation has been disabled. Use the admin panel to create generation jobs and manually trigger processing via the "Process Jobs" button.

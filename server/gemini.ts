@@ -231,18 +231,24 @@ Return a JSON array with this exact structure:
     "options": ["Option A", "Option B", "Option C", "Option D"],
     "correctAnswer": "The exact text of the correct option",
     "explanation": "Detailed explanation of why this answer is correct",
-    "subject": "Subject area (e.g., Pharmacology, Medical-Surgical)",
+    "subject": "Subject area (e.g., Pharmacology, Medical-Surgical, Management of Care)",
+    "topic": "Specific topic/unit within the subject (e.g., Advance Directives, Drug Interactions, Client Rights)",
     "difficulty": "easy|medium|hard"
   }
 ]`;
 
-  let userPrompt = `Generate ${count} ${difficulty || "medium"} difficulty ${category} questions on the topic: "${subject || 'General'}".
+  let userPrompt = `Generate ${count} ${difficulty || "medium"} difficulty ${category} questions on the subject: "${subject || 'General'}".
 
 Each question should test practical knowledge and critical thinking skills relevant to the subject area.
 
-MANDATORY - COVER THESE SPECIFIC AREAS/UNITS:
-The questions MUST cover the following specific areas, units, or subtopics. Distribute questions evenly across these areas:
+MANDATORY - COVER THESE SPECIFIC TOPICS/UNITS:
+The questions MUST cover the following specific topics, units, or subtopics. Distribute questions evenly across these topics:
 ${areasTocover}
+
+IMPORTANT FOR EACH QUESTION:
+- Set "subject" to the main subject area: "${subject || 'General'}"
+- Set "topic" to the SPECIFIC topic/unit from the list above that the question addresses (e.g., "Advance Directives", "Drug Interactions", "Algebraic Equations")
+- Each question must have a specific topic assigned - do NOT leave topic empty
 
 Make sure to generate questions that specifically address these areas rather than general questions on the topic.
 
@@ -416,6 +422,7 @@ Ensure proper formatting with exactly 4 options per question. Each question shou
           explanation: q.explanation,
           difficulty: q.difficulty || difficulty || "medium",
           subject: q.subject || subject,
+          topic: q.topic || null, // Store the specific topic/unit
         });
         validatedQuestions.push(validated);
       } catch (validationError: any) {
