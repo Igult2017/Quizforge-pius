@@ -51,52 +51,63 @@ interface AsciiMathPart {
 }
 
 function parseAsciiMath(text: string): AsciiMathPart[] {
-  // Check if text contains math-like patterns
-  const mathIndicators = /[\^*\/]|sqrt|pi\b|theta\b|>=|<=|!=|\+-|infinity|\d+\s*[+\-*/]\s*\d+/;
-  if (!mathIndicators.test(text)) {
-    return [{ content: text, isMath: false }];
+  const parts: AsciiMathPart[] = [];
+  
+  // Pattern to match actual math expressions (not just any text with a slash)
+  // Match: numbers with operators, fractions like 1/15, exponents, sqrt, etc.
+  const mathPattern = /(\d+\s*[*×]\s*\d+|\d+\s*\^\s*[\d\w(][^)\s]*\)?|\d+\/\d+|sqrt\([^)]+\)|(?<!\w)\bpi\b(?!\w)|(?<!\w)\btheta\b(?!\w)|>=|<=|!=|\+-|infinity)/gi;
+  
+  let lastIndex = 0;
+  let match;
+  
+  while ((match = mathPattern.exec(text)) !== null) {
+    // Add text before the match as plain text
+    if (match.index > lastIndex) {
+      parts.push({ content: text.slice(lastIndex, match.index), isMath: false });
+    }
+    
+    // Convert the matched math expression to LaTeX
+    let mathExpr = match[0];
+    
+    // Handle exponents with parentheses: 2^(t/3) -> 2^{t/3}
+    mathExpr = mathExpr.replace(/\^(\([^)]+\))/g, (m, p1) => `^{${p1.slice(1, -1)}}`);
+    
+    // Handle simple exponents: x^2 -> x^{2}
+    mathExpr = mathExpr.replace(/\^(\d+)/g, '^{$1}');
+    mathExpr = mathExpr.replace(/\^(\w)/g, '^{$1}');
+    
+    // Handle square roots: sqrt(x) -> \sqrt{x}
+    mathExpr = mathExpr.replace(/sqrt\(([^)]+)\)/g, '\\sqrt{$1}');
+    
+    // Handle fractions: a/b -> \frac{a}{b}
+    mathExpr = mathExpr.replace(/(\d+)\/(\d+)/g, '\\frac{$1}{$2}');
+    
+    // Handle multiplication: * -> \times
+    mathExpr = mathExpr.replace(/\s*[*×]\s*/g, ' \\times ');
+    
+    // Handle Greek letters
+    mathExpr = mathExpr.replace(/\bpi\b/gi, '\\pi');
+    mathExpr = mathExpr.replace(/\btheta\b/gi, '\\theta');
+    
+    // Handle comparison operators
+    mathExpr = mathExpr.replace(/>=/g, '\\geq');
+    mathExpr = mathExpr.replace(/<=/g, '\\leq');
+    mathExpr = mathExpr.replace(/!=/g, '\\neq');
+    
+    // Handle special symbols
+    mathExpr = mathExpr.replace(/infinity/gi, '\\infty');
+    mathExpr = mathExpr.replace(/\+-/g, '\\pm');
+    
+    parts.push({ content: mathExpr, isMath: true });
+    lastIndex = match.index + match[0].length;
   }
-
-  // Convert ASCII math notation to LaTeX
-  let result = text;
   
-  // Handle exponents with parentheses: 2^(t/3) -> 2^{t/3}
-  result = result.replace(/\^(\([^)]+\))/g, (m, p1) => `^{${p1.slice(1, -1)}}`);
-  
-  // Handle simple exponents: x^2 -> x^{2}
-  result = result.replace(/\^(\d+)/g, '^{$1}');
-  result = result.replace(/\^(\w)/g, '^{$1}');
-  
-  // Handle square roots: sqrt(x) -> \sqrt{x}
-  result = result.replace(/sqrt\(([^)]+)\)/g, '\\sqrt{$1}');
-  
-  // Handle fractions in parentheses: (a/b) -> \frac{a}{b}
-  result = result.replace(/\((\w+)\/(\w+)\)/g, '\\frac{$1}{$2}');
-  
-  // Handle simple fractions: a/b -> \frac{a}{b} (only for single letters/numbers)
-  result = result.replace(/(\d+)\/(\d+)/g, '\\frac{$1}{$2}');
-  
-  // Handle multiplication: * -> \times
-  result = result.replace(/\s*\*\s*/g, ' \\times ');
-  
-  // Handle Greek letters
-  result = result.replace(/\bpi\b/g, '\\pi');
-  result = result.replace(/\btheta\b/g, '\\theta');
-  
-  // Handle comparison operators
-  result = result.replace(/>=/g, '\\geq');
-  result = result.replace(/<=/g, '\\leq');
-  result = result.replace(/!=/g, '\\neq');
-  
-  // Handle special symbols
-  result = result.replace(/infinity/g, '\\infty');
-  result = result.replace(/\+-/g, '\\pm');
-  
-  if (result !== text) {
-    return [{ content: result, isMath: true }];
+  // Add remaining text
+  if (lastIndex < text.length) {
+    parts.push({ content: text.slice(lastIndex), isMath: false });
   }
   
-  return [{ content: text, isMath: false }];
+  return parts.length > 0 ? parts : [{ content: text, isMath: false }];
 }
 
 interface MathTextareaProps {
