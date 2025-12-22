@@ -65,11 +65,11 @@ export default function Contact() {
                   <div>
                     <div className="font-semibold mb-1">Email</div>
                     <a
-                      href="mailto:support@nurseprep.com"
+                      href="mailto:nursebracehelp@gmail.com"
                       className="text-muted-foreground hover:text-primary transition-colors"
                       data-testid="link-email"
                     >
-                      support@nurseprep.com
+                      nursebracehelp@gmail.com
                     </a>
                   </div>
                 </div>
@@ -81,11 +81,11 @@ export default function Contact() {
                   <div>
                     <div className="font-semibold mb-1">Phone</div>
                     <a
-                      href="tel:+1-800-NURSE-PREP"
+                      href="tel:+1-800-NURSE-BRACE"
                       className="text-muted-foreground hover:text-primary transition-colors"
                       data-testid="link-phone"
                     >
-                      +1 (800) NURSE-PREP
+                      +1 (800) NURSE-BRACE
                     </a>
                   </div>
                 </div>
