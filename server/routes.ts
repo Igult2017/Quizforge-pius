@@ -365,14 +365,12 @@ ${urls.map(url => `  <url>
       const { plan, email, firstName, lastName, phone } = result.data;
 
       // Send notification email (fire and forget - don't fail if email fails)
-      sendPaymentLeadNotification({
+      await sendPaymentLeadNotification({
         email,
         firstName,
         lastName,
         phone,
         plan,
-      }).catch((err) => {
-        console.error("[Lead] Failed to send notification:", err);
       });
 
       console.log(`[Lead] Captured payment lead for plan: ${plan}`);
