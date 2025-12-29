@@ -30,6 +30,64 @@ function getTransporter(): nodemailer.Transporter | null {
   return transporter;
 }
 
+export async function sendSupportEmail(data: {
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+}): Promise<boolean> {
+  const transport = getTransporter();
+
+  if (!transport) {
+    console.log("[Mailer] Skipping email - SMTP not configured");
+    return false;
+  }
+
+  const htmlContent = `
+    <h2>New Support Message - NurseBrace</h2>
+    <hr/>
+    <h3>Contact Details:</h3>
+    <ul>
+      <li><strong>Name:</strong> ${data.name}</li>
+      <li><strong>Email:</strong> ${data.email}</li>
+      <li><strong>Subject:</strong> ${data.subject}</li>
+    </ul>
+    <h3>Message:</h3>
+    <p>${data.message.replace(/\n/g, '<br/>')}</p>
+    <hr/>
+    <p><em>Sent automatically by NurseBrace</em></p>
+  `;
+
+  const textContent = `
+New Support Message - NurseBrace
+
+Contact Details:
+- Name: ${data.name}
+- Email: ${data.email}
+- Subject: ${data.subject}
+
+Message:
+${data.message}
+  `;
+
+  try {
+    await transport.sendMail({
+      from: SMTP_FROM,
+      to: SUPPORT_EMAIL,
+      subject: `[NurseBrace Support] ${data.subject}`,
+      text: textContent,
+      html: htmlContent,
+      replyTo: data.email,
+    });
+
+    console.log("[Mailer] Support email sent successfully");
+    return true;
+  } catch (error) {
+    console.error("[Mailer] Failed to send support email:", error);
+    return false;
+  }
+}
+
 export async function sendPaymentLeadNotification(data: {
   email: string;
   firstName: string;
@@ -97,3 +155,4 @@ Please reach out to this customer to assist them with their subscription.
     return false;
   }
 }
+
