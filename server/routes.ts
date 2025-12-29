@@ -8,7 +8,7 @@ import { z } from "zod";
 import { insertQuestionSchema, insertQuizAttemptSchema, insertQuizAnswerSchema, insertPaymentSchema } from "@shared/schema";
 import { initializePayment, verifyPayment, isCountryAllowed } from "./paystack";
 import { nanoid } from "nanoid";
-import { sendPaymentLeadNotification } from "./mailer";
+import { sendPaymentLeadNotification, sendSupportEmail } from "./mailer";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Get current user endpoint (Firebase/Replit Auth)
@@ -297,6 +297,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // ============= SEO ROUTES =============
   
+  // Contact form endpoint
+  app.post("/api/contact", async (req, res) => {
+    try {
+      const schema = z.object({
+        name: z.string().min(1),
+        email: z.string().email(),
+        subject: z.string().min(1),
+        message: z.string().min(1),
+      });
+
+      const result = schema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ error: "Invalid form data" });
+      }
+
+      const { name, email, subject, message } = result.data;
+
+      const success = await sendSupportEmail({
+        name,
+        email,
+        subject,
+        message,
+      });
+
+      if (success) {
+        return res.json({ success: true, message: "Your message has been sent successfully!" });
+      } else {
+        return res.status(500).json({ error: "Failed to send message. Please try again later." });
+      }
+    } catch (error) {
+      console.error("[Contact] Error sending email:", error);
+      return res.status(500).json({ error: "Something went wrong. Please try again later." });
+    }
+  });
+
   // Robots.txt for SEO
   app.get('/robots.txt', (req, res) => {
     const domain = process.env.APP_URL || (process.env.REPLIT_DOMAINS ? `https://${process.env.REPLIT_DOMAINS.split(',')[0]}` : 'https://www.nursebrace.com');
@@ -388,6 +423,41 @@ ${urls.map(url => `  <url>
     }
   });
   
+  // Contact form endpoint
+  app.post("/api/contact", async (req, res) => {
+    try {
+      const schema = z.object({
+        name: z.string().min(1),
+        email: z.string().email(),
+        subject: z.string().min(1),
+        message: z.string().min(1),
+      });
+
+      const result = schema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ error: "Invalid form data" });
+      }
+
+      const { name, email, subject, message } = result.data;
+
+      const success = await sendSupportEmail({
+        name,
+        email,
+        subject,
+        message,
+      });
+
+      if (success) {
+        return res.json({ success: true, message: "Your message has been sent successfully!" });
+      } else {
+        return res.status(500).json({ error: "Failed to send message. Please try again later." });
+      }
+    } catch (error) {
+      console.error("[Contact] Error sending email:", error);
+      return res.status(500).json({ error: "Something went wrong. Please try again later." });
+    }
+  });
+
   // Create payment order
   app.post("/api/payments/create-order", async (req, res) => {
     try {
