@@ -286,10 +286,10 @@ export default function AdminQuestions() {
     }
     
     const count = parseInt(genPdfCount);
-    if (isNaN(count) || count < 1 || count > 50) {
+    if (isNaN(count) || count < 1 || count > 1000) {
       toast({
         title: "Invalid count",
-        description: "Please enter a number between 1 and 50",
+        description: "Please enter a number between 1 and 1000",
         variant: "destructive",
       });
       return;
@@ -1121,11 +1121,11 @@ For Science (TEAS):
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Number of Questions (1-50)</Label>
+                  <Label>Number of Questions (1-1000)</Label>
                   <Input
                     type="number"
                     min="1"
-                    max="50"
+                    max="1000"
                     value={genPdfCount}
                     onChange={(e) => setGenPdfCount(e.target.value)}
                     data-testid="input-gen-pdf-count"

@@ -1300,8 +1300,8 @@ ${urls.map(url => `  <url>
         return res.status(400).json({ error: "category must be NCLEX, TEAS, or HESI" });
       }
       
-      if (count < 1 || count > 50) {
-        return res.status(400).json({ error: "count must be between 1 and 50" });
+      if (count < 1 || count > 1000) {
+        return res.status(400).json({ error: "count must be between 1 and 1000" });
       }
       
       if (!sampleQuestion || sampleQuestion.length < 50) {
