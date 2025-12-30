@@ -101,11 +101,39 @@ export async function sendBulkEmail(data: {
   }
 
   const htmlContent = `
-    <div style="font-family: sans-serif; line-height: 1.5; color: #333;">
-      ${data.message.replace(/\n/g, '<br/>')}
-      <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;" />
-      <p style="font-size: 0.8em; color: #888;">NurseBrace</p>
-    </div>
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="utf-8">
+        <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+        <style>
+          body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; line-height: 1.6; color: #1e293b; margin: 0; padding: 0; }
+          .container { max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; margin-top: 20px; margin-bottom: 20px; }
+          .header { background: #145078; padding: 32px 40px; color: #ffffff; }
+          .header h1 { margin: 0; font-family: 'Merriweather', serif; font-size: 28px; letter-spacing: -0.02em; }
+          .header p { margin: 8px 0 0; font-size: 14px; opacity: 0.9; }
+          .content { padding: 40px; min-height: 200px; }
+          .footer { background: #f8fafc; padding: 24px 40px; border-top: 1px solid #e2e8f0; }
+          .footer p { margin: 0; font-size: 13px; color: #64748b; font-weight: 600; }
+          .footer span { font-size: 11px; color: #94a3b8; display: block; margin-top: 4px; font-weight: 400; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>NurseBrace</h1>
+            <p>Adaptive Nursing Exam Preparation</p>
+          </div>
+          <div class="content">
+            ${data.message.replace(/\n/g, '<br/>')}
+          </div>
+          <div class="footer">
+            <p>NurseBrace</p>
+            <span>FOR EDUCATIONAL USE ONLY</span>
+          </div>
+        </div>
+      </body>
+    </html>
   `;
 
   try {
