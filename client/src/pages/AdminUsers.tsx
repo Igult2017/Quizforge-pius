@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
@@ -49,6 +50,8 @@ export default function AdminUsers() {
   const [emailSubject, setEmailSubject] = useState("");
   const [emailMessage, setEmailMessage] = useState("");
   const [activeTab, setActiveTab] = useState("all");
+  const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
+  const [isBulkEmailDialogOpen, setIsBulkEmailDialogOpen] = useState(false);
 
   const { data: currentUser } = useQuery<User>({
     queryKey: ["/api/auth/user"],
@@ -282,6 +285,29 @@ export default function AdminUsers() {
     },
   });
 
+  const sendBulkEmailMutation = useMutation({
+    mutationFn: async (data: { emails: string[]; subject: string; message: string }) => {
+      return await apiRequest("POST", "/api/admin/bulk-email", data);
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Success",
+        description: `Successfully sent ${data.sentCount} emails`,
+      });
+      setIsBulkEmailDialogOpen(false);
+      setEmailSubject("");
+      setEmailMessage("");
+      setSelectedUserIds([]);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to send bulk emails",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleGrantAccess = () => {
     if (selectedUser) {
       const days = accessDays ? parseInt(accessDays) : null;
@@ -302,6 +328,36 @@ export default function AdminUsers() {
     }
   };
 
+  const toggleUserSelection = (userId: string) => {
+    setSelectedUserIds(prev =>
+      prev.includes(userId)
+        ? prev.filter(id => id !== userId)
+        : [...prev, userId]
+    );
+  };
+
+  const toggleAllSelection = () => {
+    if (selectedUserIds.length === filteredUsers.length) {
+      setSelectedUserIds([]);
+    } else {
+      setSelectedUserIds(filteredUsers.map(u => u.id));
+    }
+  };
+
+  const handleSendBulkEmail = () => {
+    const selectedEmails = filteredUsers
+      .filter(u => selectedUserIds.includes(u.id) && u.email)
+      .map(u => u.email!);
+
+    if (selectedEmails.length > 0 && emailSubject && emailMessage) {
+      sendBulkEmailMutation.mutate({
+        emails: selectedEmails,
+        subject: emailSubject,
+        message: emailMessage,
+      });
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="p-8">
@@ -316,9 +372,61 @@ export default function AdminUsers() {
 
   return (
     <div className="p-8 space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold mb-2">User Management</h1>
-        <p className="text-muted-foreground">Manage user access and subscriptions</p>
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold mb-2">User Management</h1>
+          <p className="text-muted-foreground">Manage user access and subscriptions</p>
+        </div>
+        {selectedUserIds.length > 0 && (
+          <Dialog open={isBulkEmailDialogOpen} onOpenChange={setIsBulkEmailDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="gap-2">
+                <Mail className="h-4 w-4" />
+                Send Email to {selectedUserIds.length} users
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Send Bulk Email</DialogTitle>
+                <DialogDescription>
+                  This email will be sent to {selectedUserIds.length} selected users.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <Label htmlFor="bulk-subject">Subject</Label>
+                  <Input
+                    id="bulk-subject"
+                    value={emailSubject}
+                    onChange={(e) => setEmailSubject(e.target.value)}
+                    placeholder="Enter email subject"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="bulk-message">Message</Label>
+                  <Textarea
+                    id="bulk-message"
+                    value={emailMessage}
+                    onChange={(e) => setEmailMessage(e.target.value)}
+                    placeholder="Enter email message"
+                    rows={6}
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setIsBulkEmailDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleSendBulkEmail}
+                  disabled={sendBulkEmailMutation.isPending || !emailSubject || !emailMessage}
+                >
+                  {sendBulkEmailMutation.isPending ? "Sending..." : "Send Emails"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        )}
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
@@ -361,6 +469,13 @@ export default function AdminUsers() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-12">
+                      <Checkbox
+                        checked={selectedUserIds.length === filteredUsers.length && filteredUsers.length > 0}
+                        onCheckedChange={toggleAllSelection}
+                        aria-label="Select all users"
+                      />
+                    </TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead>Name</TableHead>
                     <TableHead>Status</TableHead>
@@ -371,6 +486,13 @@ export default function AdminUsers() {
                 <TableBody>
                   {filteredUsers.map((user) => (
                 <TableRow key={user.id}>
+                  <TableCell>
+                    <Checkbox
+                      checked={selectedUserIds.includes(user.id)}
+                      onCheckedChange={() => toggleUserSelection(user.id)}
+                      aria-label={`Select user ${user.email}`}
+                    />
+                  </TableCell>
                   <TableCell className="font-medium">{user.email}</TableCell>
                   <TableCell>
                     {user.firstName || user.lastName
