@@ -8,9 +8,36 @@ import { z } from "zod";
 import { insertQuestionSchema, insertQuizAttemptSchema, insertQuizAnswerSchema, insertPaymentSchema } from "@shared/schema";
 import { initializePayment, verifyPayment, isCountryAllowed } from "./paystack";
 import { nanoid } from "nanoid";
-import { sendPaymentLeadNotification, sendSupportEmail } from "./mailer";
+import { sendPaymentLeadNotification, sendSupportEmail, sendBulkEmail } from "./mailer";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Bulk email endpoint
+  app.post("/api/admin/bulk-email", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const schema = z.object({
+        emails: z.array(z.string().email()).min(1),
+        subject: z.string().min(1),
+        message: z.string().min(1),
+      });
+
+      const result = schema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ error: "Invalid request data", details: result.error.errors });
+      }
+
+      const { emails, subject, message } = result.data;
+      const response = await sendBulkEmail({ emails, subject, message });
+
+      if (response.success) {
+        return res.json({ success: true, sentCount: response.sentCount });
+      } else {
+        return res.status(500).json({ error: "Failed to send emails" });
+      }
+    } catch (error) {
+      console.error("[BulkEmail] Error:", error);
+      return res.status(500).json({ error: "Internal server error" });
+    }
+  });
   // Get current user endpoint (Firebase/Replit Auth)
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
     try {

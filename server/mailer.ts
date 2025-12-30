@@ -88,6 +88,43 @@ ${data.message}
   }
 }
 
+export async function sendBulkEmail(data: {
+  emails: string[];
+  subject: string;
+  message: string;
+}): Promise<{ success: boolean; sentCount: number }> {
+  const transport = getTransporter();
+
+  if (!transport) {
+    console.log("[Mailer] Skipping email - SMTP not configured");
+    return { success: false, sentCount: 0 };
+  }
+
+  const htmlContent = `
+    <div style="font-family: sans-serif; line-height: 1.5; color: #333;">
+      ${data.message.replace(/\n/g, '<br/>')}
+      <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;" />
+      <p style="font-size: 0.8em; color: #888;">Sent from NurseBrace Admin</p>
+    </div>
+  `;
+
+  try {
+    const info = await transport.sendMail({
+      from: SMTP_FROM,
+      to: data.emails.join(", "),
+      subject: data.subject,
+      text: data.message,
+      html: htmlContent,
+    });
+
+    console.log("[Mailer] Bulk email sent successfully:", info.messageId);
+    return { success: true, sentCount: data.emails.length };
+  } catch (error) {
+    console.error("[Mailer] Failed to send bulk email:", error);
+    return { success: false, sentCount: 0 };
+  }
+}
+
 export async function sendPaymentLeadNotification(data: {
   email: string;
   firstName: string;
