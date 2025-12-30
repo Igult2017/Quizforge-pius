@@ -318,7 +318,11 @@ export default function AdminUsers() {
 
   const handleSendEmail = () => {
     if (selectedUser && emailSubject && emailMessage) {
-      sendEmailMutation.mutate({ userId: selectedUser.id, subject: emailSubject, message: emailMessage });
+      sendBulkEmailMutation.mutate({ 
+        emails: [selectedUser.email], 
+        subject: emailSubject, 
+        message: emailMessage 
+      });
     }
   };
 

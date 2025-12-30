@@ -38,6 +38,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(500).json({ error: "Internal server error" });
     }
   });
+
+  // Keep existing single email for compatibility if needed elsewhere, but point it to bulk logic
+  app.post("/api/admin/email/send", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { userId, subject, message } = req.body;
+      const user = await storage.getUser(userId);
+      if (!user || !user.email) return res.status(404).json({ error: "User not found" });
+      
+      const response = await sendBulkEmail({ emails: [user.email], subject, message });
+      if (response.success) {
+        return res.json({ success: true });
+      } else {
+        return res.status(500).json({ error: "Failed to send email" });
+      }
+    } catch (error) {
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
   // Get current user endpoint (Firebase/Replit Auth)
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
     try {
