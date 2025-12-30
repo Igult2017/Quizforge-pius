@@ -1,0 +1,208 @@
+Build an AI-driven email sequencing system using Gemini AI that sends personalized weekly emails to users based on:
+
+The day they signed up
+
+The number of emails already sent
+
+A 2-day sending interval
+
+The day of the week (special logic for Friday / Black Friday)
+
+A rule that value emails must come before hard-sell emails
+
+Unique email content per user (to avoid spam filters)
+
+Emails must address users by name
+
+2. Core Functional Requirements
+2.1 Email Sending Frequency
+
+Emails are sent every 2 days
+
+Day 1 (signup day) counts as the first email
+
+Example:
+
+Day 1 → Email 1
+
+Day 3 → Email 2
+
+Day 5 → Email 3
+
+Day 7 → Email 4
+
+2.2 Weekly Email Purpose Logic
+
+Each week has the same marketing goal, but:
+
+Each user receives a different email copy
+
+Gemini AI must generate unique variations of the same intent
+
+2.3 Email Types (Sequence Logic)
+
+Emails follow a progressive funnel, not aggressive selling upfront.
+
+Email Order	Email Type	Description
+Email 1	Value – Welcome	Educational, helpful, onboarding
+Email 2	Value	More trust-building, no selling
+Email 3	Soft Sell	Gentle CTA, low pressure
+Email 4	Hard Sell	Strong CTA
+Email 5	Hard Sell	Strong CTA
+
+❗ Rule:
+If a user joins late in the week, they must not receive hard-sell emails before receiving at least one value email.
+
+3. Day-of-Week Logic (Critical)
+3.1 Signup Day Awareness
+
+The system must track:
+
+Signup date
+
+Current weekday (Mon–Sun)
+
+Number of emails already sent
+
+3.2 Friday / Black Friday Rule
+
+If an email is scheduled on a Friday, the email theme should be:
+
+Black Friday / Promo Offer
+
+However:
+
+Each user must receive a different AI-generated version
+
+Still follow the value → sell progression rule
+
+❗ Example:
+
+If user signs up on Friday:
+
+They receive a value-based Black Friday email
+
+NOT an aggressive hard sell immediately
+
+4. Personalization Rules
+
+Each email must:
+
+Address the user by first name
+
+Be written in a natural human tone
+
+Avoid repeating:
+
+Subject lines
+
+Body structure
+
+Phrases
+
+Use semantic variation (Gemini AI handles this)
+
+5. Anti-Spam Requirements
+
+To reduce spam detection:
+
+No identical emails sent to multiple users
+
+Vary:
+
+Subject lines
+
+Sentence structure
+
+CTA wording
+
+Increase spacing (2-day interval enforced)
+
+Avoid aggressive selling before trust is built
+
+6. Data the Function Must Track (State Management)
+
+Each user must have:
+
+user_id
+first_name
+email
+signup_date
+emails_sent_count
+last_email_sent_date
+current_weekday
+current_sequence_stage
+
+7. Decision Logic (Simplified)
+When sending an email:
+
+Check if 2 days have passed since last email
+
+Determine:
+
+Day of the week
+
+Email number in sequence
+
+Apply rules:
+
+Must start with value emails
+
+Friday = Black Friday theme
+
+No hard sell before value
+
+Ask Gemini AI to:
+
+Generate unique email
+
+Match the required intent
+
+Personalize using user’s name
+
+Send email
+
+Update user state
+
+8. Example Scenarios
+Scenario 1: User signs up on Tuesday
+
+Day 1 (Tue): Value Welcome
+
+Day 3 (Thu): Value
+
+Day 5 (Sat): Soft Sell
+
+Day 7 (Mon): Hard Sell
+
+Scenario 2: User signs up on Friday
+
+Day 1 (Fri): Value-based Black Friday email
+
+Day 3 (Sun): Value
+
+Day 5 (Tue): Soft Sell
+
+Day 7 (Thu): Hard Sell
+
+Scenario 3: User signs up on Day 4 of the week
+
+They must receive value content first
+
+Hard sell is delayed until later emails
+
+9. What Gemini AI Is Responsible For
+
+Gemini AI should:
+
+Generate email content based on:
+
+Email intent (value / soft sell / hard sell)
+
+Day of week
+
+Campaign theme (e.g., Black Friday)
+
+Ensure no two users receive the same email
+
+Maintain brand-safe, non-spammy language
