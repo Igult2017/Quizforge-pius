@@ -287,7 +287,8 @@ export default function AdminUsers() {
 
   const sendBulkEmailMutation = useMutation({
     mutationFn: async (data: { emails: string[]; subject: string; message: string }) => {
-      return await apiRequest("POST", "/api/admin/bulk-email", data);
+      const response = await apiRequest("POST", "/api/admin/bulk-email", data);
+      return await response.json();
     },
     onSuccess: (data) => {
       toast({
