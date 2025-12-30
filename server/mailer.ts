@@ -92,6 +92,7 @@ export async function sendBulkEmail(data: {
   emails: string[];
   subject: string;
   message: string;
+  title?: string;
 }): Promise<{ success: boolean; sentCount: number }> {
   const transport = getTransporter();
 
@@ -101,39 +102,90 @@ export async function sendBulkEmail(data: {
   }
 
   const htmlContent = `
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <meta charset="utf-8">
-        <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
-        <style>
-          body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; line-height: 1.6; color: #1e293b; margin: 0; padding: 0; }
-          .container { max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; margin-top: 20px; margin-bottom: 20px; }
-          .header { background: #145078; padding: 32px 40px; color: #ffffff; }
-          .header h1 { margin: 0; font-family: 'Merriweather', serif; font-size: 28px; letter-spacing: -0.02em; }
-          .header p { margin: 8px 0 0; font-size: 14px; opacity: 0.9; }
-          .content { padding: 40px; min-height: 200px; }
-          .footer { background: #f8fafc; padding: 24px 40px; border-top: 1px solid #e2e8f0; }
-          .footer p { margin: 0; font-size: 13px; color: #64748b; font-weight: 600; }
-          .footer span { font-size: 11px; color: #94a3b8; display: block; margin-top: 4px; font-weight: 400; }
-        </style>
-      </head>
-      <body>
-        <div class="container">
-          <div class="header">
-            <h1>NurseBrace</h1>
-            <p>Adaptive Nursing Exam Preparation</p>
-          </div>
-          <div class="content">
-            ${data.message.replace(/\n/g, '<br/>')}
-          </div>
-          <div class="footer">
-            <p>NurseBrace</p>
-            <span>FOR EDUCATIONAL USE ONLY</span>
-          </div>
-        </div>
-      </body>
-    </html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NurseBrace</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body, table, td, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+        table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; border-collapse: collapse !important; }
+        img { border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; -ms-interpolation-mode: bicubic; }
+        
+        body {
+            height: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 100% !important;
+            font-family: 'Montserrat', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            background-color: #ffffff;
+            color: #2d3748;
+        }
+
+        @media screen and (max-width: 600px) {
+            .email-container { width: 100% !important; }
+            .content-padding { padding: 30px 20px !important; }
+        }
+    </style>
+</head>
+<body>
+    <center>
+        <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #ffffff;">
+            <tr>
+                <td align="center">
+                    <table border="0" cellpadding="0" cellspacing="0" width="600" class="email-container" style="background-color: #ffffff;">
+                        <tr>
+                            <td align="center" style="padding: 35px 40px; background-color: #ffffff; border-bottom: 1px solid #f1f5f9;">
+                                <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                                    <tr>
+                                        <td align="left" style="font-family: 'Montserrat', sans-serif; font-size: 26px; font-weight: 700; color: #3b82f6; letter-spacing: -1px;">
+                                            Nurse<span style="color: #1e3a8a;">Brace</span>
+                                        </td>
+                                        <td align="right" style="font-family: 'Montserrat', sans-serif; font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 2px;">
+                                            Exam Prep Excellence
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="content-padding" style="padding: 50px 40px; font-family: 'Montserrat', sans-serif;">
+                                ${data.title ? `<h2 style="margin: 0 0 20px 0; font-size: 22px; font-weight: 700; color: #1e3a8a;">${data.title}</h2>` : ''}
+                                <div style="min-height: 100px; color: #475569; line-height: 1.7; font-size: 16px;">
+                                    ${data.message.replace(/\n/g, '<br/>')}
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td align="center" style="padding: 45px 40px; background-color: #f8fafc; font-family: 'Montserrat', sans-serif; border-top: 1px solid #f1f5f9;">
+                                <table border="0" cellpadding="0" cellspacing="0" width="100%" style="text-align: center;">
+                                    <tr>
+                                        <td style="padding-top: 5px;">
+                                            <p style="margin: 0 0 10px 0; font-size: 13px; font-weight: 600; color: #1e3a8a;">
+                                                Questions? Email us: <a href="mailto:nursebracehelp@gmail.com" style="color: #3b82f6; text-decoration: none;">nursebracehelp@gmail.com</a>
+                                            </p>
+                                            <p style="margin: 0; font-size: 12px; font-weight: 600; color: #94a3b8;">
+                                                &copy; 2025 NurseBrace. Empowering the next generation of nurses.
+                                            </p>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td align="center" style="padding: 30px 0; font-family: 'Montserrat', sans-serif; font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px;">
+                                Dedicated to your Nursing Journey
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+    </center>
+</body>
+</html>
   `;
 
   try {
