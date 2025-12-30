@@ -104,7 +104,7 @@ export async function sendBulkEmail(data: {
     <div style="font-family: sans-serif; line-height: 1.5; color: #333;">
       ${data.message.replace(/\n/g, '<br/>')}
       <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;" />
-      <p style="font-size: 0.8em; color: #888;">Sent from NurseBrace Admin</p>
+      <p style="font-size: 0.8em; color: #888;">NurseBrace</p>
     </div>
   `;
 
