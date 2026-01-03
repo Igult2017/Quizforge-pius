@@ -65,11 +65,11 @@ export default function Checkout() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.email || !formData.firstName || !formData.lastName) {
+    if (!formData.email || !formData.firstName || !formData.lastName || !formData.phone) {
       toast({
         variant: "destructive",
         title: "Missing Information",
-        description: "Please fill in all required fields.",
+        description: "Please fill in all required fields, including your phone number.",
       });
       return;
     }
@@ -281,7 +281,7 @@ export default function Checkout() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="phone" className="text-base">Phone Number (Optional)</Label>
+                      <Label htmlFor="phone" className="text-base">Phone Number *</Label>
                       <Input
                         id="phone"
                         name="phone"
@@ -289,6 +289,7 @@ export default function Checkout() {
                         placeholder="e.g., +1 (555) 123-4567"
                         value={formData.phone}
                         onChange={handleChange}
+                        required
                         disabled={isLoading}
                         data-testid="input-phone"
                         className="h-11"
