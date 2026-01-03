@@ -30,7 +30,7 @@ export default function Checkout() {
 
   // Auto-fill form with user data if authenticated
   useEffect(() => {
-    if (isAuthenticated && userData) {
+    if (isAuthenticated && userData && !formData.email) {
       setFormData({
         email: userData.email || "",
         firstName: userData.firstName || "",
