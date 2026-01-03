@@ -102,6 +102,30 @@ export default function Checkout() {
     }
   };
 
+  // Skip the form and submit immediately if user is already logged in
+  useEffect(() => {
+    if (isAuthenticated && userData && formData.email && formData.firstName && formData.lastName && !showPaymentDownMessage && !isLoading) {
+      const autoSubmit = async () => {
+        setIsLoading(true);
+        try {
+          const response = await apiRequest("POST", "/api/payments/offline-lead", {
+            plan,
+            ...formData,
+          });
+          const data = await response.json();
+          if (data.success) {
+            setShowPaymentDownMessage(true);
+          }
+        } catch (error) {
+          console.error("Auto-submit lead error:", error);
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      autoSubmit();
+    }
+  }, [isAuthenticated, userData, plan, formData.email]);
+
   if (!currentPlan) {
     return null;
   }
