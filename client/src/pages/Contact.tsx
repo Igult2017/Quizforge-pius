@@ -106,10 +106,19 @@ export default function Contact() {
                     <div className="font-semibold mb-1">Phone</div>
                     <a
                       href="tel:+1-800-NURSE-BRACE"
-                      className="text-muted-foreground hover:text-primary transition-colors"
+                      className="text-muted-foreground hover:text-primary transition-colors block"
                       data-testid="link-phone"
                     >
                       +1 (800) NURSE-BRACE
+                    </a>
+                    <a
+                      href="https://wa.me/19793042463"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-muted-foreground hover:text-primary transition-colors block mt-1"
+                      data-testid="link-whatsapp"
+                    >
+                      WhatsApp: +1 979 304 2463
                     </a>
                   </div>
                 </div>
