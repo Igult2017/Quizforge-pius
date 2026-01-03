@@ -483,8 +483,7 @@ export default function AdminUsers() {
                       />
                     </TableHead>
                     <TableHead>Email</TableHead>
-                    <TableHead>Phone</TableHead>
-                    <TableHead>Name</TableHead>
+                    <TableHead>Name & Phone</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Admin Access</TableHead>
                     <TableHead>Actions</TableHead>
@@ -501,11 +500,19 @@ export default function AdminUsers() {
                     />
                   </TableCell>
                   <TableCell className="font-medium">{user.email}</TableCell>
-                  <TableCell>{user.phone || "—"}</TableCell>
                   <TableCell>
-                    {user.firstName || user.lastName
-                      ? `${user.firstName || ""} ${user.lastName || ""}`.trim()
-                      : "—"}
+                    <div className="flex flex-col">
+                      <span className="font-medium">
+                        {user.firstName || user.lastName
+                          ? `${user.firstName || ""} ${user.lastName || ""}`.trim()
+                          : "—"}
+                      </span>
+                      {user.phone && (
+                        <span className="text-xs text-muted-foreground">
+                          {user.phone}
+                        </span>
+                      )}
+                    </div>
                   </TableCell>
                   <TableCell>
                     <div className="flex gap-2 flex-wrap">
