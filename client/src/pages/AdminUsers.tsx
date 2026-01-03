@@ -19,6 +19,7 @@ interface User {
   email: string;
   firstName: string | null;
   lastName: string | null;
+  phone: string | null;
   nclexFreeTrialUsed: boolean;
   teasFreeTrialUsed: boolean;
   hesiFreeTrialUsed: boolean;
@@ -482,6 +483,7 @@ export default function AdminUsers() {
                       />
                     </TableHead>
                     <TableHead>Email</TableHead>
+                    <TableHead>Phone</TableHead>
                     <TableHead>Name</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Admin Access</TableHead>
@@ -499,6 +501,7 @@ export default function AdminUsers() {
                     />
                   </TableCell>
                   <TableCell className="font-medium">{user.email}</TableCell>
+                  <TableCell>{user.phone || "—"}</TableCell>
                   <TableCell>
                     {user.firstName || user.lastName
                       ? `${user.firstName || ""} ${user.lastName || ""}`.trim()
