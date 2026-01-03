@@ -101,6 +101,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             email: normalizedEmail,
             firstName: req.user.claims.first_name || null,
             lastName: req.user.claims.last_name || null,
+            phone: (req.user.claims as any).phone_number || null,
             profileImageUrl: null,
           });
           
@@ -138,6 +139,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("[AUTH ERROR]", error);
       return res.json(null);
+    }
+  });
+
+  // Update user phone number endpoint
+  app.post('/api/auth/update-phone', async (req, res) => {
+    try {
+      const { userId, phone } = req.body;
+      if (!userId || !phone) {
+        return res.status(400).json({ error: "Missing userId or phone" });
+      }
+      
+      const user = await storage.getUser(userId);
+      if (user) {
+        await storage.upsertUser({
+          ...user,
+          phone: phone as string
+        });
+        return res.json({ success: true });
+      }
+      res.status(404).json({ error: "User not found" });
+    } catch (error) {
+      console.error("[UPDATE PHONE ERROR]", error);
+      res.status(500).json({ error: "Internal server error" });
     }
   });
 

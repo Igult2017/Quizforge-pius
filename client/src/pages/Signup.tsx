@@ -40,6 +40,7 @@ export default function Signup() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [phone, setPhone] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   const handleEmailSignup = async (e: React.FormEvent) => {
@@ -52,6 +53,15 @@ export default function Signup() {
         variant: "destructive",
         title: "Invalid Email",
         description: emailValidation.message,
+      });
+      return;
+    }
+
+    if (!phone || phone.length < 7) {
+      toast({
+        variant: "destructive",
+        title: "Phone Number Required",
+        description: "Please enter a valid phone number",
       });
       return;
     }
@@ -77,7 +87,7 @@ export default function Signup() {
     setIsLoading(true);
 
     try {
-      await signupWithEmail(email, password);
+      await signupWithEmail(email, password, { phone });
       
       toast({
         title: "Welcome to NurseBrace!",
@@ -193,6 +203,20 @@ export default function Signup() {
                   required
                   disabled={isLoading}
                   data-testid="input-email"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="phone" className="font-bold">Phone Number *</Label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  placeholder="e.g., +1 (555) 123-4567"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  required
+                  disabled={isLoading}
+                  data-testid="input-phone"
                 />
               </div>
 

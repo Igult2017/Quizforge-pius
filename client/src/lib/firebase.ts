@@ -83,7 +83,7 @@ export const loginWithEmail = async (email: string, password: string) => {
   }
 };
 
-export const signupWithEmail = async (email: string, password: string) => {
+export const signupWithEmail = async (email: string, password: string, additionalData?: { phone?: string }) => {
   const authInstance = getAuthSafe();
   if (!authInstance) {
     throw new Error("Firebase is not configured");
@@ -100,6 +100,27 @@ export const signupWithEmail = async (email: string, password: string) => {
     } catch (verificationError: any) {
       console.error("[Firebase] Failed to send verification email:", verificationError.message);
       // Don't throw - allow user to continue even if email fails
+    }
+
+    // Pass phone number to backend through Replit Auth mechanism if needed
+    // or store it in Firebase profile
+    if (additionalData?.phone) {
+      // We can't directly set custom claims here from client, 
+      // but the server routes already handle upserting from claims.
+      // For now, we'll let the user record be created in the database 
+      // through the /api/auth/user endpoint which is called after auth state change.
+      // The phone number needs to be sent to the backend.
+      // Since Replit Auth syncs with Firebase, we can use a small trick:
+      // call a dedicated update-phone endpoint right after signup.
+      try {
+        await fetch("/api/auth/update-phone", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId: result.user.uid, phone: additionalData.phone }),
+        });
+      } catch (e) {
+        console.error("Failed to sync phone number to backend", e);
+      }
     }
     
     return result;
