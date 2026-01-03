@@ -636,6 +636,8 @@ export class PostgresStorage implements IStorage {
       const newCorrect = record.correctCount + (isCorrect ? 1 : 0);
       const newAccuracy = Math.round((newCorrect / newTotal) * 100);
 
+      console.log(`[PERFORMANCE] Updating ${userId} for ${category}/${subject}/${topic}: Correct=${isCorrect}, NewAcc=${newAccuracy}%`);
+
       await db
         .update(userTopicPerformance)
         .set({
@@ -648,6 +650,7 @@ export class PostgresStorage implements IStorage {
         .where(eq(userTopicPerformance.id, record.id));
     } else {
       // Create new record
+      console.log(`[PERFORMANCE] Creating new record for ${userId} for ${category}/${subject}/${topic}: Correct=${isCorrect}`);
       await db.insert(userTopicPerformance).values({
         userId,
         category,

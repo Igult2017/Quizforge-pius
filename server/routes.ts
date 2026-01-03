@@ -1006,9 +1006,10 @@ ${urls.map(url => `  <url>
         answeredAt: new Date(),
       });
 
-      // Update user topic performance for adaptive learning (only if not already answered)
-      if (existingAnswer.userAnswer === null && question.subject) {
+      // Update user topic performance for adaptive learning (track every answer, even re-answers)
+      if (question.subject) {
         try {
+          console.log(`[ADAPTIVE] Saving answer for ${attempt.userId}: category=${question.category}, subject=${question.subject}, topic=${question.topic}, correct=${isCorrect}`);
           await storage.updateUserTopicPerformance(
             attempt.userId,
             question.category,
