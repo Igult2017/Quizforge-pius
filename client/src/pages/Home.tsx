@@ -48,7 +48,7 @@ export default function Home() {
           <CategoryCard
             title="NCLEX Practice"
             description="Master your RN or PN licensing exam with comprehensive practice questions."
-            questionCount="5,000+ RN & PN questions"
+            questionCount="7,000+ RN & PN questions"
             features={[
               "Exam simulations",
               "Detailed explanations",
@@ -63,7 +63,7 @@ export default function Home() {
           <CategoryCard
             title="ATI TEAS Prep"
             description="Ace your nursing school entrance exam with targeted practice questions."
-            questionCount="2,500+ TEAS questions"
+            questionCount="7,000+ TEAS questions"
             features={[
               "All subject areas",
               "Practice tests",
@@ -78,7 +78,7 @@ export default function Home() {
           <CategoryCard
             title="HESI A2 Study"
             description="Master math and science concepts for nursing school admission success."
-            questionCount="1,500+ HESI questions"
+            questionCount="7,000+ HESI questions"
             features={[
               "Math & Science focus",
               "Performance tracking",

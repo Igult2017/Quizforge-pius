@@ -477,7 +477,7 @@ export default function Landing() {
                 Pass Your Nursing Exams on the First Try
               </h1>
               <p className="text-lg font-semibold opacity-90 mb-10 max-w-lg font-poppins">
-                10,000+ NCLEX, ATI TEAS, and HESI A2 practice questions with instant feedback 
+                7,000+ NCLEX, ATI TEAS, and HESI A2 practice questions with instant feedback 
                 and smart analytics to boost your score.
               </p>
               

@@ -86,7 +86,7 @@ export default function Exams() {
       icon: Stethoscope,
       description: "National Council Licensure Examination for Registered Nurses and Practical Nurses",
       color: "purple",
-      questionCount: "5,000+ Questions",
+      questionCount: "7,000+ Questions",
       details: [
         "Comprehensive RN and PN question banks",
         "Covers all NCLEX categories and client needs",
@@ -104,7 +104,7 @@ export default function Exams() {
       icon: BookOpen,
       description: "Test of Essential Academic Skills for Nursing School Entrance",
       color: "orange",
-      questionCount: "2,500+ Questions",
+      questionCount: "7,000+ Questions",
       details: [
         "Reading: Key ideas, craft and structure, integration of knowledge",
         "Mathematics: Numbers and algebra, measurement and data",
@@ -120,7 +120,7 @@ export default function Exams() {
       icon: Brain,
       description: "Health Education Systems Incorporated Admission Assessment",
       color: "teal",
-      questionCount: "1,500+ Questions",
+      questionCount: "7,000+ Questions",
       details: [
         "Mathematics: Basic calculations, algebra, fractions, decimals",
         "Reading Comprehension: Main ideas, supporting details, inferences",

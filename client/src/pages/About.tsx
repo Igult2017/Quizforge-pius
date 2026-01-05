@@ -105,7 +105,7 @@ export default function About() {
   const features = [
     {
       icon: GraduationCap,
-      title: "12,500+ Practice Questions",
+      title: "21,000+ Practice Questions",
       description: "Comprehensive coverage across NCLEX, ATI TEAS, and HESI A2 exams",
     },
     {
