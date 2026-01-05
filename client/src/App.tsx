@@ -10,6 +10,7 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Checkout from "./pages/Checkout";
 import PostPaymentSignup from "./pages/PostPaymentSignup";
+import CompleteProfile from "./pages/CompleteProfile";
 import Pricing from "./pages/Pricing";
 import Contact from "./pages/Contact";
 import Exams from "./pages/Exams";
@@ -30,6 +31,9 @@ function App() {
   useAutoLogout(isAuthenticated);
 
   const isLoading = authLoading || userLoading;
+
+  // Check if profile is incomplete (missing phone)
+  const isProfileIncomplete = isAuthenticated && !userLoading && userData && (!userData.phone || userData.phone === '0000000000');
 
   // Loading state
   if (isLoading) {
@@ -56,6 +60,21 @@ function App() {
           <Route path="/exams" component={Exams} />
           <Route path="/about" component={About} />
           <Route component={Landing} />
+        </Switch>
+      </>
+    );
+  }
+
+  // Redirect to complete profile if phone is missing
+  if (isProfileIncomplete) {
+    return (
+      <>
+        <TawkToChat />
+        <Switch>
+          <Route path="/complete-profile" component={CompleteProfile} />
+          <Route>
+            <Redirect to="/complete-profile" />
+          </Route>
         </Switch>
       </>
     );

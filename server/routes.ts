@@ -101,7 +101,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             email: normalizedEmail,
             firstName: req.user.claims.first_name || null,
             lastName: req.user.claims.last_name || null,
-            phone: (req.user.claims as any).phone_number || null,
+            phone: (req.user.claims as any).phone_number || '0000000000',
             profileImageUrl: null,
           });
           
@@ -116,6 +116,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (!user) {
         return res.json(null);
+      }
+
+      // Check if profile is incomplete (missing or placeholder phone)
+      const isProfileIncomplete = !user.phone || user.phone === '0000000000';
+      if (isProfileIncomplete) {
+        console.log(`[AUTH] ⚠️ User ${user.email} has missing or placeholder phone.`);
       }
 
       // Get actual subscription data
