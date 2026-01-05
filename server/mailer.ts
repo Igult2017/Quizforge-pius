@@ -167,7 +167,7 @@ export async function sendBulkEmail(data: {
                                                 Questions? Email us: <a href="mailto:nursebracehelp@gmail.com" style="color: #3b82f6; text-decoration: none;">nursebracehelp@gmail.com</a>
                                             </p>
                                             <p style="margin: 0; font-size: 12px; font-weight: 600; color: #94a3b8;">
-                                                &copy; 2025 NurseBrace. Empowering the next generation of nurses.
+                                                &copy; ${new Date().getFullYear()} NurseBrace. Empowering the next generation of nurses.
                                             </p>
                                         </td>
                                     </tr>
