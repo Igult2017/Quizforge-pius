@@ -27,7 +27,7 @@ export const users = pgTable("users", {
   email: varchar("email").unique(),
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
-  phone: varchar("phone"),
+  phone: varchar("phone").notNull(),
   profileImageUrl: varchar("profile_image_url"),
   nclexFreeTrialUsed: boolean("nclex_free_trial_used").default(false).notNull(),
   teasFreeTrialUsed: boolean("teas_free_trial_used").default(false).notNull(),
