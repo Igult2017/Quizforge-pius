@@ -9,6 +9,7 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS nclex_free_trial_used BOOLEAN DEFAULT
 ALTER TABLE users ADD COLUMN IF NOT EXISTS teas_free_trial_used BOOLEAN DEFAULT false NOT NULL;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS hesi_free_trial_used BOOLEAN DEFAULT false NOT NULL;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS phone VARCHAR;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS is_new_signup BOOLEAN DEFAULT true NOT NULL;
 
 -- Create generation_jobs table for batch question generation
 CREATE TABLE IF NOT EXISTS "generation_jobs" (

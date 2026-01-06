@@ -1,0 +1,100 @@
+ internalQuery: undefined,
+
+> rest-express@1.0.0 start
+> npm run db:migrate && NODE_ENV=production node dist/index.js
+
+
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '3716',
+  routine: 'errorMissingColumn'
+}
+> rest-express@1.0.0 db:migrate
+> npm run db:sql-migrate
+
+
+> rest-express@1.0.0 db:sql-migrate
+> tsx server/runMigration.ts
+
+🔧 Running SQL migration...
+  - Executing: ALTER TABLE users DROP COLUMN IF EXISTS has_used_free_trial...
+  - Executing: ALTER TABLE users ADD COLUMN IF NOT EXISTS nclex_free_trial_...
+  - Executing: ALTER TABLE users ADD COLUMN IF NOT EXISTS teas_free_trial_u...
+  - Executing: ALTER TABLE users ADD COLUMN IF NOT EXISTS hesi_free_trial_u...
+  - Executing: ALTER TABLE users ADD COLUMN IF NOT EXISTS phone VARCHAR...
+  - Executing: CREATE TABLE IF NOT EXISTS "generation_jobs" (     "id" seri...
+  - Executing: ALTER TABLE generation_logs ADD COLUMN IF NOT EXISTS generat...
+  - Executing: ALTER TABLE generation_logs ALTER COLUMN subject_progress_id...
+  - Executing: ALTER TABLE generation_jobs ADD COLUMN IF NOT EXISTS areas_t...
+  - Executing: ALTER TABLE questions ADD COLUMN IF NOT EXISTS topic text...
+  - Executing: CREATE TABLE IF NOT EXISTS "user_topic_performance" (     "i...
+✅ SQL migration completed successfully
+Firebase Admin initialized with base64-encoded service account
+[INIT] Checking system users...
+[INIT] Error initializing system users: error: column "is_new_signup" does not exist
+    at /app/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async file:///app/node_modules/drizzle-orm/node-postgres/session.js:83:22
+    at async PostgresStorage.getUser (file:///app/dist/index.js:703:24)
+    at async initializeSystemUsers (file:///app/dist/index.js:4674:27)
+    at async file:///app/dist/index.js:4715:5 {
+  length: 114,
+  severity: 'ERROR',
+  code: '42703',
+  detail: undefined,
+  hint: undefined,
+  position: '178',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '3716',
+  routine: 'errorMissingColumn'
+}
+Server initialization failed: error: column "is_new_signup" does not exist
+    at /app/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async file:///app/node_modules/drizzle-orm/node-postgres/session.js:83:22
+    at async PostgresStorage.getUser (file:///app/dist/index.js:703:24)
+    at async initializeSystemUsers (file:///app/dist/index.js:4674:27)
+    at async file:///app/dist/index.js:4715:5 {
+  length: 114,
+  severity: 'ERROR',
+  code: '42703',
+  detail: undefined,
+  hint: undefined,
+  position: '178',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+
+> rest-express@1.0.0 start
+> npm run db:migrate && NODE_ENV=production node dist/index.js
+
+
+> rest-express@1.0.0 db:migrate
+> npm run db:sql-migrate
+
+
+> rest-express@1.0.0 db:sql-migrate
+> tsx server/runMigration.ts
+
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '3716',
+  routine: 'errorMissingColumn'
+}
