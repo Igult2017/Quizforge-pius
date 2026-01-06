@@ -91,6 +91,10 @@ function App() {
       <Route path="/about" component={About} />
       <Route path="/checkout" component={Checkout} />
 
+      {/* Admin routes */}
+      <Route path="/admin/:rest*" component={Admin} />
+      <Route path="/admin" component={Admin} />
+
       {/* Redirect login/signup for authenticated users */}
       <Route path="/login">
         {isAdmin ? <Redirect to="/admin" /> : <Redirect to="/categories" />}
@@ -99,7 +103,10 @@ function App() {
         {isAdmin ? <Redirect to="/admin" /> : <Redirect to="/categories" />}
       </Route>
 
-      <Route component={NotFound} />
+      {/* Fallback for authenticated users */}
+      <Route path="/:rest*">
+        <Redirect to={isAdmin ? "/admin" : "/categories"} />
+      </Route>
     </Switch>
     </>
   );
