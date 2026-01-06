@@ -93,6 +93,9 @@ export default function Admin() {
               <Route path="/admin/questions" component={AdminQuestions} />
               <Route path="/admin/generation" component={AdminGeneration} />
               <Route path="/admin/marketing" component={AdminMarketing} />
+              <Route>
+                <Redirect to="/admin" />
+              </Route>
             </Switch>
           </main>
         </div>

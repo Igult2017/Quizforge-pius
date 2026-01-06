@@ -91,6 +91,14 @@ function App() {
       <Route path="/about" component={About} />
       <Route path="/checkout" component={Checkout} />
 
+      {/* Redirect login/signup for authenticated users */}
+      <Route path="/login">
+        {isAdmin ? <Redirect to="/admin" /> : <Redirect to="/categories" />}
+      </Route>
+      <Route path="/signup">
+        {isAdmin ? <Redirect to="/admin" /> : <Redirect to="/categories" />}
+      </Route>
+
       <Route component={NotFound} />
     </Switch>
     </>
