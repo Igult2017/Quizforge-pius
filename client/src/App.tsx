@@ -32,10 +32,6 @@ function App() {
 
   const isLoading = authLoading || userLoading;
 
-  // Check if profile is incomplete (missing phone)
-  // ONLY apply to new users who need to complete signup
-  const isProfileIncomplete = isAuthenticated && !userLoading && userData && userData.isNewSignup && (!userData.phone || userData.phone === '0000000000');
-
   // Loading state
   if (isLoading) {
     return (
@@ -69,21 +65,6 @@ function App() {
     );
   }
 
-  // Redirect to complete profile if phone is missing
-  if (isProfileIncomplete) {
-    return (
-      <>
-        <TawkToChat />
-        <Switch>
-          <Route path="/complete-profile" component={CompleteProfile} />
-          <Route>
-            <Redirect to="/complete-profile" />
-          </Route>
-        </Switch>
-      </>
-    );
-  }
-
   // Authenticated user routes
   const isAdmin = userData?.isAdmin || false;
 
@@ -109,14 +90,6 @@ function App() {
       <Route path="/exams" component={Exams} />
       <Route path="/about" component={About} />
       <Route path="/checkout" component={Checkout} />
-
-      {/* Redirect login/signup for authenticated users */}
-      <Route path="/login">
-        <Redirect to={isAdmin ? "/admin" : "/categories"} />
-      </Route>
-      <Route path="/signup">
-        <Redirect to={isAdmin ? "/admin" : "/categories"} />
-      </Route>
 
       <Route component={NotFound} />
     </Switch>
