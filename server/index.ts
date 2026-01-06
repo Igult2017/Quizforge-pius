@@ -5,7 +5,7 @@ import { setupVite, serveStatic, log } from "./vite";
 import path from "path";
 import { fileURLToPath } from "url";
 import { startBackgroundGeneration } from "./backgroundGeneration";
-import { startJobProcessor } from "./generationJobProcessor";
+import { stopJobProcessor } from "./generationJobProcessor";
 import { storage } from "./storage";
 
 // ES-module-safe __dirname (optional, in case you need it later)
@@ -29,6 +29,7 @@ async function initializeSystemUsers() {
         email: null,
         firstName: null,
         lastName: null,
+        phone: null,
         profileImageUrl: null,
       });
       console.log("[INIT] ✓ Anonymous user created");
