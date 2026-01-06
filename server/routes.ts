@@ -79,12 +79,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (existingUserByEmail) {
           console.log(`[AUTH] ℹ️ User already exists by email: ${normalizedEmail}. Updating Firebase ID from ${existingUserByEmail.id} to ${userId}`);
           
-          // Update existing user with new Firebase ID if different
+      // Update existing user with new Firebase ID if different
           if (existingUserByEmail.id !== userId) {
             await storage.updateUserId(existingUserByEmail.id, userId);
           }
           
           user = await storage.getUser(userId);
+          // If the user already existed by email, they are NOT a new signup
+          if (user && user.isNewSignup) {
+            await storage.upsertUser({
+              ...user,
+              isNewSignup: false
+            } as any);
+            user = await storage.getUser(userId);
+          }
         } else {
           // New user - create them
           // Check if this is the first real user (excluding 'anonymous')
@@ -96,7 +104,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             console.log(`[AUTH] ⭐ First user detected! Granting admin access to: ${normalizedEmail}`);
           }
           
-          user = await storage.upsertUser({
+      user = await storage.upsertUser({
             id: userId,
             email: normalizedEmail,
             firstName: req.user.claims.first_name || null,
@@ -163,7 +171,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (user) {
         await storage.upsertUser({
           ...user,
-          phone: phone as string
+          phone: phone as string,
+          isNewSignup: false // Profile is now complete
         });
         return res.json({ success: true });
       }
