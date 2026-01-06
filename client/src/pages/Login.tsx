@@ -99,10 +99,17 @@ export default function Login() {
       }
 
       // Update React Query with fresh user data
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
       const fetchUser = getQueryFn({ on401: "throw" });
-      const freshUser = await fetchUser({ queryKey: ["/api/auth/user"] });
-      queryClient.setQueryData(["/api/auth/user"], freshUser);
+      try {
+        // @ts-ignore - The fetcher expect specific params but getQueryFn wrapper might differ
+        const freshUser = await fetchUser({ queryKey: ["/api/auth/user"] });
+        queryClient.setQueryData(["/api/auth/user"], freshUser);
+      } catch (userFetchError) {
+        console.error("[Login] Failed to fetch user after login, but authenticated:", userFetchError);
+        // Force a small delay to allow state to settle
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
 
       toast({
         title: "Welcome back!",

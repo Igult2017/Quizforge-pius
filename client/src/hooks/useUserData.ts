@@ -7,7 +7,9 @@ export interface UserData {
   email: string | null;
   firstName: string | null;
   lastName: string | null;
+  phone: string | null;
   profileImageUrl: string | null;
+  isNewSignup: boolean;
   nclexFreeTrialUsed: boolean;
   teasFreeTrialUsed: boolean;
   hesiFreeTrialUsed: boolean;

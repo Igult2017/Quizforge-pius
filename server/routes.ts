@@ -170,10 +170,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = await storage.getUser(userId);
       if (user) {
         await storage.upsertUser({
-          ...user,
+          id: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
           phone: phone as string,
-          isNewSignup: false // Profile is now complete
+          profileImageUrl: user.profileImageUrl,
         });
+        // Update user to mark profile as complete if it was a new signup
+        if (user.isNewSignup) {
+          await storage.updateUser(user.id, { isNewSignup: false });
+        }
         return res.json({ success: true });
       }
       res.status(404).json({ error: "User not found" });
