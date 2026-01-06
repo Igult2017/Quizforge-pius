@@ -1,0 +1,58 @@
+[AuthChange] Triggered: Object
+securetoken.googleapis.com/v1/token?key=AIzaSyC3gq2n4MY35qxhKZHMQU20AFck5NKA7aU:1  Failed to load resource: the server responded with a status of 400 ()Understand this error
+index-C34PRKel.js:1917 [Auth] Failed to get ID token: FirebaseError: Firebase: Error (auth/quota-exceeded).
+    at rN (index-C34PRKel.js:444:728)
+    at Hs (index-C34PRKel.js:444:30)
+    at iR (index-C34PRKel.js:549:1420)
+    at async SJ (index-C34PRKel.js:654:35)
+    at async dh.refresh (index-C34PRKel.js:669:898)
+    at async dh.getToken (index-C34PRKel.js:669:724)
+    at async Z1 (index-C34PRKel.js:594:57)
+    at async _o.getIdToken (index-C34PRKel.js:684:719)
+    at async index-C34PRKel.js:1917:4790
+(anonymous) @ index-C34PRKel.js:1917Understand this error
+securetoken.googleapis.com/v1/token?key=AIzaSyC3gq2n4MY35qxhKZHMQU20AFck5NKA7aU:1  Failed to load resource: the server responded with a status of 400 ()Understand this error
+index-C34PRKel.js:1917 [ADMIN DETECTION] Object
+index-C34PRKel.js:1917 [Auth] Failed to get ID token: FirebaseError: Firebase: Error (auth/quota-exceeded).
+    at rN (index-C34PRKel.js:444:728)
+    at Hs (index-C34PRKel.js:444:30)
+    at iR (index-C34PRKel.js:549:1420)
+    at async SJ (index-C34PRKel.js:654:35)
+    at async dh.refresh (index-C34PRKel.js:669:898)
+    at async dh.getToken (index-C34PRKel.js:669:724)
+    at async Z1 (index-C34PRKel.js:594:57)
+    at async _o.getIdToken (index-C34PRKel.js:684:719)
+    at async index-C34PRKel.js:1917:4790
+(anonymous) @ index-C34PRKel.js:1917Understand this error
+index-C34PRKel.js:1917 [ADMIN DETECTION] Object
+index-C34PRKel.js:1917 [ADMIN DETECTION] Object
+index-C34PRKel.js:1917 [AuthChange] Triggered: Object
+securetoken.googleapis.com/v1/token?key=AIzaSyC3gq2n4MY35qxhKZHMQU20AFck5NKA7aU:1  Failed to load resource: the server responded with a status of 400 ()Understand this error
+index-C34PRKel.js:1917 [Auth] Failed to get ID token: FirebaseError: Firebase: Error (auth/quota-exceeded).
+    at rN (index-C34PRKel.js:444:728)
+    at Hs (index-C34PRKel.js:444:30)
+    at iR (index-C34PRKel.js:549:1420)
+    at async SJ (index-C34PRKel.js:654:35)
+    at async dh.refresh (index-C34PRKel.js:669:898)
+    at async dh.getToken (index-C34PRKel.js:669:724)
+    at async Z1 (index-C34PRKel.js:594:57)
+    at async _o.getIdToken (index-C34PRKel.js:684:719)
+    at async index-C34PRKel.js:1917:4790
+(anonymous) @ index-C34PRKel.js:1917Understand this error
+index-C34PRKel.js:1917 [ADMIN DETECTION] Object
+index-C34PRKel.js:1917 [TawkTo] Chat widget loaded successfully
+content.js:131 Content script received URL_CHANGED message for: https://www.nursebrace.com/login
+content.js:142 URL changed, but not PDF/YouTube, automatic popup skipped.
+index-C34PRKel.js:1539 [Firebase] Attempting login with email: rosebellad1999@gmail.com
+index-C34PRKel.js:1539 [Firebase] Login successful: rosebellad1999@gmail.com
+securetoken.googleapis.com/v1/token?key=AIzaSyC3gq2n4MY35qxhKZHMQU20AFck5NKA7aU:1  Failed to load resource: the server responded with a status of 400 ()Understand this error
+index-C34PRKel.js:2003 Email login error: FirebaseError: Firebase: Error (auth/quota-exceeded).
+    at rN (index-C34PRKel.js:444:728)
+    at Hs (index-C34PRKel.js:444:30)
+    at iR (index-C34PRKel.js:549:1420)
+    at async SJ (index-C34PRKel.js:654:35)
+    at async dh.refresh (index-C34PRKel.js:669:898)
+    at async dh.getToken (index-C34PRKel.js:669:724)
+    at async Z1 (index-C34PRKel.js:594:57)
+    at async _o.getIdToken (index-C34PRKel.js:684:719)
+    at async y (index-C34PRKel.js:2003:1500)
