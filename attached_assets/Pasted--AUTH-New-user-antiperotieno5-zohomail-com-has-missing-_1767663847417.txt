@@ -1,0 +1,100 @@
+[AUTH] ⚠️ New user antiperotieno5@zohomail.com has missing or placeholder phone.
+1:42:25 AM [express] GET /api/auth/user 304 in 7ms
+[AUTH] ⚠️ New user antiperotieno5@zohomail.com has missing or placeholder phone.
+1:42:25 AM [express] GET /api/auth/user 304 in 6ms
+[AUTH] ⚠️ New user antiperotieno5@zohomail.com has missing or placeholder phone.
+1:42:26 AM [express] GET /api/auth/user 304 in 14ms
+[AUTH] ⚠️ New user antiperotieno5@zohomail.com has missing or placeholder phone.
+1:42:26 AM [express] GET /api/auth/user 304 in 10ms
+[AUTH] ⚠️ New user antiperotieno5@zohomail.com has missing or placeholder phone.
+1:42:26 AM [express] GET /api/auth/user 304 in 24ms
+[AUTH] ⚠️ New user antiperotieno5@zohomail.com has missing or placeholder phone.
+1:42:27 AM [express] GET /api/auth/user 304 in 6ms
+[AUTH] ⚠️ New user antiperotieno5@zohomail.com has missing or placeholder phone.
+1:42:27 AM [express] GET /api/auth/user 304 in 7ms
+[AUTH] ⚠️ New user antiperotieno5@zohomail.com has missing or placeholder phone.
+1:42:27 AM [express] GET /api/auth/user 304 in 8ms
+[AUTH] ⚠️ New user antiperotieno5@zohomail.com has missing or placeholder phone.
+1:42:27 AM [express] GET /api/auth/user 304 in 10ms
+[AUTH] ⚠️ New user antiperotieno5@zohomail.com has missing or placeholder phone.
+1:42:28 AM [express] GET /api/auth/user 304 in 9ms
+[AUTH] ⚠️ New user antiperotieno5@zohomail.com has missing or placeholder phone.
+1:42:28 AM [express] GET /api/auth/user 304 in 13ms
+[AUTH] ⚠️ New user antiperotieno5@zohomail.com has missing or placeholder phone.
+1:42:28 AM [express] GET /api/auth/user 304 in 6ms
+[AUTH] ⚠️ New user antiperotieno5@zohomail.com has missing or placeholder phone.
+1:42:28 AM [express] GET /api/auth/user 304 in 15ms
+[AUTH] ⚠️ New user antiperotieno5@zohomail.com has missing or placeholder phone.
+1:42:29 AM [express] GET /api/auth/user 304 in 17ms
+[AUTH] ⚠️ New user antiperotieno5@zohomail.com has missing or placeholder phone.
+1:42:29 AM [express] GET /api/auth/user 304 in 25ms
+[AUTH] ⚠️ New user antiperotieno5@zohomail.com has missing or placeholder phone.
+1:42:29 AM [express] GET /api/auth/user 304 in 15ms
+[AUTH] ⚠️ New user antiperotieno5@zohomail.com has missing or placeholder phone.
+1:42:29 AM [express] GET /api/auth/user 304 in 18ms
+[AUTH] ⚠️ New user antiperotieno5@zohomail.com has missing or placeholder phone.
+1:42:30 AM [express] GET /api/auth/user 304 in 12ms
+[AUTH] ⚠️ New user antiperotieno5@zohomail.com has missing or placeholder phone.
+1:42:30 AM [express] GET /api/auth/user 304 in 8ms
+[AUTH] ⚠️ New user antiperotieno5@zohomail.com has missing or placeholder phone.
+1:42:30 AM [express] GET /api/auth/user 304 in 13ms
+[AUTH] ⚠️ New user antiperotieno5@zohomail.com has missing or placeholder phone.
+1:42:30 AM [express] GET /api/auth/user 304 in 11ms
+[AUTH] ⚠️ New user antiperotieno5@zohomail.com has missing or placeholder phone.
+1:42:31 AM [express] GET /api/auth/user 304 in 16ms
+[AUTH] ⚠️ New user antiperotieno5@zohomail.com has missing or placeholder phone.
+1:42:31 AM [express] GET /api/auth/user 304 in 16ms
+[AUTH] ⚠️ New user antiperotieno5@zohomail.com has missing or placeholder phone.
+1:42:31 AM [express] GET /api/auth/user 304 in 10ms
+[AUTH] ⚠️ New user antiperotieno5@zohomail.com has missing or placeholder phone.
+1:42:31 AM [express] GET /api/auth/user 304 in 13ms
+[AUTH] ⚠️ New user antiperotieno5@zohomail.com has missing or placeholder phone.
+1:42:32 AM [express] GET /api/auth/user 304 in 13ms
+[AUTH] ⚠️ New user antiperotieno5@zohomail.com has missing or placeholder phone.
+1:42:32 AM [express] GET /api/auth/user 304 in 6ms
+[AUTH] ⚠️ New user antiperotieno5@zohomail.com has missing or placeholder phone.
+1:42:32 AM [express] GET /api/auth/user 304 in 19ms
+[AUTH] ⚠️ New user antiperotieno5@zohomail.com has missing or placeholder phone.
+1:42:32 AM [express] GET /api/auth/user 304 in 6ms
+[AUTH] ⚠️ New user antiperotieno5@zohomail.com has missing or placeholder phone.
+1:42:32 AM [express] GET /api/auth/user 304 in 11ms
+[AUTH] ⚠️ New user antiperotieno5@zohomail.com has missing or placeholder phone.
+1:42:33 AM [express] GET /api/auth/user 304 in 6ms
+[AUTH] ⚠️ New user antiperotieno5@zohomail.com has missing or placeholder phone.
+1:42:33 AM [express] GET /api/auth/user 304 in 10ms
+[AUTH] ⚠️ New user antiperotieno5@zohomail.com has missing or placeholder phone.
+1:42:33 AM [express] GET /api/auth/user 304 in 13ms
+[AUTH] ⚠️ New user antiperotieno5@zohomail.com has missing or placeholder phone.
+1:42:33 AM [express] GET /api/auth/user 304 in 13ms
+[AUTH] ⚠️ New user antiperotieno5@zohomail.com has missing or placeholder phone.
+1:42:34 AM [express] GET /api/auth/user 304 in 11ms
+[AUTH] ⚠️ New user antiperotieno5@zohomail.com has missing or placeholder phone.
+1:42:34 AM [express] GET /api/auth/user 304 in 24ms
+[AUTH] ⚠️ New user antiperotieno5@zohomail.com has missing or placeholder phone.
+1:42:34 AM [express] GET /api/auth/user 304 in 9ms
+[AUTH] ⚠️ New user antiperotieno5@zohomail.com has missing or placeholder phone.
+1:42:34 AM [express] GET /api/auth/user 304 in 7ms
+[AUTH] ⚠️ New user antiperotieno5@zohomail.com has missing or placeholder phone.
+1:42:35 AM [express] GET /api/auth/user 304 in 10ms
+[AUTH] ⚠️ New user antiperotieno5@zohomail.com has missing or placeholder phone.
+1:42:35 AM [express] GET /api/auth/user 304 in 6ms
+[AUTH] ⚠️ New user antiperotieno5@zohomail.com has missing or placeholder phone.
+1:42:35 AM [express] GET /api/auth/user 304 in 6ms
+[AUTH] ⚠️ New user antiperotieno5@zohomail.com has missing or placeholder phone.
+1:42:35 AM [express] GET /api/auth/user 304 in 6ms
+[AUTH] ⚠️ New user antiperotieno5@zohomail.com has missing or placeholder phone.
+1:42:35 AM [express] GET /api/auth/user 304 in 7ms
+[AUTH] ⚠️ New user antiperotieno5@zohomail.com has missing or placeholder phone.
+1:42:36 AM [express] GET /api/auth/user 304 in 3ms
+[AUTH] ⚠️ New user antiperotieno5@zohomail.com has missing or placeholder phone.
+1:42:36 AM [express] GET /api/auth/user 304 in 5ms
+[AUTH] ⚠️ New user antiperotieno5@zohomail.com has missing or placeholder phone.
+1:42:36 AM [express] GET /api/auth/user 304 in 10ms
+[AUTH] ⚠️ New user antiperotieno5@zohomail.com has missing or placeholder phone.
+1:42:36 AM [express] GET /api/auth/user 304 in 10ms
+[AUTH] ⚠️ New user antiperotieno5@zohomail.com has missing or placeholder phone.
+1:42:37 AM [express] GET /api/auth/user 304 in 12ms
+[AUTH] ⚠️ New user antiperotieno5@zohomail.com has missing or placeholder phone.
+1:42:37 AM [express] GET /api/auth/user 304 in 6ms
+[AUTH] ⚠️ New user antiperotieno5@zohomail.com has missing or placeholder phone.
+1:42:37 AM [express] GET /api/auth/user 304 in 9ms

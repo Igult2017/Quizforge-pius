@@ -1,5 +1,6 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
+import admin from "firebase-admin";
 import { storage } from "./storage";
 import { isAuthenticated } from "./firebaseAuth";
 import { isAdmin } from "./adminMiddleware";
