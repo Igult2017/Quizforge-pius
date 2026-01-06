@@ -190,6 +190,8 @@ export const insertUserSchema = createInsertSchema(users).omit({
   nclexFreeTrialUsed: true,
   teasFreeTrialUsed: true,
   hesiFreeTrialUsed: true,
+}).extend({
+  phone: z.string().optional().nullable(),
 });
 
 export const insertSubscriptionSchema = createInsertSchema(subscriptions).omit({

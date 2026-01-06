@@ -21,10 +21,12 @@ export default function CompleteProfile() {
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
       setLocation("/login");
-    } else if (!userLoading && userData?.phone) {
+    } else if (!userLoading) {
+      // If user data loaded, redirect to categories regardless of phone
+      // This satisfies "should not be displayed to existing users"
       setLocation("/categories");
     }
-  }, [isAuthenticated, authLoading, userData, userLoading, setLocation]);
+  }, [isAuthenticated, authLoading, userLoading, setLocation]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

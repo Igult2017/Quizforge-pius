@@ -57,11 +57,12 @@ export default function Signup() {
       return;
     }
 
-    if (!phone || phone.length < 7) {
+    // Phone validation (optional)
+    if (phone && phone.length < 7) {
       toast({
         variant: "destructive",
-        title: "Phone Number Required",
-        description: "Please enter a valid phone number",
+        title: "Invalid Phone Number",
+        description: "Please enter a valid phone number or leave it blank",
       });
       return;
     }
@@ -214,14 +215,13 @@ export default function Signup() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="phone" className="font-bold">Phone Number *</Label>
+                <Label htmlFor="phone" className="font-bold">Phone Number (Optional)</Label>
                 <Input
                   id="phone"
                   type="tel"
                   placeholder="e.g., +1 (555) 123-4567"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  required
                   disabled={isLoading}
                   data-testid="input-phone"
                 />
