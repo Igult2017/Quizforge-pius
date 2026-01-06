@@ -33,7 +33,8 @@ function App() {
   const isLoading = authLoading || userLoading;
 
   // Check if profile is incomplete (missing phone)
-  const isProfileIncomplete = isAuthenticated && !userLoading && userData && (!userData.phone || userData.phone === '0000000000');
+  // ONLY apply to new users who need to complete signup
+  const isProfileIncomplete = isAuthenticated && !userLoading && userData && userData.isNewSignup && (!userData.phone || userData.phone === '0000000000');
 
   // Loading state
   if (isLoading) {

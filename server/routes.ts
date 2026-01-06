@@ -103,7 +103,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             lastName: req.user.claims.last_name || null,
             phone: (req.user.claims as any).phone_number || '0000000000',
             profileImageUrl: null,
-          });
+            isNewSignup: true,
+          } as any);
           
           // Grant admin to first user
           if (isFirstUser) {
@@ -119,9 +120,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Check if profile is incomplete (missing or placeholder phone)
-      const isProfileIncomplete = !user.phone || user.phone === '0000000000';
+      // Only enforce for new signups
+      const isProfileIncomplete = user.isNewSignup && (!user.phone || user.phone === '0000000000');
       if (isProfileIncomplete) {
-        console.log(`[AUTH] ⚠️ User ${user.email} has missing or placeholder phone.`);
+        console.log(`[AUTH] ⚠️ New user ${user.email} has missing or placeholder phone.`);
       }
 
       // Get actual subscription data
@@ -141,6 +143,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         hesiFreeTrialUsed: user.hesiFreeTrialUsed || false,
         hasActiveSubscription,
         subscription,
+        isNewSignup: user.isNewSignup,
       });
     } catch (error: any) {
       console.error("[AUTH ERROR]", error);
