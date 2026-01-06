@@ -48,6 +48,7 @@ export interface IStorage {
   revokeAdminStatus(userId: string): Promise<void>;
   banUser(userId: string): Promise<void>;
   unbanUser(userId: string): Promise<void>;
+  updateUser(userId: string, data: Partial<User>): Promise<void>;
   deleteUser(userId: string): Promise<void>;
 
   // Subscriptions
@@ -234,6 +235,16 @@ export class PostgresStorage implements IStorage {
       .set({ 
         isBanned: false,
         updatedAt: new Date() 
+      })
+      .where(eq(users.id, userId));
+  }
+
+  async updateUser(userId: string, data: Partial<User>): Promise<void> {
+    await db
+      .update(users)
+      .set({
+        ...data,
+        updatedAt: new Date(),
       })
       .where(eq(users.id, userId));
   }
