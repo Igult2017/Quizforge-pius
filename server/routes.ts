@@ -128,9 +128,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Check if profile is incomplete (missing or placeholder phone)
-      // Only enforce for new signups
+      // Only enforce for brand new signups
       const isProfileIncomplete = user.isNewSignup && (!user.phone || user.phone === '0000000000');
-      if (isProfileIncomplete) {
+      if (isProfileIncomplete && user.isNewSignup) {
         console.log(`[AUTH] ⚠️ New user ${user.email} has missing or placeholder phone.`);
       }
 

@@ -103,7 +103,7 @@ export default function Login() {
       const fetchUser = getQueryFn({ on401: "throw" });
       try {
         // @ts-ignore - The fetcher expect specific params but getQueryFn wrapper might differ
-        const freshUser = await fetchUser({ queryKey: ["/api/auth/user"] });
+        const freshUser = await fetchUser({ queryKey: ["/api/auth/user"], client: queryClient } as any);
         queryClient.setQueryData(["/api/auth/user"], freshUser);
       } catch (userFetchError) {
         console.error("[Login] Failed to fetch user after login, but authenticated:", userFetchError);
