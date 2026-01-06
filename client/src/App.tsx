@@ -38,7 +38,6 @@ function App() {
       <div className="flex items-center justify-center h-screen bg-blue-700">
         <div className="flex flex-col items-center gap-4">
           <div className="h-12 w-12 border-4 border-t-white border-white/20 rounded-full animate-spin"></div>
-          <p className="text-white font-medium animate-pulse">Loading your experience...</p>
         </div>
       </div>
     );
