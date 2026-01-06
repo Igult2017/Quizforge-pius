@@ -648,6 +648,13 @@ export class PostgresStorage implements IStorage {
           updatedAt: new Date(),
         })
         .where(eq(userTopicPerformance.id, record.id));
+
+      // Also update the parent subject-level record if this was a topic update
+      if (topic) {
+        // Use setImmediate or similar to avoid potential infinite recursion if logic changes,
+        // though here it's safe as we pass null for topic.
+        await this.updateUserTopicPerformance(userId, category, subject, null, isCorrect);
+      }
     } else {
       // Create new record
       console.log(`[PERFORMANCE] Creating new record for ${userId} for ${category}/${subject}/${topic}: Correct=${isCorrect}`);
@@ -660,7 +667,13 @@ export class PostgresStorage implements IStorage {
         correctCount: isCorrect ? 1 : 0,
         accuracy: isCorrect ? 100 : 0,
         lastAttemptedAt: new Date(),
-      });
+        updatedAt: new Date(),
+      } as any);
+
+      // Also ensure parent subject-level record exists/is updated if this was a topic update
+      if (topic) {
+        await this.updateUserTopicPerformance(userId, category, subject, null, isCorrect);
+      }
     }
   }
 
