@@ -27,8 +27,8 @@ export function useAuth() {
         if (firebaseUser) {
           try {
             // Ensure we have a valid token before updating state
-            const token = await firebaseUser.getIdToken(true);
-            console.log("[Auth] Token refreshed successfully:", token ? "✅" : "❌");
+            const token = await firebaseUser.getIdToken();
+            console.log("[Auth] Token retrieved successfully:", token ? "✅" : "❌");
 
             // Update React state
             setUser(firebaseUser);
