@@ -110,7 +110,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             email: normalizedEmail,
             firstName: req.user.claims.first_name || null,
             lastName: req.user.claims.last_name || null,
-            phone: (req.user.claims as any).phone_number || '0000000000',
+            phone: (req.user.claims as any).phone_number || null,
             profileImageUrl: null,
             isNewSignup: true,
           } as any);

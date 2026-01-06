@@ -22,8 +22,7 @@ export default function CompleteProfile() {
     if (!authLoading && !isAuthenticated) {
       setLocation("/login");
     } else if (!userLoading) {
-      // If user data loaded, redirect to categories regardless of phone
-      // This satisfies "should not be displayed to existing users"
+      // Always redirect to categories, effectively bypassing this page
       setLocation("/categories");
     }
   }, [isAuthenticated, authLoading, userLoading, setLocation]);
