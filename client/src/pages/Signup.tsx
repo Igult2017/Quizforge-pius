@@ -215,7 +215,7 @@ export default function Signup() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="phone" className="font-bold">Phone Number (Optional)</Label>
+                <Label htmlFor="phone" className="font-bold">Phone Number</Label>
                 <Input
                   id="phone"
                   type="tel"
