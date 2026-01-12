@@ -923,8 +923,15 @@ ${urls.map(url => `  <url>
         console.log(`[FREE TRIAL] Marked ${category} as used for user ${userId} at quiz start`);
       }
 
-      // Always use 5 questions for free trial
-      const questionCount = 5;
+      // Check if user is an admin or has an active subscription
+      const user = await storage.getUser(userId);
+      const subscription = await storage.getActiveSubscription(userId);
+      const hasFullAccess = user?.isAdmin || !!user?.adminGrantedAccess || !!subscription;
+
+      // Only limit for free trial users
+      const questionCount = hasFullAccess ? (req.body.count || 50) : 5;
+      
+      console.log(`[QUIZ] Starting quiz for user ${userId}. Full access: ${hasFullAccess}, count: ${questionCount}`);
       
       // Get adaptive, subjects, and topics options from request
       const { adaptive, subjects, topics } = req.body;
