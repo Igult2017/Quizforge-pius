@@ -923,8 +923,8 @@ ${urls.map(url => `  <url>
         console.log(`[FREE TRIAL] Marked ${category} as used for user ${userId} at quiz start`);
       }
 
-      // Always use 50 questions
-      const questionCount = 50;
+      // Always use 5 questions for free trial
+      const questionCount = 5;
       
       // Get adaptive, subjects, and topics options from request
       const { adaptive, subjects, topics } = req.body;

@@ -195,7 +195,7 @@ export default function About() {
           <div className="text-center bg-card border rounded-lg p-8">
             <h2 className="text-2xl font-bold mb-4">Join Thousands of Successful Students</h2>
             <p className="text-muted-foreground mb-6 max-w-2xl mx-auto">
-              Start your journey to exam success today with 50 free questions per exam category.
+              Start your journey to exam success today with 5 free questions per exam category.
             </p>
             <div className="flex gap-4 justify-center flex-wrap">
               <Button 

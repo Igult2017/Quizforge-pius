@@ -206,7 +206,7 @@ export default function Exams() {
           <div className="mt-12 text-center bg-card border rounded-lg p-8">
             <h2 className="text-2xl font-bold mb-4">Ready to Start Practicing?</h2>
             <p className="text-muted-foreground mb-6 max-w-2xl mx-auto">
-              Get access to all exam categories with 50 free questions per exam. Subscribe for unlimited practice.
+              Get access to all exam categories with 5 free questions per exam. Subscribe for unlimited practice.
             </p>
             <div className="flex gap-4 justify-center flex-wrap">
               <Button 
