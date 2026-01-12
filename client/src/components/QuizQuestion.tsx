@@ -37,7 +37,7 @@ export function QuizQuestion({
              </div>
           </div>
         </div>
-        <CardTitle className="text-xl md:text-2xl font-semibold leading-relaxed tracking-tight text-foreground/90">
+        <CardTitle className="text-lg md:text-xl font-semibold leading-relaxed tracking-tight text-foreground/90">
           <MathRenderer text={question} />
         </CardTitle>
       </CardHeader>
