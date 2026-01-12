@@ -134,13 +134,13 @@ export default function Exams() {
     },
   ];
 
-  const colorClasses = {
+  const colorClasses: Record<string, string> = {
     purple: "border-purple-500 bg-purple-50 dark:bg-purple-950/20",
     orange: "border-orange-500 bg-orange-50 dark:bg-orange-950/20",
     teal: "border-teal-500 bg-teal-50 dark:bg-teal-950/20",
   };
 
-  const iconColorClasses = {
+  const iconColorClasses: Record<string, string> = {
     purple: "text-purple-600 dark:text-purple-400",
     orange: "text-orange-600 dark:text-orange-400",
     teal: "text-teal-600 dark:text-teal-400",
