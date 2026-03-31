@@ -7,20 +7,19 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { Loader2, CreditCard, Shield, Lock, CheckCircle2, AlertTriangle } from "lucide-react";
+import { Loader2, CreditCard, Shield, Lock, CheckCircle2 } from "lucide-react";
 import { useUserData } from "@/hooks/useUserData";
-import { useQuery } from "@tanstack/react-query";
 
 export default function Checkout() {
   const [, setLocationState] = useLocation();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  const [showPaymentDownMessage, setShowPaymentDownMessage] = useState(false);
   const { isAuthenticated, userData } = useUserData();
   
-  // Get plan from URL params
+  // Get plan and cancelled flag from URL params
   const params = new URLSearchParams(window.location.search);
   const plan = params.get("plan") || "";
+  const wasCancelled = params.get("cancelled") === "true";
   const [formData, setFormData] = useState({
     email: "",
     firstName: "",
@@ -64,7 +63,7 @@ export default function Checkout() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.email || !formData.firstName || !formData.lastName || !formData.phone) {
       toast({
         variant: "destructive",
@@ -77,85 +76,32 @@ export default function Checkout() {
     setIsLoading(true);
 
     try {
-      // Temporary: Payment system is down - capture lead instead
-      const response = await apiRequest("POST", "/api/payments/offline-lead", {
+      const response = await apiRequest("POST", "/api/payments/create-order", {
         plan,
         ...formData,
       });
 
       const data = await response.json();
 
-      if (data.success) {
-        setShowPaymentDownMessage(true);
+      if (data.success && data.redirectUrl) {
+        // Redirect to Stripe's hosted checkout page
+        window.location.href = data.redirectUrl;
       } else {
-        throw new Error(data.error || "Failed to submit");
+        throw new Error(data.error || "Failed to create payment session");
       }
     } catch (error: any) {
-      console.error("Submit error:", error);
+      console.error("[Checkout] Error:", error);
       toast({
         variant: "destructive",
-        title: "Error",
-        description: "Something went wrong. Please try again.",
+        title: "Payment Error",
+        description: error.message || "Something went wrong. Please try again.",
       });
-    } finally {
       setIsLoading(false);
     }
   };
 
   if (!currentPlan) {
     return null;
-  }
-
-  // Show payment down message after form submission
-  if (showPaymentDownMessage) {
-    return (
-      <div className="min-h-screen bg-background font-poppins">
-        <Header
-          onSignIn={() => setLocationState("/login")}
-          onGetStarted={() => setLocationState("/signup")}
-        />
-        <div className="container mx-auto px-4 py-12">
-          <div className="max-w-2xl mx-auto">
-            <Card className="border-2">
-              <CardContent className="pt-8 pb-8">
-                <div className="text-center space-y-6">
-                  <div className="mx-auto w-16 h-16 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
-                    <AlertTriangle className="h-8 w-8 text-amber-600 dark:text-amber-400" />
-                  </div>
-                  <div>
-                    <h2 className="text-2xl font-bold mb-3">Payment System Temporarily Unavailable</h2>
-                    <p className="text-muted-foreground text-lg leading-relaxed">
-                      The payment system is currently down. We are working to restore it. Sorry for the inconvenience.
-                    </p>
-                  </div>
-                  <div className="bg-muted/50 rounded-lg p-4">
-                    <p className="text-sm text-muted-foreground">
-                      We have received your details and will contact you shortly at <strong>{formData.email}</strong> to assist with your <strong>{currentPlan.name}</strong> subscription.
-                    </p>
-                  </div>
-                  <div className="pt-4">
-                    <Button
-                      onClick={() => setLocationState("/")}
-                      variant="outline"
-                      className="mr-3"
-                      data-testid="button-go-home"
-                    >
-                      Go to Home
-                    </Button>
-                    <Button
-                      onClick={() => setLocationState("/pricing")}
-                      data-testid="button-view-plans"
-                    >
-                      View Plans
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </div>
-    );
   }
 
   return (
@@ -203,6 +149,12 @@ export default function Checkout() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
+                  {wasCancelled && (
+                    <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800">
+                      <strong>Payment cancelled.</strong> No charge was made. You can try again below.
+                    </div>
+                  )}
+
                   {/* Accepted Payment Methods */}
                   <div className="mb-6 p-4 bg-muted/50 rounded-lg">
                     <div className="text-sm font-medium mb-3">We Accept</div>
@@ -314,7 +266,7 @@ export default function Checkout() {
                         ) : (
                           <>
                             <Lock className="mr-2 h-5 w-5" />
-                            Continue to Secure Payment
+                            Continue to Stripe Checkout
                           </>
                         )}
                       </Button>

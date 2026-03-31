@@ -44,6 +44,11 @@ async function initializeSystemUsers() {
 
 const app = express();
 
+// Stripe webhook requires the raw request body for signature verification.
+// Register this BEFORE express.json() so the stream is consumed as a Buffer
+// and body-parser skips it (it checks req._body flag).
+app.use("/api/stripe/webhook", express.raw({ type: "application/json" }));
+
 // Middleware to parse JSON and URL-encoded bodies
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
