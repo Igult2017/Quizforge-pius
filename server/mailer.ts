@@ -205,6 +205,160 @@ export async function sendBulkEmail(data: {
   }
 }
 
+export async function sendPaymentSuccessNotification(data: {
+  email: string;
+  firstName: string;
+  lastName: string;
+  phone?: string;
+  plan: string;
+  amountDollars: number;
+  stripeSessionId: string;
+  timestamp: string;
+}): Promise<boolean> {
+  const transport = getTransporter();
+
+  if (!transport) {
+    console.log("[Mailer] Skipping email - SMTP not configured");
+    return false;
+  }
+
+  const planNames: Record<string, string> = {
+    weekly: "Weekly Plan ($19.99/week)",
+    monthly: "Monthly Plan ($49.99/month)",
+  };
+  const planDisplay = planNames[data.plan] || data.plan;
+
+  const htmlContent = `
+    <h2 style="color:#16a34a;">✅ Payment Successful — NurseBrace</h2>
+    <hr/>
+    <h3>Customer Details:</h3>
+    <ul>
+      <li><strong>Name:</strong> ${data.firstName} ${data.lastName}</li>
+      <li><strong>Email:</strong> ${data.email}</li>
+      <li><strong>Phone:</strong> ${data.phone || "Not provided"}</li>
+      <li><strong>Plan:</strong> ${planDisplay}</li>
+      <li><strong>Amount Charged:</strong> $${data.amountDollars.toFixed(2)} USD</li>
+    </ul>
+    <h3>Transaction Details:</h3>
+    <ul>
+      <li><strong>Stripe Session ID:</strong> ${data.stripeSessionId}</li>
+      <li><strong>Timestamp:</strong> ${data.timestamp}</li>
+    </ul>
+    <hr/>
+    <p>The customer has been redirected to complete their account setup.</p>
+    <p><em>Sent automatically by NurseBrace</em></p>
+  `;
+
+  const textContent = `
+✅ Payment Successful — NurseBrace
+
+Customer Details:
+- Name: ${data.firstName} ${data.lastName}
+- Email: ${data.email}
+- Phone: ${data.phone || "Not provided"}
+- Plan: ${planDisplay}
+- Amount Charged: $${data.amountDollars.toFixed(2)} USD
+
+Transaction Details:
+- Stripe Session ID: ${data.stripeSessionId}
+- Timestamp: ${data.timestamp}
+
+The customer has been redirected to complete their account setup.
+  `;
+
+  try {
+    await transport.sendMail({
+      from: SMTP_FROM,
+      to: SUPPORT_EMAIL,
+      subject: `[NurseBrace] ✅ Payment Successful — ${data.firstName} ${data.lastName} (${planDisplay})`,
+      text: textContent,
+      html: htmlContent,
+    });
+    console.log("[Mailer] Payment success notification sent");
+    return true;
+  } catch (error) {
+    console.error("[Mailer] Failed to send payment success notification:", error);
+    return false;
+  }
+}
+
+export async function sendPaymentFailedNotification(data: {
+  email: string;
+  firstName: string;
+  lastName: string;
+  phone?: string;
+  plan: string;
+  reason?: string;
+  stripeSessionId?: string;
+  timestamp: string;
+}): Promise<boolean> {
+  const transport = getTransporter();
+
+  if (!transport) {
+    console.log("[Mailer] Skipping email - SMTP not configured");
+    return false;
+  }
+
+  const planNames: Record<string, string> = {
+    weekly: "Weekly Plan ($19.99/week)",
+    monthly: "Monthly Plan ($49.99/month)",
+  };
+  const planDisplay = planNames[data.plan] || data.plan;
+
+  const htmlContent = `
+    <h2 style="color:#dc2626;">❌ Payment Failed — NurseBrace</h2>
+    <hr/>
+    <h3>Customer Details:</h3>
+    <ul>
+      <li><strong>Name:</strong> ${data.firstName} ${data.lastName}</li>
+      <li><strong>Email:</strong> ${data.email}</li>
+      <li><strong>Phone:</strong> ${data.phone || "Not provided"}</li>
+      <li><strong>Attempted Plan:</strong> ${planDisplay}</li>
+    </ul>
+    <h3>Failure Details:</h3>
+    <ul>
+      <li><strong>Reason:</strong> ${data.reason || "Unknown"}</li>
+      ${data.stripeSessionId ? `<li><strong>Stripe Session ID:</strong> ${data.stripeSessionId}</li>` : ""}
+      <li><strong>Timestamp:</strong> ${data.timestamp}</li>
+    </ul>
+    <hr/>
+    <p>Consider reaching out to this customer to assist them with their subscription.</p>
+    <p><em>Sent automatically by NurseBrace</em></p>
+  `;
+
+  const textContent = `
+❌ Payment Failed — NurseBrace
+
+Customer Details:
+- Name: ${data.firstName} ${data.lastName}
+- Email: ${data.email}
+- Phone: ${data.phone || "Not provided"}
+- Attempted Plan: ${planDisplay}
+
+Failure Details:
+- Reason: ${data.reason || "Unknown"}
+${data.stripeSessionId ? `- Stripe Session ID: ${data.stripeSessionId}` : ""}
+- Timestamp: ${data.timestamp}
+
+Consider reaching out to this customer to assist them with their subscription.
+  `;
+
+  try {
+    await transport.sendMail({
+      from: SMTP_FROM,
+      to: SUPPORT_EMAIL,
+      subject: `[NurseBrace] ❌ Payment Failed — ${data.firstName} ${data.lastName} (${planDisplay})`,
+      text: textContent,
+      html: htmlContent,
+    });
+    console.log("[Mailer] Payment failure notification sent");
+    return true;
+  } catch (error) {
+    console.error("[Mailer] Failed to send payment failure notification:", error);
+    return false;
+  }
+}
+
 export async function sendPaymentLeadNotification(data: {
   email: string;
   firstName: string;

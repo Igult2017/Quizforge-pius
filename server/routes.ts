@@ -7,9 +7,9 @@ import { isAdmin } from "./adminMiddleware";
 import { generateQuestions } from "./gemini";
 import { z } from "zod";
 import { insertQuestionSchema, insertQuizAttemptSchema, insertQuizAnswerSchema, insertPaymentSchema } from "@shared/schema";
-import { initializePayment, verifyPayment, isCountryAllowed } from "./paystack";
+import { createCheckoutSession, retrieveCheckoutSession, constructWebhookEvent } from "./stripe";
 import { nanoid } from "nanoid";
-import { sendPaymentLeadNotification, sendSupportEmail, sendBulkEmail } from "./mailer";
+import { sendPaymentLeadNotification, sendPaymentSuccessNotification, sendPaymentFailedNotification, sendSupportEmail, sendBulkEmail } from "./mailer";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Bulk email endpoint
@@ -555,45 +555,36 @@ ${urls.map(url => `  <url>
     }
   });
 
-  // Create payment order
+  // Create payment order (Stripe Checkout Session)
   app.post("/api/payments/create-order", async (req, res) => {
     try {
-      const { plan, email, firstName, lastName, phone, countryCode } = req.body;
-      
+      const { plan, email, firstName, lastName, phone } = req.body;
+
       if (!plan || !email || !firstName || !lastName) {
         return res.status(400).json({ error: "Missing required fields" });
       }
 
-      // Validate country code (defaults to US if not provided)
-      const country = (countryCode || "US").toUpperCase();
-      if (!isCountryAllowed(country)) {
-        return res.status(400).json({ 
-          error: "Country not supported",
-          message: "Payment is only available for USA, European countries, Australia, Canada, and New Zealand."
-        });
-      }
-
-      // Plan pricing in US Dollars (USD)
+      // Plan pricing in US cents
       const planPricing: Record<string, number> = {
-        weekly: 19.99,
-        monthly: 49.99,
+        weekly: 1999,  // $19.99
+        monthly: 4999, // $49.99
       };
 
-      const amount = planPricing[plan];
-      if (!amount) {
+      const amountCents = planPricing[plan];
+      if (!amountCents) {
         return res.status(400).json({ error: "Invalid plan" });
       }
 
-      // Generate unique merchant reference
+      // Generate unique internal reference
       const merchantReference = `NB-${plan.toUpperCase()}-${nanoid(12)}`;
-      
-      console.log(`[Payment] Creating order for ${plan} plan ($${amount} USD) from ${country}`);
 
-      // Create payment record in database
+      console.log(`[Payment] Creating Stripe order for ${plan} plan ($${(amountCents / 100).toFixed(2)} USD)`);
+
+      // Create payment record in DB first (status: pending)
       const payment = await storage.createPayment({
         merchantReference,
         plan,
-        amount: amount * 100, // store in cents
+        amount: amountCents,
         currency: "USD",
         status: "pending",
         email,
@@ -605,72 +596,190 @@ ${urls.map(url => `  <url>
         paymentMethod: null,
       });
 
-      // Initialize payment with Paystack
-      const paystackResponse = await initializePayment({
+      const appUrl = process.env.APP_URL || "http://localhost:5000";
+
+      // Create Stripe Checkout Session
+      const session = await createCheckoutSession({
         email,
-        amount: amount * 100, // convert to cents
         firstName,
         lastName,
         phone: phone || "",
         merchantReference,
-        countryCode: country,
+        plan,
+        amountCents,
+        currency: "USD",
+        // Stripe appends ?session_id={CHECKOUT_SESSION_ID} automatically when {CHECKOUT_SESSION_ID} is in the URL
+        successUrl: `${appUrl}/payment/callback?session_id={CHECKOUT_SESSION_ID}&merchantReference=${merchantReference}`,
+        cancelUrl: `${appUrl}/checkout?plan=${plan}&cancelled=true`,
       });
 
-      // Update payment with Paystack reference
+      // Save Stripe session ID as our order tracking ID
       await storage.updatePayment(payment.id, {
-        orderTrackingId: paystackResponse.data.reference,
+        orderTrackingId: session.id,
       });
 
       res.json({
         success: true,
         paymentId: payment.id,
-        redirectUrl: paystackResponse.data.authorization_url,
-        reference: paystackResponse.data.reference,
+        redirectUrl: session.url,
+        sessionId: session.id,
       });
     } catch (error: any) {
-      console.error("Payment creation error:", error);
+      console.error("[Payment] Create order error:", error);
       res.status(500).json({ error: error.message || "Failed to create payment order" });
     }
   });
 
-  // Payment callback - handle return from Paystack
+  // Payment callback - Stripe redirects here after checkout
   app.get("/payment/callback", async (req, res) => {
-    const { reference } = req.query;
+    const { session_id, merchantReference } = req.query;
 
-    if (!reference) {
+    if (!session_id) {
       return res.redirect("/?payment=error");
     }
 
     try {
-      // Verify transaction status with Paystack
-      const verificationResult = await verifyPayment(reference as string);
+      // Retrieve and verify the Stripe session
+      const session = await retrieveCheckoutSession(session_id as string);
 
-      // Find payment in database
-      const payment = await storage.getPaymentByOrderTrackingId(reference as string);
-      
+      // Find payment record by Stripe session ID
+      const payment = await storage.getPaymentByOrderTrackingId(session_id as string);
+
       if (!payment) {
         return res.redirect("/?payment=not_found");
       }
 
-      // Update payment status based on Paystack response
-      if (verificationResult.data.status === "success") {
+      if (session.payment_status === "paid") {
         await storage.updatePayment(payment.id, {
           status: "completed",
           paymentMethod: "card",
         });
-        
-        // Redirect to post-payment signup page
-        return res.redirect(`/post-payment-signup?merchantReference=${payment.merchantReference}&reference=${reference}`);
+
+        return res.redirect(
+          `/post-payment-signup?merchantReference=${payment.merchantReference}&reference=${session_id}`
+        );
       } else {
-        await storage.updatePayment(payment.id, {
-          status: "failed",
-        });
+        await storage.updatePayment(payment.id, { status: "failed" });
         return res.redirect("/?payment=failed");
       }
     } catch (error) {
-      console.error("Payment callback error:", error);
+      console.error("[Payment] Callback error:", error);
       return res.redirect("/?payment=error");
     }
+  });
+
+  // Stripe Webhook — reliable server-side event handling
+  // Sends email on payment success or failure with full payer details
+  app.post("/api/stripe/webhook", async (req: any, res) => {
+    const sig = req.headers["stripe-signature"] as string;
+
+    if (!sig) {
+      return res.status(400).json({ error: "Missing stripe-signature header" });
+    }
+
+    let event: any;
+    try {
+      event = constructWebhookEvent(req.body as Buffer, sig);
+    } catch (err: any) {
+      console.error("[Stripe Webhook] Signature verification failed:", err.message);
+      return res.status(400).json({ error: `Webhook signature verification failed: ${err.message}` });
+    }
+
+    const timestamp = new Date().toISOString();
+
+    try {
+      switch (event.type) {
+        case "checkout.session.completed": {
+          const session = event.data.object;
+          const meta = session.metadata || {};
+          const merchantRef: string = meta.merchant_reference || "";
+
+          console.log(`[Stripe Webhook] checkout.session.completed — session: ${session.id}`);
+
+          // Mark payment completed in DB (idempotent — may already be done by callback)
+          if (merchantRef) {
+            const payment = await storage.getPaymentByMerchantReference(merchantRef);
+            if (payment && payment.status !== "completed") {
+              await storage.updatePayment(payment.id, {
+                status: "completed",
+                paymentMethod: "card",
+              });
+            }
+          }
+
+          // Send success notification email
+          await sendPaymentSuccessNotification({
+            email: session.customer_email || meta.email || "",
+            firstName: meta.first_name || "",
+            lastName: meta.last_name || "",
+            phone: meta.phone || undefined,
+            plan: meta.plan || "",
+            amountDollars: (session.amount_total || 0) / 100,
+            stripeSessionId: session.id,
+            timestamp,
+          });
+          break;
+        }
+
+        case "checkout.session.expired": {
+          const session = event.data.object;
+          const meta = session.metadata || {};
+          const merchantRef: string = meta.merchant_reference || "";
+
+          console.log(`[Stripe Webhook] checkout.session.expired — session: ${session.id}`);
+
+          if (merchantRef) {
+            const payment = await storage.getPaymentByMerchantReference(merchantRef);
+            if (payment && payment.status === "pending") {
+              await storage.updatePayment(payment.id, { status: "failed" });
+            }
+          }
+
+          await sendPaymentFailedNotification({
+            email: session.customer_email || meta.email || "",
+            firstName: meta.first_name || "",
+            lastName: meta.last_name || "",
+            phone: meta.phone || undefined,
+            plan: meta.plan || "",
+            reason: "Checkout session expired without payment",
+            stripeSessionId: session.id,
+            timestamp,
+          });
+          break;
+        }
+
+        case "payment_intent.payment_failed": {
+          const paymentIntent = event.data.object;
+          const lastError = paymentIntent.last_payment_error;
+
+          console.log(`[Stripe Webhook] payment_intent.payment_failed — intent: ${paymentIntent.id}`);
+
+          // Extract metadata from the payment intent if available
+          const meta = paymentIntent.metadata || {};
+
+          await sendPaymentFailedNotification({
+            email: paymentIntent.receipt_email || meta.email || "",
+            firstName: meta.first_name || "",
+            lastName: meta.last_name || "",
+            phone: meta.phone || undefined,
+            plan: meta.plan || "",
+            reason: lastError?.message || "Payment declined",
+            stripeSessionId: meta.merchant_reference || paymentIntent.id,
+            timestamp,
+          });
+          break;
+        }
+
+        default:
+          // Ignore unhandled event types
+          console.log(`[Stripe Webhook] Unhandled event type: ${event.type}`);
+      }
+    } catch (err) {
+      console.error("[Stripe Webhook] Handler error:", err);
+      // Still return 200 to acknowledge receipt — Stripe will retry on 4xx/5xx
+    }
+
+    res.json({ received: true });
   });
 
   // Verify payment status
@@ -714,12 +823,11 @@ ${urls.map(url => `  <url>
         });
       }
 
-      // If payment is pending and we have reference, check status with Paystack
+      // If payment is pending and we have a Stripe session ID, re-check with Stripe
       if (payment.status === "pending" && reference) {
         try {
-          const verificationResult = await verifyPayment(reference);
-          
-          if (verificationResult.data.status === "success") {
+          const session = await retrieveCheckoutSession(reference);
+          if (session.payment_status === "paid") {
             await storage.updatePayment(payment.id, {
               status: "completed",
               paymentMethod: "card",
@@ -727,7 +835,7 @@ ${urls.map(url => `  <url>
             payment.status = "completed";
           }
         } catch (error) {
-          console.error("Error checking transaction status:", error);
+          console.error("[Payment] Error re-checking Stripe session status:", error);
         }
       }
 

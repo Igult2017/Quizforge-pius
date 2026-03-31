@@ -10,18 +10,19 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Checkout from "./pages/Checkout";
 import PostPaymentSignup from "./pages/PostPaymentSignup";
-import CompleteProfile from "./pages/CompleteProfile";
 import Pricing from "./pages/Pricing";
 import Contact from "./pages/Contact";
 import Exams from "./pages/Exams";
 import About from "./pages/About";
+import FAQ from "./pages/FAQ";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfService from "./pages/TermsOfService";
 import Categories from "./pages/Categories";
 import TopicSelection from "./pages/TopicSelection";
 import Performance from "./pages/Performance";
 import Quiz from "./pages/Quiz";
 import Results from "./pages/Results";
 import Admin from "./pages/Admin";
-import NotFound from "./pages/not-found";
 
 function App() {
   const { isAuthenticated, isLoading: authLoading } = useAuth();
@@ -58,6 +59,9 @@ function App() {
           <Route path="/contact" component={Contact} />
           <Route path="/exams" component={Exams} />
           <Route path="/about" component={About} />
+          <Route path="/faq" component={FAQ} />
+          <Route path="/privacy" component={PrivacyPolicy} />
+          <Route path="/terms" component={TermsOfService} />
           <Route component={Landing} />
         </Switch>
       </>
@@ -89,10 +93,9 @@ function App() {
       <Route path="/exams" component={Exams} />
       <Route path="/about" component={About} />
       <Route path="/checkout" component={Checkout} />
-
-      {/* Admin routes */}
-      <Route path="/admin/:rest*" component={Admin} />
-      <Route path="/admin" component={Admin} />
+      <Route path="/faq" component={FAQ} />
+      <Route path="/privacy" component={PrivacyPolicy} />
+      <Route path="/terms" component={TermsOfService} />
 
       {/* Redirect login/signup for authenticated users */}
       <Route path="/login">
