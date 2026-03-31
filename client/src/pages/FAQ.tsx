@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Header } from "@/components/Header";
+import { Footer } from "@/components/Footer";
 import { useLocation } from "wouter";
 import { ChevronDown, ChevronUp, HelpCircle, BookOpen, CreditCard, BarChart2, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -255,6 +256,8 @@ export default function FAQ() {
           </div>
         </div>
       </main>
+
+      <Footer />
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import { Header } from "@/components/Header";
+import { Footer } from "@/components/Footer";
 import { PricingCard } from "@/components/PricingCard";
 import { CheckCircle2 } from "lucide-react";
 import { useLocation } from "wouter";
@@ -161,6 +162,8 @@ export default function Pricing() {
           />
         </div>
       </div>
+
+      <Footer />
       </div>
     </>
   );
