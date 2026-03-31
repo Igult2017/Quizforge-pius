@@ -323,7 +323,7 @@ function SampleTest({ onGetAccess }: { onGetAccess: () => void }) {
 }
 
 /* ─── SAMPLE QUESTIONS PAGE ─── */
-function SampleQuestionsPage({ isMobile, px, onHome, onPricing }: { isMobile: boolean; isTablet: boolean; px: string; onHome: () => void; onPricing: () => void }) {
+function SampleQuestionsPage({ isMobile, px, onHome, onPricing }: { isMobile: boolean; px: string; onHome: () => void; onPricing: () => void }) {
   const [answers, setAnswers] = useState<Record<number,number>>({});
   const [revealed, setRevealed] = useState<Record<number,boolean>>({});
   const [filter, setFilter] = useState("All");
@@ -598,7 +598,6 @@ export default function NurseBrace() {
       {page === "questions" ? (
         <SampleQuestionsPage
           isMobile={isMobile}
-          isTablet={isTablet}
           px={px}
           onHome={()=>{setPage("home");window.scrollTo({top:0,behavior:"smooth"});}}
           onPricing={scrollToPricing}
@@ -857,8 +856,8 @@ export default function NurseBrace() {
             {[
               { label:"Product", links:[{text:"Exams",onClick:goExams},{text:"Pricing",onClick:scrollToPricing}] },
               { label:"Company", links:[{text:"About Us",onClick:()=>navigate("/about")},{text:"Contact",onClick:()=>navigate("/contact")}] },
-              { label:"Resources", links:[{text:"FAQ",onClick:()=>{}},{text:"Sample Questions",onClick:()=>{setPage("questions");window.scrollTo({top:0,behavior:"smooth"});}}] },
-              { label:"Legal", links:[{text:"Privacy Policy",onClick:()=>{}},{text:"Terms of Service",onClick:()=>{}}] },
+              { label:"Resources", links:[{text:"FAQ",onClick:()=>navigate("/contact")},{text:"Sample Questions",onClick:()=>{setPage("questions");window.scrollTo({top:0,behavior:"smooth"});}}] },
+              { label:"Legal", links:[{text:"Privacy Policy",onClick:()=>navigate("/contact")},{text:"Terms of Service",onClick:()=>navigate("/contact")}] },
             ].map(col=>(
               <div key={col.label}>
                 <p style={{ fontWeight:800, fontSize:12, color:"#e2e8f0", marginBottom:16, borderBottom:"1px solid rgba(255,255,255,0.1)", paddingBottom:8, textTransform:"uppercase", letterSpacing:0.8 }}>{col.label}</p>
