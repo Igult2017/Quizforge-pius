@@ -14,6 +14,9 @@ import Pricing from "./pages/Pricing";
 import Contact from "./pages/Contact";
 import Exams from "./pages/Exams";
 import About from "./pages/About";
+import FAQ from "./pages/FAQ";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfService from "./pages/TermsOfService";
 import Categories from "./pages/Categories";
 import TopicSelection from "./pages/TopicSelection";
 import Performance from "./pages/Performance";
@@ -56,6 +59,9 @@ function App() {
           <Route path="/contact" component={Contact} />
           <Route path="/exams" component={Exams} />
           <Route path="/about" component={About} />
+          <Route path="/faq" component={FAQ} />
+          <Route path="/privacy" component={PrivacyPolicy} />
+          <Route path="/terms" component={TermsOfService} />
           <Route component={Landing} />
         </Switch>
       </>
@@ -87,6 +93,9 @@ function App() {
       <Route path="/exams" component={Exams} />
       <Route path="/about" component={About} />
       <Route path="/checkout" component={Checkout} />
+      <Route path="/faq" component={FAQ} />
+      <Route path="/privacy" component={PrivacyPolicy} />
+      <Route path="/terms" component={TermsOfService} />
 
       {/* Redirect login/signup for authenticated users */}
       <Route path="/login">

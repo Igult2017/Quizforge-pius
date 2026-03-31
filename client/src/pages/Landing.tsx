@@ -856,8 +856,8 @@ export default function NurseBrace() {
             {[
               { label:"Product", links:[{text:"Exams",onClick:goExams},{text:"Pricing",onClick:scrollToPricing}] },
               { label:"Company", links:[{text:"About Us",onClick:()=>navigate("/about")},{text:"Contact",onClick:()=>navigate("/contact")}] },
-              { label:"Resources", links:[{text:"FAQ",onClick:()=>navigate("/contact")},{text:"Sample Questions",onClick:()=>{setPage("questions");window.scrollTo({top:0,behavior:"smooth"});}}] },
-              { label:"Legal", links:[{text:"Privacy Policy",onClick:()=>navigate("/contact")},{text:"Terms of Service",onClick:()=>navigate("/contact")}] },
+              { label:"Resources", links:[{text:"FAQ",onClick:()=>navigate("/faq")},{text:"Sample Questions",onClick:()=>{setPage("questions");window.scrollTo({top:0,behavior:"smooth"});}}] },
+              { label:"Legal", links:[{text:"Privacy Policy",onClick:()=>navigate("/privacy")},{text:"Terms of Service",onClick:()=>navigate("/terms")}] },
             ].map(col=>(
               <div key={col.label}>
                 <p style={{ fontWeight:800, fontSize:12, color:"#e2e8f0", marginBottom:16, borderBottom:"1px solid rgba(255,255,255,0.1)", paddingBottom:8, textTransform:"uppercase", letterSpacing:0.8 }}>{col.label}</p>
