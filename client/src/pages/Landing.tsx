@@ -564,7 +564,7 @@ export default function NurseBrace() {
               <span style={{ width:8, height:8, borderRadius:"50%", background:"#f59e0b", flexShrink:0, display:"inline-block" }}/>
               For students testing in the next 2–4 weeks
             </div>
-            <h1 style={{ fontWeight:900, fontSize:`clamp(18px,${isMobile?"4.5vw":"2.6vw"},34px)`, lineHeight:1.2, marginBottom:18 }}>
+            <h1 style={{ fontWeight:900, fontSize:`clamp(24px,${isMobile?"5.5vw":"2.6vw"},34px)`, lineHeight:1.2, marginBottom:18 }}>
               Pass Your TEAS/HESI/NCLEX Exam on Your First Try —{" "}
               <span style={{ color:"#fbbf24" }}>Without Wasting Time on the Wrong Materials</span>
             </h1>
@@ -693,7 +693,7 @@ export default function NurseBrace() {
               <span style={{ color:"#6b7280", fontSize:14, fontWeight:600, marginLeft:8 }}>4.9/5 — 10,000+ Students</span>
             </div>
           </div>
-          <div style={{ display:"flex", flexDirection:isMobile?"column":"row", gap:24, flexWrap:isMobile?"nowrap":"wrap" }}>
+          <div style={{ display:"flex", flexDirection:(isMobile||isTablet)?"column":"row", gap:24, flexWrap:"nowrap" }}>
             {[
               { quote:"I failed my first attempt… used NurseBrace and passed on my second try! The questions were so much like the real thing.", name:"Maria T.", tag:"TEAS — Second attempt" },
               { quote:"The questions were VERY similar to my actual exam. I felt prepared in a way I never had before. Worth every penny.", name:"James K.", tag:"HESI A2 — First attempt" },
@@ -759,14 +759,14 @@ export default function NurseBrace() {
             <h2 style={{ fontWeight:900, fontSize:"clamp(20px,3vw,36px)", color:"#111827", marginTop:12 }}>Get Instant Access Today</h2>
             <p style={{ fontSize:15, color:"#6b7280", marginTop:10, fontWeight:500 }}>One subscription gives you access to all exams. No hidden fees, no surprises.</p>
           </div>
-          <div style={{ display:"flex", flexDirection:isMobile?"column":"row", gap:24, flexWrap:"wrap", justifyContent:"center" }}>
+          <div style={{ display:"flex", flexDirection:(isMobile||isTablet)?"column":"row", gap:24, flexWrap:"wrap", justifyContent:"center" }}>
             {[
               { title:"Free Trial", price:"$0", period:"", sub:"No credit card required", feats:["30 practice questions","All question categories","Detailed explanations"], btn:"Try a Free Sample Test", outline:true, onClick:scrollToSampleTest },
               { title:"Monthly Plan", price:"$49.99", period:"/mo", sub:"Full access — cancel anytime", feats:["Unlimited practice sessions","50 questions per session","All features included","Regular content updates"], btn:"Get Instant Access Now", popular:true, onClick:goMonthly },
               { title:"Weekly Plan", price:"$19.99", period:"/wk", sub:"Perfect for last-minute prep", feats:["Unlimited practice sessions","50 questions per session","All features included"], btn:"Subscribe", outline:true, onClick:goWeekly },
             ].map((p,i)=>(
-              <div key={i} className={`pc${p.popular?" pop":""}`} style={{ position:"relative", maxWidth:isMobile?"100%":320, minWidth:isMobile?"100%":240 }}>
-                {p.popular&&<div style={{ position:"absolute", top:-14, left:24, background:"#2563eb", color:"white", borderRadius:20, padding:"5px 16px", fontSize:12, fontWeight:800 }}>Most Popular</div>}
+              <div key={i} className={`pc${p.popular?" pop":""}`} style={{ position:"relative", maxWidth:(isMobile||isTablet)?"100%":320, minWidth:(isMobile||isTablet)?"100%":240 }}>
+                {p.popular&&<div style={{ position:"absolute", top:-14, left:"50%", transform:"translateX(-50%)", background:"#2563eb", color:"white", borderRadius:20, padding:"5px 16px", fontSize:12, fontWeight:800, whiteSpace:"nowrap" }}>Most Popular</div>}
                 <h3 style={{ fontWeight:800, fontSize:22, color:"#111827", marginBottom:4 }}>{p.title}</h3>
                 <p style={{ fontWeight:900, fontSize:32, color:"#2563eb", marginBottom:p.period?2:6 }}>{p.price}<span style={{ fontSize:15, fontWeight:600 }}>{p.period}</span></p>
                 <p style={{ fontSize:13, color:"#9ca3af", marginBottom:22, fontWeight:500 }}>{p.sub}</p>

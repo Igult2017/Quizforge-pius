@@ -97,7 +97,7 @@ export default function Pricing() {
             and all nursing question banks. No hidden fees, no surprises.
           </p>
 
-          <div className="flex items-center justify-center gap-6 text-sm">
+          <div className="flex flex-wrap items-center justify-center gap-4 text-sm">
             <div className="flex items-center gap-2">
               <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-500" />
               <span>7-Day Money-Back Guarantee</span>
@@ -113,7 +113,7 @@ export default function Pricing() {
           </div>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+        <div className="grid lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
           <PricingCard
             title="Free Trial"
             price="$0"

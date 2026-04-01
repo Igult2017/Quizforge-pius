@@ -293,14 +293,14 @@ export default function Quiz() {
       <Header />
 
       <div className="container mx-auto px-4 py-8">
-        <div className="mb-6 flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold mb-1" data-testid="text-quiz-title">{category} Practice Quiz</h1>
-            <p className="text-muted-foreground">
+        <div className="mb-6 flex items-start justify-between flex-wrap gap-3">
+          <div className="min-w-0">
+            <h1 className="text-xl md:text-2xl font-bold mb-1" data-testid="text-quiz-title">{category} Practice Quiz</h1>
+            <p className="text-muted-foreground text-sm md:text-base">
               Answer all questions and submit when you're ready
             </p>
           </div>
-          <Badge variant="secondary" className="text-sm" data-testid="badge-category">
+          <Badge variant="secondary" className="text-sm shrink-0" data-testid="badge-category">
             {category}
           </Badge>
         </div>
