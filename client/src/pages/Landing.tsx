@@ -517,7 +517,7 @@ export default function NurseBrace() {
         .hbo{background:white;color:#1d4ed8;border:2px solid rgba(255,255,255,0.3);padding:13px 24px;border-radius:50px;font-size:14px;font-weight:800;cursor:pointer;transition:all .2s;} .hbo:hover{background:#f0f4ff;transform:translateY(-2px);}
         .cta{background:#2563eb;color:white;border:none;padding:17px 36px;border-radius:12px;font-size:16px;font-weight:800;cursor:pointer;transition:all .2s;display:inline-block;} .cta:hover{background:#1d4ed8;transform:translateY(-3px);box-shadow:0 12px 32px rgba(37,99,235,0.4);}
         .ctag{background:#16a34a;color:white;border:none;padding:17px 36px;border-radius:12px;font-size:16px;font-weight:800;cursor:pointer;transition:all .2s;display:inline-block;} .ctag:hover{background:#15803d;transform:translateY(-3px);}
-        .pi{display:flex;align-items:flex-start;gap:14px;padding:18px 20px;background:white;border-radius:12px;border-left:4px solid #ef4444;box-shadow:0 2px 12px rgba(0,0,0,0.06);margin-bottom:14px;}
+        .pi{display:flex;align-items:center;gap:16px;padding:20px 22px;background:white;border-radius:14px;border:1px solid #e5e7eb;box-shadow:0 2px 10px rgba(0,0,0,0.05);margin-bottom:14px;}
         .si{display:flex;align-items:flex-start;gap:14px;padding:16px 20px;background:#f0fdf4;border-radius:12px;border-left:4px solid #22c55e;margin-bottom:12px;}
         .wi{display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid #f1f5f9;font-size:15px;font-weight:600;color:#1e293b;}
         .db{display:flex;align-items:flex-start;gap:12px;padding:14px 18px;background:#fef2f2;border-radius:10px;margin-bottom:10px;font-size:14px;color:#7f1d1d;font-weight:600;}
@@ -645,8 +645,19 @@ export default function NurseBrace() {
             <span style={{ fontSize:36 }}>😬</span>
             <h2 style={{ fontWeight:900, fontSize:"clamp(20px,3vw,36px)", color:"#111827", marginTop:12 }}>Tired of Studying and Still Not Passing?</h2>
           </div>
-          {["You've been reading, watching videos… but questions still feel unfamiliar on exam day.","You're running out of time before your test — and the pressure is mounting.","You may have failed before — and you absolutely cannot go through that again."].map((text,i)=>(
-            <div key={i} className="pi"><span style={{ fontSize:22, marginTop:2 }}>😔</span><p style={{ fontSize:isMobile?14:15, color:"#374151", fontWeight:600, lineHeight:1.65 }}>{text}</p></div>
+          {[
+            { label:"The Study Trap", labelColor:"#e11d48", icon:"😤", iconBg:"#fff1f2", text:"You've been reading and watching videos — but questions still feel unfamiliar on exam day." },
+            { label:"Running Out of Time", labelColor:"#d97706", icon:"⏰", iconBg:"#fffbeb", text:"Your test is coming fast — and the pressure keeps mounting with every passing day." },
+            { label:"Fear of Failing Again", labelColor:"#2563eb", icon:"🚫", iconBg:"#eff6ff", text:"You may have failed before — and you absolutely cannot go through that again." },
+          ].map((item,i)=>(
+            <div key={i} className="pi">
+              <div style={{ flexShrink:0, width:52, height:52, borderRadius:12, background:item.iconBg, display:"flex", alignItems:"center", justifyContent:"center", fontSize:24 }}>{item.icon}</div>
+              <div style={{ flex:1 }}>
+                <p style={{ fontSize:11, fontWeight:800, letterSpacing:"0.08em", textTransform:"uppercase", color:item.labelColor, marginBottom:4 }}>{item.label}</p>
+                <p style={{ fontSize:isMobile?14:15, color:"#374151", fontWeight:500, lineHeight:1.6, margin:0 }}>{item.text}</p>
+              </div>
+              <span style={{ flexShrink:0, color:"#d1d5db", fontSize:18, fontWeight:300 }}>›</span>
+            </div>
           ))}
           <div style={{ background:"#1e293b", color:"white", borderRadius:14, padding:isMobile?"20px 20px":"24px 28px", marginTop:28, textAlign:"center" }}>
             <p style={{ fontSize:isMobile?14:17, fontWeight:800, lineHeight:1.65 }}>Most students fail because they <span style={{ color:"#fbbf24" }}>study the wrong way.</span><br/><span style={{ fontWeight:500, fontSize:13, opacity:0.8 }}>Not because they're not smart enough.</span></p>
