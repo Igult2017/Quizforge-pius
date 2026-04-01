@@ -31,7 +31,9 @@ export default function Pricing() {
 
   const getButtonText = (planType: "free" | "paid", planName: string) => {
     if (!isAuthenticated) {
-      return planType === "free" ? "Sign Up Free" : "Subscribe";
+      if (planType === "free") return "Try a Free Sample Test";
+      if (planName === "Monthly") return "Get Instant Access Now";
+      return "Subscribe";
     }
     
     if (hasActiveSubscription) {
@@ -116,11 +118,10 @@ export default function Pricing() {
             title="Free Trial"
             price="$0"
             period="one-time"
-            description="Try before you subscribe"
+            description="No credit card required"
             features={[
-              "50 NCLEX questions (one-time)",
-              "50 ATI TEAS questions (one-time)",
-              "50 HESI A2 questions (one-time)",
+              "30 practice questions",
+              "All question categories",
               "Detailed explanations"
             ]}
             buttonText={getButtonText("free", "free")}
@@ -132,11 +133,12 @@ export default function Pricing() {
             title="Monthly Plan"
             price="$49.99"
             period="month"
-            description="Consistent study, most popular"
+            description="Full access — cancel anytime"
             features={[
               "Unlimited practice sessions",
               "50 questions per session",
-              "All features included"
+              "All features included",
+              "Regular content updates"
             ]}
             badge={hasActiveSubscription && subscription?.plan === "monthly" ? "Current Plan" : "Most Popular"}
             highlighted={true}
@@ -149,7 +151,7 @@ export default function Pricing() {
             title="Weekly Plan"
             price="$19.99"
             period="week"
-            description="Perfect for intensive exam prep"
+            description="Perfect for last-minute prep"
             features={[
               "Unlimited practice sessions",
               "50 questions per session",
