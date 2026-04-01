@@ -19,7 +19,7 @@ const COLUMNS = [
     label: "Resources",
     links: [
       { text: "FAQ", href: "/faq" },
-      { text: "Sample Questions", href: "/exams" },
+      { text: "Sample Questions", href: "/sample-questions" },
     ],
   },
   {
