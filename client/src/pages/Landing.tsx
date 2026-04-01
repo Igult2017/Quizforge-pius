@@ -610,8 +610,9 @@ export default function NurseBrace() {
       <section style={{ background:"linear-gradient(135deg,#1d4ed8 0%,#2563eb 60%,#3b82f6 100%)", padding:isMobile?`48px ${px}`:`64px ${px}`, display:"flex", alignItems:"center" }}>
         <div style={{ maxWidth:1200, margin:"0 auto", width:"100%", display:"flex", flexDirection:isMobile?"column":"row", alignItems:isMobile?"flex-start":"center", gap:isMobile?32:60 }}>
           <div style={{ flex:"0 0 52%", color:"white", width:"100%" }}>
-            <div style={{ display:"inline-block", background:"rgba(255,255,255,0.18)", border:"1px solid rgba(255,255,255,0.35)", borderRadius:20, padding:"6px 16px", fontSize:11, fontWeight:700, letterSpacing:1, marginBottom:20, textTransform:"uppercase" }}>
-              For Students Testing in the Next 2-4 Weeks
+            <div style={{ display:"inline-flex", alignItems:"center", gap:8, background:"rgba(255,255,255,0.12)", border:"1px solid rgba(255,255,255,0.25)", borderRadius:50, padding:"7px 16px", fontSize:13, fontWeight:500, marginBottom:20 }}>
+              <span style={{ width:8, height:8, borderRadius:"50%", background:"#f59e0b", flexShrink:0, display:"inline-block" }}/>
+              For students testing in the next 2–4 weeks
             </div>
             <h1 style={{ fontWeight:900, fontSize:`clamp(18px,${isMobile?"4.5vw":"2.6vw"},34px)`, lineHeight:1.2, marginBottom:18 }}>
               Pass Your TEAS/HESI/NCLEX Exam on Your First Try —{" "}
