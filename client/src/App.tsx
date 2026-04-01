@@ -3,7 +3,6 @@ import { Switch, Route, Redirect } from "wouter";
 import { useAuth } from "./hooks/useAuth";
 import { useUserData } from "./hooks/useUserData";
 import { useAutoLogout } from "./hooks/useAutoLogout";
-import { TawkToChat } from "./components/TawkToChat";
 
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
@@ -48,7 +47,6 @@ function App() {
   if (!isAuthenticated) {
     return (
       <>
-        <TawkToChat />
         <Switch>
           <Route path="/" component={Landing} />
           <Route path="/login" component={Login} />
@@ -73,7 +71,6 @@ function App() {
 
   return (
     <>
-      <TawkToChat />
       <Switch>
         {/* Admin routes */}
         <Route path="/admin/:rest*" component={Admin} />
