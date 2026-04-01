@@ -27,6 +27,7 @@ export function Header({ onSignIn, onGetStarted }: HeaderProps) {
 
   const NAV_LINKS = [
     { label: "Exams", href: "/exams" },
+    { label: "Sample Questions", href: "/sample-questions" },
     { label: "Pricing", href: "/pricing" },
     { label: "About", href: "/about" },
     { label: "Contact", href: "/contact" },

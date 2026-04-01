@@ -17,6 +17,7 @@ import About from "./pages/About";
 import FAQ from "./pages/FAQ";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
+import SampleQuestions from "./pages/SampleQuestions";
 import Categories from "./pages/Categories";
 import TopicSelection from "./pages/TopicSelection";
 import Performance from "./pages/Performance";
@@ -62,6 +63,7 @@ function App() {
           <Route path="/faq" component={FAQ} />
           <Route path="/privacy" component={PrivacyPolicy} />
           <Route path="/terms" component={TermsOfService} />
+          <Route path="/sample-questions" component={SampleQuestions} />
           <Route component={Landing} />
         </Switch>
       </>
@@ -96,6 +98,7 @@ function App() {
       <Route path="/faq" component={FAQ} />
       <Route path="/privacy" component={PrivacyPolicy} />
       <Route path="/terms" component={TermsOfService} />
+      <Route path="/sample-questions" component={SampleQuestions} />
 
       {/* Redirect login/signup for authenticated users */}
       <Route path="/login">
