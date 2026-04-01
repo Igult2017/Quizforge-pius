@@ -1,14 +1,20 @@
 import Stripe from "stripe";
 
-if (!process.env.STRIPE_SECRET_KEY) {
-  console.error(
-    "[Stripe] ERROR: STRIPE_SECRET_KEY is not set. Payment processing will fail!"
-  );
-}
+let _stripe: Stripe | null = null;
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
-  apiVersion: "2025-01-27.acacia",
-});
+function getStripe(): Stripe {
+  if (!process.env.STRIPE_SECRET_KEY) {
+    throw new Error(
+      "Payment processing is not configured. Please set STRIPE_SECRET_KEY."
+    );
+  }
+  if (!_stripe) {
+    _stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+      apiVersion: "2025-01-27.acacia",
+    });
+  }
+  return _stripe;
+}
 
 const PLAN_NAMES: Record<string, string> = {
   weekly: "NurseBrace Weekly Plan",
@@ -31,16 +37,12 @@ export async function createCheckoutSession(data: {
   phone?: string;
   merchantReference: string;
   plan: string;
-  amountCents: number; // e.g. 1999 for $19.99
-  currency: string;   // e.g. "USD"
-  successUrl: string; // must contain {CHECKOUT_SESSION_ID} or ?session_id=...
+  amountCents: number;
+  currency: string;
+  successUrl: string;
   cancelUrl: string;
 }): Promise<Stripe.Checkout.Session> {
-  if (!process.env.STRIPE_SECRET_KEY) {
-    throw new Error(
-      "Payment processing is not configured. Please set STRIPE_SECRET_KEY."
-    );
-  }
+  const stripe = getStripe();
 
   const session = await stripe.checkout.sessions.create({
     payment_method_types: ["card"],
@@ -61,7 +63,6 @@ export async function createCheckoutSession(data: {
         quantity: 1,
       },
     ],
-    // Store our internal reference and customer info in metadata
     metadata: {
       merchant_reference: data.merchantReference,
       plan: data.plan,
@@ -83,6 +84,7 @@ export async function createCheckoutSession(data: {
 export async function retrieveCheckoutSession(
   sessionId: string
 ): Promise<Stripe.Checkout.Session> {
+  const stripe = getStripe();
   const session = await stripe.checkout.sessions.retrieve(sessionId, {
     expand: ["payment_intent"],
   });
@@ -97,6 +99,7 @@ export function constructWebhookEvent(
   payload: Buffer,
   signature: string
 ): Stripe.Event {
+  const stripe = getStripe();
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
   if (!webhookSecret) {
     throw new Error(
