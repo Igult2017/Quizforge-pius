@@ -613,7 +613,7 @@ export default function NurseBrace() {
             <div style={{ display:"inline-block", background:"rgba(255,255,255,0.18)", border:"1px solid rgba(255,255,255,0.35)", borderRadius:20, padding:"6px 16px", fontSize:11, fontWeight:700, letterSpacing:1, marginBottom:20, textTransform:"uppercase" }}>
               For Students Testing in the Next 2-4 Weeks
             </div>
-            <h1 style={{ fontWeight:900, fontSize:`clamp(22px,${isMobile?"5.5vw":"3.5vw"},46px)`, lineHeight:1.15, marginBottom:18 }}>
+            <h1 style={{ fontWeight:900, fontSize:`clamp(18px,${isMobile?"4.5vw":"2.6vw"},34px)`, lineHeight:1.2, marginBottom:18 }}>
               Pass Your TEAS/HESI/NCLEX Exam on Your First Try —{" "}
               <span style={{ color:"#fbbf24" }}>Without Wasting Time on the Wrong Materials</span>
             </h1>
