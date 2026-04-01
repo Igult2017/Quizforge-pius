@@ -21,7 +21,6 @@ const NAV_LINKS = [
   { label: "Exams", href: "/exams" },
   { label: "Pricing", href: "/pricing" },
   { label: "Sample Questions", href: "/sample-questions" },
-  { label: "About", href: "/about" },
   { label: "Contact", href: "/contact" },
 ];
 
