@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { Footer } from "@/components/Footer";
+import { Header } from "@/components/Header";
 import { BookOpen, Timer, Brain } from "lucide-react";
 
 /* ─── BREAKPOINT HOOK ─── */
@@ -479,7 +480,6 @@ export default function NurseBrace() {
   const [timeLeft, setTimeLeft] = useState({ h:1,m:47,s:33 });
   const [showExit, setShowExit] = useState(false);
   const [exitDismissed, setExitDismissed] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
   const [page, setPage] = useState("home");
   const w = useWidth();
   const isMobile = w < 768;
@@ -510,9 +510,7 @@ export default function NurseBrace() {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap');
         *{box-sizing:border-box;margin:0;padding:0;font-family:'Montserrat',sans-serif;}
-        .nl{color:#333;text-decoration:none;font-size:14px;font-weight:600;transition:color .2s;} .nl:hover{color:#2563eb;}
-        .bno{background:transparent;color:#2563eb;border:2px solid #2563eb;padding:9px 20px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;transition:all .2s;} .bno:hover{background:#eff6ff;}
-        .bn{background:#2563eb;color:white;border:none;padding:9px 20px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;transition:all .2s;} .bn:hover{background:#1d4ed8;transform:translateY(-1px);}
+
         .hbw{display:inline-block;border-radius:50px;padding:5px;border:2px dashed rgba(255,255,255,0.65);}
         .hbp{background:#2563eb;color:white;border:2px solid rgba(255,255,255,0.3);padding:13px 24px;border-radius:50px;font-size:14px;font-weight:800;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:8px;} .hbp:hover{background:#1d4ed8;transform:translateY(-2px);}
         .hbo{background:white;color:#1d4ed8;border:2px solid rgba(255,255,255,0.3);padding:13px 24px;border-radius:50px;font-size:14px;font-weight:800;cursor:pointer;transition:all .2s;} .hbo:hover{background:#f0f4ff;transform:translateY(-2px);}
@@ -531,8 +529,6 @@ export default function NurseBrace() {
         .ci{display:flex;align-items:center;gap:10px;margin-bottom:12px;font-size:14px;color:#374151;font-weight:500;}
         .fl{color:#2563eb;text-decoration:none;font-size:13px;display:block;margin-bottom:10px;font-weight:500;} .fl:hover{color:#1d4ed8;text-decoration:underline;}
         .sbar{position:fixed;bottom:0;left:0;right:0;background:#1d4ed8;color:white;display:flex;align-items:center;justify-content:center;gap:20px;padding:13px 24px;z-index:999;box-shadow:0 -4px 20px rgba(0,0,0,0.2);}
-        .mmenu{position:fixed;inset:0;background:white;z-index:200;display:flex;flex-direction:column;padding:88px 28px 40px;gap:0;}
-        .mml{color:#1e293b;text-decoration:none;font-size:20px;font-weight:800;padding:18px 0;border-bottom:1px solid #f1f5f9;display:block;}
         @media(max-width:768px){
           .tc{min-width:100%;}
           .pc{max-width:100%!important;min-width:100%!important;}
@@ -549,53 +545,7 @@ export default function NurseBrace() {
         }
       `}</style>
 
-      {/* NAVBAR */}
-      <nav style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:`0 ${px}`, height:64, background:"white", borderBottom:"3px solid #2563eb", position:"sticky", top:0, zIndex:100, boxShadow:"0 2px 12px rgba(0,0,0,0.06)" }}>
-        <span style={{ fontWeight:900, fontSize:isMobile?18:22, color:"#2563eb", letterSpacing:"-0.5px", cursor:"pointer" }} onClick={()=>{setPage("home");window.scrollTo({top:0,behavior:"smooth"});}}>NurseBrace</span>
-        {!isMobile ? (
-          <>
-            <div style={{ display:"flex", gap:32, alignItems:"center" }}>
-              <a href="#" className="nl" onClick={e=>{e.preventDefault();goExams();}}>Exams</a>
-              <a href="#pricing" className="nl" onClick={e=>{e.preventDefault();scrollToPricing();}}>Pricing</a>
-              <a href="#" className="nl" onClick={e=>{e.preventDefault();setPage("questions");window.scrollTo({top:0,behavior:"smooth"});}}>Sample Questions</a>
-            </div>
-            <div style={{ display:"flex", gap:10 }}>
-              <button className="bno" onClick={goLogin}>Sign In</button>
-              <button className="bn" onClick={goSignup}>Get Started</button>
-            </div>
-          </>
-        ) : (
-          <button onClick={()=>setMenuOpen(!menuOpen)} style={{ background:"none", border:"none", cursor:"pointer", padding:8, display:"flex", flexDirection:"column", gap:5 }}>
-            {menuOpen
-              ? <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="#2563eb" strokeWidth="2.5" strokeLinecap="round"/></svg>
-              : <><span style={{ display:"block",width:24,height:2.5,background:"#2563eb",borderRadius:2 }}/><span style={{ display:"block",width:24,height:2.5,background:"#2563eb",borderRadius:2 }}/><span style={{ display:"block",width:18,height:2.5,background:"#2563eb",borderRadius:2 }}/></>
-            }
-          </button>
-        )}
-      </nav>
-
-      {/* MOBILE MENU */}
-      {menuOpen && isMobile && (
-        <div className="mmenu">
-          <button onClick={()=>setMenuOpen(false)} style={{ position:"absolute",top:16,right:16,background:"none",border:"none",cursor:"pointer",padding:8 }}>
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="#2563eb" strokeWidth="2.5" strokeLinecap="round"/></svg>
-          </button>
-          <span style={{ fontWeight:900, fontSize:22, color:"#2563eb", marginBottom:16 }}>NurseBrace</span>
-          {["Exams","Pricing","Sample Questions"].map(l=>(
-            <a key={l} href="#" className="mml" onClick={e=>{
-              e.preventDefault();
-              setMenuOpen(false);
-              if(l==="Sample Questions"){setPage("questions");window.scrollTo({top:0,behavior:"smooth"});}
-              else if(l==="Exams"){goExams();}
-              else if(l==="Pricing"){scrollToPricing();}
-            }}>{l}</a>
-          ))}
-          <div style={{ display:"flex", flexDirection:"column", gap:12, marginTop:28 }}>
-            <button className="bno" style={{ padding:"14px",fontSize:15 }} onClick={goLogin}>Sign In</button>
-            <button className="bn" style={{ padding:"14px",fontSize:15 }} onClick={goSignup}>Get Started</button>
-          </div>
-        </div>
-      )}
+      <Header onSignIn={goLogin} onGetStarted={goSignup} />
 
       {page === "questions" ? (
         <SampleQuestionsPage

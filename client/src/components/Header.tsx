@@ -1,7 +1,5 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,7 +8,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Menu, X, Crown, Settings, User, LogOut } from "lucide-react";
+import { Crown, Settings, User, LogOut } from "lucide-react";
 import { logout } from "@/lib/firebase";
 import { useUserData } from "@/hooks/useUserData";
 
@@ -19,45 +17,78 @@ interface HeaderProps {
   onGetStarted?: () => void;
 }
 
+const NAV_LINKS = [
+  { label: "Exams", href: "/exams" },
+  { label: "Pricing", href: "/pricing" },
+  { label: "Sample Questions", href: "/sample-questions" },
+  { label: "About", href: "/about" },
+  { label: "Contact", href: "/contact" },
+];
+
 export function Header({ onSignIn, onGetStarted }: HeaderProps) {
   const [, setLocation] = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
-  const { isAuthenticated, userData, hasActiveSubscription, allFreeTrialsUsed } = useUserData();
+  const { isAuthenticated, userData, hasActiveSubscription, allFreeTrialsUsed, subscription } = useUserData();
   const isAdmin = userData?.isAdmin || false;
 
-  const NAV_LINKS = [
-    { label: "Exams", href: "/exams" },
-    { label: "Sample Questions", href: "/sample-questions" },
-    { label: "Pricing", href: "/pricing" },
-    { label: "About", href: "/about" },
-    { label: "Contact", href: "/contact" },
-  ];
-
   const close = () => setMenuOpen(false);
+  const handleSignIn = () => { (onSignIn || (() => setLocation("/login")))(); close(); };
+  const handleGetStarted = () => { (onGetStarted || (() => setLocation("/signup")))(); close(); };
 
   return (
-    <header className="sticky top-0 z-50 bg-white border-b-[3px] border-blue-600 shadow-sm">
+    <header
+      style={{
+        position: "sticky",
+        top: 0,
+        zIndex: 100,
+        background: "white",
+        borderBottom: "3px solid #2563eb",
+        boxShadow: "0 2px 12px rgba(0,0,0,0.06)",
+        fontFamily: "'Montserrat', sans-serif",
+      }}
+    >
       <div
-        style={{ fontFamily: "'Montserrat', sans-serif" }}
-        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between"
+        style={{
+          maxWidth: 1200,
+          margin: "0 auto",
+          padding: "0 28px",
+          height: 64,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
       >
         {/* Logo */}
         <Link
           href="/"
-          className="font-black text-xl text-blue-600 tracking-tight select-none"
-          style={{ letterSpacing: "-0.5px" }}
+          style={{
+            fontWeight: 900,
+            fontSize: 22,
+            color: "#2563eb",
+            letterSpacing: "-0.5px",
+            textDecoration: "none",
+            cursor: "pointer",
+          }}
           onClick={close}
         >
           NurseBrace
         </Link>
 
         {/* Desktop nav */}
-        <nav className="hidden md:flex items-center gap-7">
+        <nav className="hidden md:flex" style={{ gap: 32, alignItems: "center" }}>
           {NAV_LINKS.map((l) => (
             <Link
               key={l.href}
               href={l.href}
-              className="text-sm font-600 font-semibold text-gray-600 hover:text-blue-600 transition-colors"
+              style={{
+                color: "#333",
+                textDecoration: "none",
+                fontSize: 14,
+                fontWeight: 600,
+                transition: "color 0.2s",
+              }}
+              onMouseEnter={e => (e.currentTarget.style.color = "#2563eb")}
+              onMouseLeave={e => (e.currentTarget.style.color = "#333")}
             >
               {l.label}
             </Link>
@@ -65,56 +96,53 @@ export function Header({ onSignIn, onGetStarted }: HeaderProps) {
         </nav>
 
         {/* Desktop actions */}
-        <div className="hidden md:flex items-center gap-2">
+        <div className="hidden md:flex" style={{ gap: 10, alignItems: "center" }}>
           {isAuthenticated ? (
             <>
               {/* Subscription / admin badge */}
               {isAdmin ? (
-                <Badge variant="secondary" className="gap-1">
-                  <Crown className="h-3 w-3" />
-                  Admin
-                </Badge>
+                <span style={{ fontSize: 12, fontWeight: 700, color: "#2563eb", border: "1.5px solid #2563eb", borderRadius: 20, padding: "3px 12px", display: "flex", alignItems: "center", gap: 4 }}>
+                  <Crown style={{ width: 12, height: 12 }} /> Admin
+                </span>
               ) : hasActiveSubscription ? (
-                <Badge variant="secondary" className="gap-1">
-                  <Crown className="h-3 w-3" />
-                  {userData?.subscription?.plan === "weekly" ? "Weekly" : "Monthly"} Plan
-                </Badge>
+                <span style={{ fontSize: 12, fontWeight: 700, color: "#2563eb", border: "1.5px solid #2563eb", borderRadius: 20, padding: "3px 12px", display: "flex", alignItems: "center", gap: 4 }}>
+                  <Crown style={{ width: 12, height: 12 }} />
+                  {subscription?.plan === "weekly" ? "Weekly" : "Monthly"} Plan
+                </span>
               ) : allFreeTrialsUsed ? (
-                <Button
-                  variant="default"
-                  size="sm"
+                <button
                   onClick={() => setLocation("/pricing")}
-                  className="bg-blue-600 hover:bg-blue-700 font-bold"
+                  style={{ background: "#2563eb", color: "white", border: "none", padding: "9px 20px", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 6, transition: "all 0.2s" }}
+                  onMouseEnter={e => (e.currentTarget.style.background = "#1d4ed8")}
+                  onMouseLeave={e => (e.currentTarget.style.background = "#2563eb")}
                 >
-                  <Crown className="mr-1.5 h-3.5 w-3.5" />
-                  Subscribe
-                </Button>
+                  <Crown style={{ width: 13, height: 13 }} /> Subscribe
+                </button>
               ) : (
-                <Badge variant="outline">Free Trial</Badge>
+                <span style={{ fontSize: 12, fontWeight: 700, color: "#555", border: "1.5px solid #ddd", borderRadius: 20, padding: "3px 12px" }}>
+                  Free Trial
+                </span>
               )}
 
               {isAdmin && (
-                <Button
-                  variant="outline"
-                  size="sm"
+                <button
                   onClick={() => setLocation("/admin")}
-                  className="font-bold border-blue-600 text-blue-600 hover:bg-blue-50"
+                  style={{ background: "transparent", color: "#2563eb", border: "2px solid #2563eb", padding: "9px 20px", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 6, transition: "all 0.2s" }}
+                  onMouseEnter={e => (e.currentTarget.style.background = "#eff6ff")}
+                  onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
                 >
-                  <Settings className="mr-1.5 h-3.5 w-3.5" />
-                  Admin
-                </Button>
+                  <Settings style={{ width: 13, height: 13 }} /> Admin
+                </button>
               )}
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="rounded-full border border-gray-200"
+                  <button
+                    style={{ background: "transparent", border: "1.5px solid #e5e7eb", borderRadius: "50%", width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
                   >
-                    <User className="h-4 w-4" />
-                    <span className="sr-only">Profile</span>
-                  </Button>
+                    <User style={{ width: 16, height: 16, color: "#555" }} />
+                    <span style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0,0,0,0)" }}>Profile</span>
+                  </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuLabel>
@@ -124,7 +152,7 @@ export function Header({ onSignIn, onGetStarted }: HeaderProps) {
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => logout()}>
-                    <LogOut className="mr-2 h-4 w-4" />
+                    <LogOut style={{ width: 16, height: 16, marginRight: 8 }} />
                     Log out
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -133,14 +161,18 @@ export function Header({ onSignIn, onGetStarted }: HeaderProps) {
           ) : (
             <>
               <button
-                className="text-sm font-bold text-blue-600 border-2 border-blue-600 px-4 py-2 rounded-lg hover:bg-blue-50 transition-colors"
-                onClick={onSignIn || (() => setLocation("/login"))}
+                onClick={handleSignIn}
+                style={{ background: "transparent", color: "#2563eb", border: "2px solid #2563eb", padding: "9px 20px", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer", transition: "all 0.2s" }}
+                onMouseEnter={e => (e.currentTarget.style.background = "#eff6ff")}
+                onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
               >
                 Sign In
               </button>
               <button
-                className="text-sm font-bold text-white bg-blue-600 px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-                onClick={onGetStarted || (() => setLocation("/signup"))}
+                onClick={handleGetStarted}
+                style={{ background: "#2563eb", color: "white", border: "none", padding: "9px 20px", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer", transition: "all 0.2s" }}
+                onMouseEnter={e => { e.currentTarget.style.background = "#1d4ed8"; e.currentTarget.style.transform = "translateY(-1px)"; }}
+                onMouseLeave={e => { e.currentTarget.style.background = "#2563eb"; e.currentTarget.style.transform = "translateY(0)"; }}
               >
                 Get Started
               </button>
@@ -150,63 +182,82 @@ export function Header({ onSignIn, onGetStarted }: HeaderProps) {
 
         {/* Mobile hamburger */}
         <button
-          className="md:hidden p-2 rounded-md text-blue-600"
+          className="flex md:hidden"
           onClick={() => setMenuOpen(!menuOpen)}
+          style={{ background: "none", border: "none", cursor: "pointer", padding: 8, flexDirection: "column", gap: 5 }}
           aria-label="Toggle menu"
         >
-          {menuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          {menuOpen ? (
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path d="M6 6l12 12M18 6L6 18" stroke="#2563eb" strokeWidth="2.5" strokeLinecap="round" />
+            </svg>
+          ) : (
+            <>
+              <span style={{ display: "block", width: 24, height: 2.5, background: "#2563eb", borderRadius: 2 }} />
+              <span style={{ display: "block", width: 24, height: 2.5, background: "#2563eb", borderRadius: 2 }} />
+              <span style={{ display: "block", width: 18, height: 2.5, background: "#2563eb", borderRadius: 2 }} />
+            </>
+          )}
         </button>
       </div>
 
-      {/* Mobile menu */}
+      {/* Mobile menu — full-screen overlay */}
       {menuOpen && (
         <div
-          className="md:hidden fixed inset-0 top-16 bg-white z-40 flex flex-col px-6 pt-6 pb-10 gap-0 border-t border-gray-100"
-          style={{ fontFamily: "'Montserrat', sans-serif" }}
+          className="md:hidden"
+          style={{ position: "fixed", inset: 0, background: "white", zIndex: 200, display: "flex", flexDirection: "column", padding: "88px 28px 40px", gap: 0 }}
         >
+          <button
+            onClick={close}
+            style={{ position: "absolute", top: 16, right: 16, background: "none", border: "none", cursor: "pointer", padding: 8 }}
+          >
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+              <path d="M6 6l12 12M18 6L6 18" stroke="#2563eb" strokeWidth="2.5" strokeLinecap="round" />
+            </svg>
+          </button>
+
+          <span style={{ fontWeight: 900, fontSize: 22, color: "#2563eb", marginBottom: 16 }}>NurseBrace</span>
+
           {NAV_LINKS.map((l) => (
             <Link
               key={l.href}
               href={l.href}
-              className="text-lg font-extrabold text-gray-800 py-4 border-b border-gray-100 block"
               onClick={close}
+              style={{ color: "#1e293b", textDecoration: "none", fontSize: 20, fontWeight: 800, padding: "18px 0", borderBottom: "1px solid #f1f5f9", display: "block" }}
             >
               {l.label}
             </Link>
           ))}
 
-          <div className="flex flex-col gap-3 mt-6">
+          <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 28 }}>
             {isAuthenticated ? (
               <>
                 {isAdmin && (
-                  <Button
-                    className="font-bold border-blue-600 text-blue-600 bg-transparent border-2 hover:bg-blue-50"
+                  <button
                     onClick={() => { setLocation("/admin"); close(); }}
+                    style={{ background: "transparent", color: "#2563eb", border: "2px solid #2563eb", padding: 14, borderRadius: 8, fontSize: 15, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
                   >
-                    <Settings className="mr-2 h-4 w-4" />
-                    Admin Panel
-                  </Button>
+                    <Settings style={{ width: 16, height: 16 }} /> Admin Panel
+                  </button>
                 )}
-                <Button
-                  variant="destructive"
-                  className="font-bold"
+                <button
                   onClick={() => { logout(); close(); }}
+                  style={{ background: "#ef4444", color: "white", border: "none", padding: 14, borderRadius: 8, fontSize: 15, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
                 >
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Log Out
-                </Button>
+                  <LogOut style={{ width: 16, height: 16 }} /> Log Out
+                </button>
               </>
             ) : (
               <>
                 <button
-                  className="w-full text-base font-bold text-blue-600 border-2 border-blue-600 py-3 rounded-lg hover:bg-blue-50 transition-colors"
-                  onClick={() => { (onSignIn || (() => setLocation("/login")))(); close(); }}
+                  onClick={handleSignIn}
+                  style={{ width: "100%", background: "transparent", color: "#2563eb", border: "2px solid #2563eb", padding: 14, borderRadius: 8, fontSize: 15, fontWeight: 700, cursor: "pointer" }}
                 >
                   Sign In
                 </button>
                 <button
-                  className="w-full text-base font-bold text-white bg-blue-600 py-3 rounded-lg hover:bg-blue-700 transition-colors"
-                  onClick={() => { (onGetStarted || (() => setLocation("/signup")))(); close(); }}
+                  onClick={handleGetStarted}
+                  style={{ width: "100%", background: "#2563eb", color: "white", border: "none", padding: 14, borderRadius: 8, fontSize: 15, fontWeight: 700, cursor: "pointer" }}
                 >
                   Get Started
                 </button>
