@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
+import { Footer } from "@/components/Footer";
 
 /* ─── BREAKPOINT HOOK ─── */
 function useWidth() {
@@ -846,32 +847,7 @@ export default function NurseBrace() {
       </section>
 
       {/* FOOTER */}
-      <footer style={{ background:"#0f172a", padding:`${isMobile?"40px":"56px"} ${px} 32px` }}>
-        <div style={{ maxWidth:1200, margin:"0 auto" }}>
-          <div style={{ display:"grid", gridTemplateColumns:isMobile?"1fr 1fr":isTablet?"repeat(3,1fr)":"repeat(5,1fr)", gap:isMobile?24:40, marginBottom:48, alignItems:"start" }}>
-            <div style={{ gridColumn:isMobile?"1/-1":undefined, marginBottom:isMobile?8:0 }}>
-              <span style={{ fontWeight:900, fontSize:22, color:"#2563eb" }}>NurseBrace</span>
-              <p style={{ fontSize:13, color:"#94a3b8", marginTop:10, lineHeight:1.65, fontWeight:500 }}>Empowering nursing students to pass on the first try.</p>
-            </div>
-            {[
-              { label:"Product", links:[{text:"Exams",onClick:goExams},{text:"Pricing",onClick:scrollToPricing}] },
-              { label:"Company", links:[{text:"About Us",onClick:()=>navigate("/about")},{text:"Contact",onClick:()=>navigate("/contact")}] },
-              { label:"Resources", links:[{text:"FAQ",onClick:()=>navigate("/faq")},{text:"Sample Questions",onClick:()=>{setPage("questions");window.scrollTo({top:0,behavior:"smooth"});}}] },
-              { label:"Legal", links:[{text:"Privacy Policy",onClick:()=>navigate("/privacy")},{text:"Terms of Service",onClick:()=>navigate("/terms")}] },
-            ].map(col=>(
-              <div key={col.label}>
-                <p style={{ fontWeight:800, fontSize:12, color:"#e2e8f0", marginBottom:16, borderBottom:"1px solid rgba(255,255,255,0.1)", paddingBottom:8, textTransform:"uppercase", letterSpacing:0.8 }}>{col.label}</p>
-                {col.links.map(l=>(
-                  <a key={l.text} href="#" className="fl" onClick={e=>{e.preventDefault();l.onClick();}}>{l.text}</a>
-                ))}
-              </div>
-            ))}
-          </div>
-          <div style={{ borderTop:"1px solid rgba(255,255,255,0.08)", paddingTop:24, textAlign:isMobile?"center":undefined }}>
-            <p style={{ fontSize:13, color:"#64748b", fontWeight:500 }}>2026 NurseBrace. All rights reserved.</p>
-          </div>
-        </div>
-      </footer>
+      <Footer />
 
       </> /* end home page */}
 

@@ -1,7 +1,6 @@
 import { Header } from "@/components/Header";
-import { useLocation } from "wouter";
+import { Footer } from "@/components/Footer";
 import { FileText } from "lucide-react";
-import { Button } from "@/components/ui/button";
 
 const LAST_UPDATED = "January 1, 2026";
 
@@ -167,8 +166,6 @@ const SECTIONS: Section[] = [
 ];
 
 export default function TermsOfService() {
-  const [, navigate] = useLocation();
-
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Header />
@@ -222,20 +219,9 @@ export default function TermsOfService() {
           ))}
         </div>
 
-        <div className="mt-14 border-t border-gray-200 pt-8 flex flex-col sm:flex-row gap-3 justify-between items-center">
-          <p className="text-sm text-gray-400">
-            © {new Date().getFullYear()} NurseBrace. All rights reserved.
-          </p>
-          <div className="flex gap-3">
-            <Button variant="outline" size="sm" onClick={() => navigate("/privacy")}>
-              Privacy Policy
-            </Button>
-            <Button size="sm" onClick={() => navigate("/contact")}>
-              Contact Us
-            </Button>
-          </div>
-        </div>
       </main>
+
+      <Footer />
     </div>
   );
 }

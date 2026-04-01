@@ -1,80 +1,9 @@
 import { Header } from "@/components/Header";
+import { Footer } from "@/components/Footer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Target, Users, Award, Heart, GraduationCap, TrendingUp } from "lucide-react";
-import { Link, useLocation } from "wouter";
-import { Twitter, Facebook, Instagram } from "lucide-react";
-
-const Footer = () => {
-  const headerClasses = "font-semibold text-gray-900 mb-4 border-b border-gray-300 pb-2 text-base font-poppins";
-
-  return (
-    <footer className="bg-gray-100 text-gray-900 pt-16 border-t border-gray-200">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-8 py-12">
-          
-          <div className="col-span-2 lg:col-span-1">
-            <h3 className="text-3xl font-extrabold mb-4 text-blue-600 font-poppins">NurseBrace</h3>
-            <p className="text-sm text-gray-700 max-w-xs leading-relaxed font-poppins">
-              Empowering healthcare professionals.
-            </p>
-          </div>
-
-          <div>
-            <h4 className={headerClasses}>Product</h4>
-            <ul className="space-y-3 text-sm">
-              <li><Link href="/exams" className="text-blue-600 hover:text-blue-800 transition duration-150 font-poppins">Exams</Link></li>
-              <li><Link href="/pricing" className="text-blue-600 hover:text-blue-800 transition duration-150 font-poppins">Pricing</Link></li>
-            </ul>
-          </div>
-
-          <div>
-            <h4 className={headerClasses}>Company</h4>
-            <ul className="space-y-3 text-sm">
-              <li><Link href="/about" className="text-blue-600 hover:text-blue-800 transition duration-150 font-poppins">About Us</Link></li>
-              <li><Link href="/contact" className="text-blue-600 hover:text-blue-800 transition duration-150 font-poppins">Contact</Link></li>
-            </ul>
-          </div>
-
-          <div>
-            <h4 className={headerClasses}>Resources</h4>
-            <ul className="space-y-3 text-sm">
-              <li><Link href="/faq" className="text-blue-600 hover:text-blue-800 transition duration-150 font-poppins">FAQ</Link></li>
-            </ul>
-          </div>
-
-          <div>
-            <h4 className={headerClasses}>Legal</h4>
-            <ul className="space-y-3 text-sm">
-              <li><Link href="/privacy" className="text-blue-600 hover:text-blue-800 transition duration-150 font-poppins">Privacy Policy</Link></li>
-              <li><Link href="/terms" className="text-blue-600 hover:text-blue-800 transition duration-150 font-poppins">Terms of Service</Link></li>
-            </ul>
-          </div>
-        </div>
-
-        <div className="border-t-2 border-gray-200 py-6 md:flex md:items-center md:justify-between">
-          <p className="text-sm text-gray-600 text-center md:text-left mb-4 md:mb-0 font-poppins">
-            © {new Date().getFullYear()} NurseBrace. All rights reserved.
-          </p>
-
-          <div className="flex justify-center md:justify-end space-x-6">
-            <a href="#" aria-label="Twitter" className="text-gray-600 hover:text-blue-600 transition">
-              <Twitter className="h-5 w-5 md:h-6 md:w-6" />
-            </a>
-            <a href="#" aria-label="Facebook" className="text-gray-600 hover:text-blue-600 transition">
-              <Facebook className="h-5 w-5 md:h-6 md:w-6" />
-            </a>
-            <a href="#" aria-label="Instagram" className="text-gray-600 hover:text-blue-600 transition">
-              <Instagram className="h-5 w-5 md:h-6 md:w-6" />
-            </a>
-          </div>
-        </div>
-
-      </div>
-    </footer>
-  );
-};
+import { useLocation } from "wouter";
 
 export default function About() {
   const [, setLocation] = useLocation();

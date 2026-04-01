@@ -298,8 +298,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      // Build performance map
-      const performanceMap = new Map(performance.map(p => [p.subject, p]));
+      // Build performance map using only subject-level records (topic IS NULL).
+      // Topic-level records exist alongside subject-level ones; using all of them
+      // collapses duplicates via Map's last-write-wins and shows wrong accuracy.
+      const performanceMap = new Map(
+        performance.filter(p => p.topic === null).map(p => [p.subject, p])
+      );
       
       // Merge with all subjects from database
       const fullPerformance = Array.from(subjectTopicsMap.entries()).map(([subject, topicsSet]) => {

@@ -132,6 +132,11 @@ export default function Quiz() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/quiz"] });
+      // Invalidate performance caches so Performance page and TopicSelection
+      // show updated accuracy immediately after this quiz.
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/user/topic-performance"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/user/weak-topics"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
       setLocation(`/results?attemptId=${attemptId}`);
     },
     onError: (error: Error) => {
