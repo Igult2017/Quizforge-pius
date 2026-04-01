@@ -689,7 +689,10 @@ export class PostgresStorage implements IStorage {
   }
 
   async getWeakTopics(userId: string, category: string, threshold: number = 70): Promise<UserTopicPerformance[]> {
-    // Get topics where accuracy is below threshold and user has attempted at least 5 questions
+    // Get subjects where accuracy is below threshold and user has attempted at least 5 questions.
+    // Filter to subject-level records only (topic IS NULL) — the per-subject aggregates.
+    // Including topic-level rows causes the same subject to appear multiple times in the
+    // adaptive loop, making it query and count the same question pool repeatedly.
     return await db
       .select()
       .from(userTopicPerformance)
@@ -697,7 +700,8 @@ export class PostgresStorage implements IStorage {
         eq(userTopicPerformance.userId, userId),
         eq(userTopicPerformance.category, category),
         lte(userTopicPerformance.accuracy, threshold),
-        gte(userTopicPerformance.totalAttempted, 5)
+        gte(userTopicPerformance.totalAttempted, 5),
+        sql`${userTopicPerformance.topic} IS NULL`
       ))
       .orderBy(userTopicPerformance.accuracy);
   }
