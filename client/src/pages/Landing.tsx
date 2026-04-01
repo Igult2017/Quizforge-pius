@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { Footer } from "@/components/Footer";
+import { BookOpen, Timer, Brain } from "lucide-react";
 
 /* ─── BREAKPOINT HOOK ─── */
 function useWidth() {
@@ -518,7 +519,7 @@ export default function NurseBrace() {
         .cta{background:#2563eb;color:white;border:none;padding:17px 36px;border-radius:12px;font-size:16px;font-weight:800;cursor:pointer;transition:all .2s;display:inline-block;} .cta:hover{background:#1d4ed8;transform:translateY(-3px);box-shadow:0 12px 32px rgba(37,99,235,0.4);}
         .ctag{background:#16a34a;color:white;border:none;padding:17px 36px;border-radius:12px;font-size:16px;font-weight:800;cursor:pointer;transition:all .2s;display:inline-block;} .ctag:hover{background:#15803d;transform:translateY(-3px);}
         .pi{display:flex;align-items:center;gap:16px;padding:20px 22px;background:white;border-radius:14px;border:1px solid #e5e7eb;box-shadow:0 2px 10px rgba(0,0,0,0.05);margin-bottom:14px;}
-        .si{display:flex;align-items:flex-start;gap:14px;padding:16px 20px;background:#f0fdf4;border-radius:12px;border-left:4px solid #22c55e;margin-bottom:12px;}
+        .si{display:flex;align-items:center;gap:16px;padding:20px 22px;background:white;border-radius:14px;border:1px solid #e5e7eb;box-shadow:0 2px 10px rgba(0,0,0,0.05);margin-bottom:14px;}
         .wi{display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid #f1f5f9;font-size:15px;font-weight:600;color:#1e293b;}
         .db{display:flex;align-items:flex-start;gap:12px;padding:14px 18px;background:#fef2f2;border-radius:10px;margin-bottom:10px;font-size:14px;color:#7f1d1d;font-weight:600;}
         .dg{display:flex;align-items:flex-start;gap:12px;padding:14px 18px;background:#f0fdf4;border-radius:10px;margin-bottom:10px;font-size:14px;color:#14532d;font-weight:600;}
@@ -672,8 +673,15 @@ export default function NurseBrace() {
             <span style={{ fontSize:36 }}>💡</span>
             <h2 style={{ fontWeight:900, fontSize:"clamp(20px,3vw,36px)", color:"#111827", marginTop:12 }}>This Is What Actually Works</h2>
           </div>
-          {["Focus on high-yield topics that repeatedly appear on real exams","Match the exact difficulty and style of real TEAS/HESI questions","Train you to think the way the exam wants you to think"].map((item,i)=>(
-            <div key={i} className="si"><CheckIcon color="#22c55e"/><p style={{ fontSize:isMobile?14:15, color:"#15803d", fontWeight:700, lineHeight:1.6 }}>{item}</p></div>
+          {[
+            { icon:<BookOpen size={22} color="#16a34a"/>, text:"Focus on high-yield topics that repeatedly appear on real exams" },
+            { icon:<Timer size={22} color="#16a34a"/>, text:"Match the exact difficulty and style of real TEAS/HESI questions" },
+            { icon:<Brain size={22} color="#16a34a"/>, text:"Train you to think the way the exam wants you to think" },
+          ].map((item,i)=>(
+            <div key={i} className="si">
+              <div style={{ flexShrink:0, width:52, height:52, borderRadius:12, background:"#f0fdf4", border:"1px solid #bbf7d0", display:"flex", alignItems:"center", justifyContent:"center" }}>{item.icon}</div>
+              <p style={{ fontSize:isMobile?14:15, color:"#1e293b", fontWeight:500, lineHeight:1.6, margin:0 }}>{item.text}</p>
+            </div>
           ))}
           <div style={{ background:"#2563eb", color:"white", borderRadius:14, padding:"22px 28px", marginTop:28, textAlign:"center" }}>
             <p style={{ fontSize:isMobile?14:17, fontWeight:800 }}>So when you sit for your test… <span style={{ color:"#fbbf24" }}>nothing feels new.</span></p>
