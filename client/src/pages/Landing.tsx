@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useLocation } from "wouter";
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
@@ -478,19 +478,47 @@ function SampleQuestionsPage({ isMobile, px, onHome, onPricing }: { isMobile: bo
 export default function NurseBrace() {
   const [, navigate] = useLocation();
   const [timeLeft, setTimeLeft] = useState({ h:1,m:47,s:33 });
-  const [showExit, setShowExit] = useState(false);
-  const [exitDismissed, setExitDismissed] = useState(false);
+  const [showExit, setShowExitState] = useState(false);
   const [page, setPage] = useState("home");
   const w = useWidth();
   const isMobile = w < 768;
   const isTablet = w >= 768 && w < 1024;
   const isNarrow = w < 480;
 
+  // Popup control via refs to avoid stale closures in event handlers
+  const showExitRef = useRef(false);
+  const popupCountRef = useRef(0);
+  const lastShownAtRef = useRef(0);
+  const MAX_SHOWS = 5;
+  const COOLDOWN_MS = 150_000; // 2.5 minutes between shows
+
+  const tryShowPopup = useCallback(() => {
+    if (showExitRef.current) return;
+    if (popupCountRef.current >= MAX_SHOWS) return;
+    if (Date.now() - lastShownAtRef.current < COOLDOWN_MS) return;
+    showExitRef.current = true;
+    popupCountRef.current += 1;
+    lastShownAtRef.current = Date.now();
+    setShowExitState(true);
+  }, []);
+
+  const dismissPopup = useCallback((permanent = false) => {
+    showExitRef.current = false;
+    if (permanent) popupCountRef.current = MAX_SHOWS;
+    setShowExitState(false);
+  }, []);
+
   useEffect(()=>{ const t=setInterval(()=>setTimeLeft(p=>{let{h,m,s}=p;s--;if(s<0){s=59;m--;}if(m<0){m=59;h--;}if(h<0){h=1;m=59;s=59;}return{h,m,s};}),1000);return()=>clearInterval(t); },[]);
-  // Desktop: trigger when mouse moves toward the top of the browser (exit intent)
-  useEffect(()=>{ if(exitDismissed||isMobile||isTablet)return; const fn=(e: MouseEvent)=>{if(e.clientY<10)setShowExit(true);}; document.addEventListener("mouseleave",fn);return()=>document.removeEventListener("mouseleave",fn); },[exitDismissed,isMobile,isTablet]);
-  // Mobile/tablet: trigger when user scrolls back up after reading (exit intent)
-  useEffect(()=>{ if(exitDismissed||(!isMobile&&!isTablet))return; let lastY=window.scrollY; const fn=()=>{ const y=window.scrollY; if(lastY-y>80&&y>300)setShowExit(true); lastY=y; }; window.addEventListener("scroll",fn,{passive:true}); return()=>window.removeEventListener("scroll",fn); },[exitDismissed,isMobile,isTablet]);
+  // 1. Desktop: mouse moves toward top of browser
+  useEffect(()=>{ if(isMobile||isTablet)return; const fn=(e: MouseEvent)=>{if(e.clientY<10)tryShowPopup();}; document.addEventListener("mouseleave",fn); return()=>document.removeEventListener("mouseleave",fn); },[isMobile,isTablet,tryShowPopup]);
+  // 2. Mobile/tablet: scroll back up after reading
+  useEffect(()=>{ if(!isMobile&&!isTablet)return; let lastY=window.scrollY; const fn=()=>{ const y=window.scrollY; if(lastY-y>80&&y>300)tryShowPopup(); lastY=y; }; window.addEventListener("scroll",fn,{passive:true}); return()=>window.removeEventListener("scroll",fn); },[isMobile,isTablet,tryShowPopup]);
+  // 3. All devices: 40 seconds of idle (no scroll, tap, click, or keypress)
+  useEffect(()=>{ let t: ReturnType<typeof setTimeout>; const reset=()=>{ clearTimeout(t); t=setTimeout(tryShowPopup,40_000); }; const evts=["scroll","touchstart","click","mousemove","keydown"]; evts.forEach(e=>window.addEventListener(e,reset,{passive:true})); reset(); return()=>{ clearTimeout(t); evts.forEach(e=>window.removeEventListener(e,reset)); }; },[tryShowPopup]);
+  // 4. All devices: user switches to another tab
+  useEffect(()=>{ const fn=()=>{ if(document.hidden)tryShowPopup(); }; document.addEventListener("visibilitychange",fn); return()=>document.removeEventListener("visibilitychange",fn); },[tryShowPopup]);
+  // 5. All devices: user reaches the bottom of the page
+  useEffect(()=>{ const fn=()=>{ if(window.innerHeight+window.scrollY>=document.body.offsetHeight-200)tryShowPopup(); }; window.addEventListener("scroll",fn,{passive:true}); return()=>window.removeEventListener("scroll",fn); },[tryShowPopup]);
 
   const pad=(n: number)=>String(n).padStart(2,"0");
   const px = isMobile?"16px":isTablet?"28px":"40px";
@@ -836,19 +864,19 @@ export default function NurseBrace() {
       </div>
 
       {/* EXIT POPUP */}
-      {showExit&&!exitDismissed&&(
+      {showExit&&(
         <div style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center" }}
-          onClick={()=>{ setShowExit(false); setExitDismissed(true); }}>
+          onClick={()=>dismissPopup(false)}>
           <div style={{ background:"white",borderRadius:20,padding:isMobile?"32px 24px":"48px 40px",maxWidth:480,width:"90%",textAlign:"center" }}
             onClick={e=>e.stopPropagation()}>
             <div style={{ fontSize:48,marginBottom:12 }}>⏸️</div>
             <h3 style={{ fontWeight:900,fontSize:isMobile?20:24,color:"#111827",marginBottom:12 }}>Wait! Don't Leave Empty-Handed</h3>
             <p style={{ fontSize:15,color:"#6b7280",lineHeight:1.7,marginBottom:24,fontWeight:500 }}>Get a <strong>FREE sample test</strong> before you go — see the quality yourself with zero commitment.</p>
             <button className="cta" style={{ width:"100%",marginBottom:12 }}
-              onClick={()=>{ setShowExit(false); setExitDismissed(true); scrollToSampleTest(); }}>
+              onClick={()=>{ dismissPopup(true); scrollToSampleTest(); }}>
               Yes, Give Me the Free Test
             </button>
-            <button onClick={()=>{ setShowExit(false); setExitDismissed(true); }} style={{ background:"none",border:"none",color:"#9ca3af",fontSize:13,cursor:"pointer",fontWeight:600 }}>
+            <button onClick={()=>dismissPopup(false)} style={{ background:"none",border:"none",color:"#9ca3af",fontSize:13,cursor:"pointer",fontWeight:600 }}>
               No thanks, I don't want to prepare
             </button>
           </div>
