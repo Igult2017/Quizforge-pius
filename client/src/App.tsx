@@ -23,6 +23,7 @@ import Performance from "./pages/Performance";
 import Quiz from "./pages/Quiz";
 import Results from "./pages/Results";
 import Admin from "./pages/Admin";
+import { TawkToChat } from "./components/TawkToChat";
 
 function App() {
   const { isAuthenticated, isLoading: authLoading } = useAuth();
@@ -48,6 +49,7 @@ function App() {
   if (!isAuthenticated) {
     return (
       <>
+        <TawkToChat />
         <Switch>
           <Route path="/" component={Landing} />
           <Route path="/login" component={Login} />
@@ -73,6 +75,7 @@ function App() {
 
   return (
     <>
+      <TawkToChat />
       <Switch>
         {/* Admin routes */}
         <Route path="/admin/:rest*" component={Admin} />
