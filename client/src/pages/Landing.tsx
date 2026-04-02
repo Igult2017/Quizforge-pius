@@ -487,7 +487,10 @@ export default function NurseBrace() {
   const isNarrow = w < 480;
 
   useEffect(()=>{ const t=setInterval(()=>setTimeLeft(p=>{let{h,m,s}=p;s--;if(s<0){s=59;m--;}if(m<0){m=59;h--;}if(h<0){h=1;m=59;s=59;}return{h,m,s};}),1000);return()=>clearInterval(t); },[]);
-  useEffect(()=>{ if(exitDismissed||isMobile)return; const fn=(e: MouseEvent)=>{if(e.clientY<10)setShowExit(true);}; document.addEventListener("mouseleave",fn);return()=>document.removeEventListener("mouseleave",fn); },[exitDismissed,isMobile]);
+  // Desktop: trigger when mouse moves toward the top of the browser (exit intent)
+  useEffect(()=>{ if(exitDismissed||isMobile||isTablet)return; const fn=(e: MouseEvent)=>{if(e.clientY<10)setShowExit(true);}; document.addEventListener("mouseleave",fn);return()=>document.removeEventListener("mouseleave",fn); },[exitDismissed,isMobile,isTablet]);
+  // Mobile/tablet: trigger when user scrolls back up after reading (exit intent)
+  useEffect(()=>{ if(exitDismissed||(!isMobile&&!isTablet))return; let lastY=window.scrollY; const fn=()=>{ const y=window.scrollY; if(lastY-y>80&&y>300)setShowExit(true); lastY=y; }; window.addEventListener("scroll",fn,{passive:true}); return()=>window.removeEventListener("scroll",fn); },[exitDismissed,isMobile,isTablet]);
 
   const pad=(n: number)=>String(n).padStart(2,"0");
   const px = isMobile?"16px":isTablet?"28px":"40px";
