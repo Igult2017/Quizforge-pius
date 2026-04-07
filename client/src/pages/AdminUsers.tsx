@@ -43,6 +43,11 @@ interface User {
   }>;
 }
 
+const PLAN_PRICES: Record<string, string> = {
+  weekly: "$19.99",
+  monthly: "$49.99",
+};
+
 export default function AdminUsers() {
   const { toast } = useToast();
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
@@ -485,6 +490,7 @@ export default function AdminUsers() {
                     <TableHead>Email</TableHead>
                     <TableHead>Name & Phone</TableHead>
                     <TableHead>Status</TableHead>
+                    {activeTab === "subscribers" && <TableHead>Plan</TableHead>}
                     <TableHead>Admin Access</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
@@ -534,6 +540,20 @@ export default function AdminUsers() {
                       )}
                     </div>
                   </TableCell>
+                  {activeTab === "subscribers" && (
+                    <TableCell>
+                      {user.subscription ? (
+                        <span className="font-medium capitalize">
+                          {user.subscription.plan} Plan{" "}
+                          <span className="text-muted-foreground font-normal">
+                            ({PLAN_PRICES[user.subscription.plan] ?? "—"})
+                          </span>
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </TableCell>
+                  )}
                   <TableCell>
                     {user.adminGrantedAccess ? (
                       <Badge variant="default">
