@@ -373,7 +373,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const userId = req.user.claims.sub;
-      const { category, count = 50, subjects, topics } = req.body;
+      const { category, count = 30, subjects, topics } = req.body;
       
       if (!["NCLEX", "TEAS", "HESI"].includes(category)) {
         return res.status(400).json({ error: "Invalid category" });
@@ -1042,7 +1042,7 @@ ${urls.map(url => `  <url>
       const hasFullAccess = userObj?.isAdmin || adminAccessValid || !!subscription;
 
       // Only limit for free trial users
-      const questionCount = hasFullAccess ? (req.body.count || 50) : 5;
+      const questionCount = hasFullAccess ? (req.body.count || 30) : 5;
       
       console.log(`[QUIZ] Starting quiz for user ${userId}. Full access: ${hasFullAccess}, count: ${questionCount}`);
       

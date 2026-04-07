@@ -47,6 +47,8 @@ export function QuizQuestion({
             {options.map((option, index) => {
               const optionLabel = String.fromCharCode(65 + index);
               const isSelected = selectedAnswer === option;
+              // Strip leading letter prefix added by AI generation (e.g. "A. ", "B) ", "A: ")
+              const displayText = option.replace(/^[A-Da-d][.):\s]\s*/u, "");
               return (
                 <div
                   key={index}
@@ -64,11 +66,9 @@ export function QuizQuestion({
                     <span className="text-xs font-bold">{optionLabel}</span>
                   </div>
                   <Label
-                    htmlFor={`option-${index}`}
                     className="flex-1 cursor-pointer text-base md:text-lg leading-relaxed font-medium transition-colors group-hover:text-foreground"
-                    onClick={(e) => e.stopPropagation()}
                   >
-                    <MathRenderer text={option} />
+                    <MathRenderer text={displayText} />
                   </Label>
                   {isSelected && (
                     <div className="absolute right-4 top-1/2 -translate-y-1/2">
