@@ -571,11 +571,14 @@ export class PostgresStorage implements IStorage {
 
   // Progress Tracking
   async getUserProgressByCategory(userId: string, category: string): Promise<{ answered: number; total: number; percentage: number }> {
-    // Import EXAM_CONFIGS to get total questions
-    const { EXAM_CONFIGS } = await import("./questionTopics");
-    const totalQuestions = EXAM_CONFIGS[category]?.totalQuestions || 0;
+    // Count actual questions in the database for this category (live, accurate count)
+    const [totalRow] = await db
+      .select({ count: sql<number>`cast(count(*) as int)` })
+      .from(questions)
+      .where(eq(questions.category, category));
+    const totalQuestions = totalRow?.count || 0;
 
-    // Count unique questions answered in this category across all attempts
+    // Count unique questions answered in this category across all completed attempts
     const result = await db
       .selectDistinct({ questionId: quizAnswers.questionId })
       .from(quizAnswers)
