@@ -95,9 +95,11 @@ export default function AdminGeneration() {
     );
   }
 
-  const overallProgress = status
+  const overallProgressRaw = status
     ? (status.totalGenerated / status.totalTarget) * 100
     : 0;
+  const overallProgress = Math.min(overallProgressRaw, 100);
+  const overallExceeded = overallProgressRaw > 100;
 
   const completedSubjects = status?.subjects.filter((s) => s.status === "completed").length || 0;
   const totalSubjects = status?.subjects.length || 0;
@@ -141,7 +143,11 @@ export default function AdminGeneration() {
           <div>
             <div className="flex items-center justify-between text-sm mb-2">
               <span className="text-muted-foreground">Questions</span>
-              <span className="font-medium">{overallProgress.toFixed(1)}%</span>
+              <span className="font-medium">
+                {overallExceeded
+                  ? `Target met (${status?.totalGenerated.toLocaleString()} generated)`
+                  : `${overallProgress.toFixed(1)}%`}
+              </span>
             </div>
             <Progress value={overallProgress} data-testid="progress-overall" />
           </div>
@@ -205,7 +211,9 @@ export default function AdminGeneration() {
         <CardContent>
           <div className="space-y-4">
             {status?.subjects.map((subject) => {
-              const progress = (subject.generatedCount / subject.targetCount) * 100;
+              const progressRaw = (subject.generatedCount / subject.targetCount) * 100;
+              const progress = Math.min(progressRaw, 100);
+              const exceeded = progressRaw > 100;
               const statusColor =
                 subject.status === "completed"
                   ? "text-green-600 dark:text-green-400"
@@ -254,7 +262,7 @@ export default function AdminGeneration() {
                     </div>
                     <div className="text-right ml-4 flex-shrink-0">
                       <span className={`text-sm font-medium ${statusColor}`}>
-                        {progress.toFixed(0)}%
+                        {exceeded ? "✓ Met" : `${progress.toFixed(0)}%`}
                       </span>
                     </div>
                   </div>

@@ -1598,11 +1598,18 @@ ${urls.map(url => `  <url>
         .from(questions)
         .groupBy(questions.category, questions.subject);
 
-      // Create a map of actual counts for quick lookup
+      // Create a map of actual counts for quick lookup.
+      // Also build a category-level map to catch questions stored with null subjects.
       const countsMap = new Map<string, number>();
+      const categoryTotals = new Map<string, number>();
       actualCounts.forEach(({ category, subject, count }) => {
-        const key = `${category}|${subject}`;
-        countsMap.set(key, count);
+        // Normalize key: lowercase + trim to handle casing/spacing mismatches
+        const normalizedSubject = subject ? subject.toLowerCase().trim() : null;
+        const key = `${category.toLowerCase()}|${normalizedSubject}`;
+        countsMap.set(key, (countsMap.get(key) || 0) + count);
+
+        // Track total per category (includes null-subject questions)
+        categoryTotals.set(category, (categoryTotals.get(category) || 0) + count);
       });
 
       // Get subject progress tracking (for targets)
@@ -1613,12 +1620,16 @@ ${urls.map(url => `  <url>
 
       // Merge actual counts with tracking data
       const subjectsWithActualCounts = subjects.map(subject => {
-        const key = `${subject.category}|${subject.subject}`;
-        const actualCount = countsMap.get(key) || 0;
-        
+        const normalizedKey = `${subject.category.toLowerCase()}|${subject.subject.toLowerCase().trim()}`;
+        const actualCount = countsMap.get(normalizedKey) || 0;
+
+        // Fall back to the tracked generatedCount when the DB lookup returns 0
+        // (this handles questions stored with null or mismatched subject names)
+        const resolvedCount = actualCount > 0 ? actualCount : subject.generatedCount;
+
         return {
           ...subject,
-          generatedCount: actualCount, // Use actual database count
+          generatedCount: resolvedCount,
         };
       });
 
