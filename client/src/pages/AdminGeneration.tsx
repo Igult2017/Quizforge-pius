@@ -1,10 +1,9 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { queryClient, apiRequest } from "@/lib/queryClient";
+import { queryClient } from "@/lib/queryClient";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Play, Pause, RefreshCw, CheckCircle2, Clock, AlertCircle } from "lucide-react";
+import { Play, Pause, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 type SubjectProgress = {
@@ -95,14 +94,13 @@ export default function AdminGeneration() {
     );
   }
 
-  const overallProgressRaw = status
-    ? (status.totalGenerated / status.totalTarget) * 100
-    : 0;
-  const overallProgress = Math.min(overallProgressRaw, 100);
-  const overallExceeded = overallProgressRaw > 100;
+  // Group question counts by category from actual subject data
+  const categoryTotals = status?.subjects.reduce<Record<string, number>>((acc, s) => {
+    acc[s.category] = (acc[s.category] || 0) + s.generatedCount;
+    return acc;
+  }, {}) ?? {};
 
-  const completedSubjects = status?.subjects.filter((s) => s.status === "completed").length || 0;
-  const totalSubjects = status?.subjects.length || 0;
+  const totalQuestions = Object.values(categoryTotals).reduce((a, b) => a + b, 0);
 
   return (
     <div className="p-6 space-y-6">
@@ -113,15 +111,14 @@ export default function AdminGeneration() {
         </p>
       </div>
 
-      {/* Overall Status */}
+      {/* Controls */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between gap-4">
             <div>
-              <CardTitle>Overall Progress</CardTitle>
+              <CardTitle>Generation Controls</CardTitle>
               <CardDescription>
-                {status?.totalGenerated.toLocaleString()} of {status?.totalTarget.toLocaleString()}{" "}
-                questions generated
+                {totalQuestions.toLocaleString()} total questions in the database
               </CardDescription>
             </div>
             <div className="flex items-center gap-2">
@@ -139,26 +136,7 @@ export default function AdminGeneration() {
             </div>
           </div>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <div className="flex items-center justify-between text-sm mb-2">
-              <span className="text-muted-foreground">Questions</span>
-              <span className="font-medium">
-                {overallExceeded
-                  ? `Target met (${status?.totalGenerated.toLocaleString()} generated)`
-                  : `${overallProgress.toFixed(1)}%`}
-              </span>
-            </div>
-            <Progress value={overallProgress} data-testid="progress-overall" />
-          </div>
-
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Subjects</span>
-            <span className="font-medium">
-              {completedSubjects} / {totalSubjects} completed
-            </span>
-          </div>
-
+        <CardContent>
           <div className="flex gap-2">
             <Button
               onClick={() => toggleMutation.mutate(!status?.isEnabled)}
@@ -202,99 +180,27 @@ export default function AdminGeneration() {
         </CardContent>
       </Card>
 
-      {/* Subject Progress */}
+      {/* Question counts by category */}
       <Card>
         <CardHeader>
-          <CardTitle>Subject Progress</CardTitle>
-          <CardDescription>Progress by exam category and subject area</CardDescription>
+          <CardTitle>Questions in Database</CardTitle>
+          <CardDescription>Actual question count per exam category</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {status?.subjects.map((subject) => {
-              const progressRaw = (subject.generatedCount / subject.targetCount) * 100;
-              const progress = Math.min(progressRaw, 100);
-              const exceeded = progressRaw > 100;
-              const statusColor =
-                subject.status === "completed"
-                  ? "text-green-600 dark:text-green-400"
-                  : subject.status === "error"
-                    ? "text-red-600 dark:text-red-400"
-                    : "text-muted-foreground";
-
-              return (
-                <div key={subject.id} className="space-y-2" data-testid={`subject-${subject.category}-${subject.subject}`}>
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium truncate">
-                          {subject.category} - {subject.subject}
-                        </span>
-                        {subject.status === "completed" && (
-                          <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400 flex-shrink-0" />
-                        )}
-                        {subject.status === "running" && (
-                          <Clock className="h-4 w-4 text-blue-600 dark:text-blue-400 flex-shrink-0" />
-                        )}
-                        {subject.status === "error" && (
-                          <AlertCircle className="h-4 w-4 text-red-600 dark:text-red-400 flex-shrink-0" />
-                        )}
-                      </div>
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        <span>
-                          {subject.generatedCount.toLocaleString()} / {subject.targetCount.toLocaleString()}
-                        </span>
-                        {subject.lastRunAt && (
-                          <span className="text-xs">
-                            Last run: {new Date(subject.lastRunAt).toLocaleTimeString()}
-                          </span>
-                        )}
-                        {subject.errorCount > 0 && (
-                          <span className="text-xs text-red-600 dark:text-red-400">
-                            {subject.errorCount} errors
-                          </span>
-                        )}
-                      </div>
-                      {subject.lastError && (
-                        <div className="text-xs text-red-600 dark:text-red-400 mt-1 truncate">
-                          Error: {subject.lastError}
-                        </div>
-                      )}
-                    </div>
-                    <div className="text-right ml-4 flex-shrink-0">
-                      <span className={`text-sm font-medium ${statusColor}`}>
-                        {exceeded ? "✓ Met" : `${progress.toFixed(0)}%`}
-                      </span>
-                    </div>
-                  </div>
-                  <Progress value={progress} />
+          <div className="divide-y">
+            {Object.entries(categoryTotals)
+              .sort(([a], [b]) => a.localeCompare(b))
+              .map(([category, count]) => (
+                <div key={category} className="flex items-center justify-between py-3">
+                  <span className="font-medium">{category}</span>
+                  <span className="text-2xl font-bold">{count.toLocaleString()}</span>
                 </div>
-              );
-            })}
+              ))}
+            <div className="flex items-center justify-between py-3">
+              <span className="font-semibold text-muted-foreground">Total</span>
+              <span className="text-2xl font-bold text-primary">{totalQuestions.toLocaleString()}</span>
+            </div>
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Info */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">How It Works</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2 text-sm text-muted-foreground">
-          <p>
-            • Background generation runs every 5 minutes, generating 100 questions per cycle
-          </p>
-          <p>
-            • Questions are generated in rotation across all subjects until targets are met
-          </p>
-          <p>
-            • Generation automatically pauses when all subjects reach their target counts
-          </p>
-          <p>
-            • Manual admin generation remains available for specific subjects as needed
-          </p>
-          <p>
-            • Progress persists across server restarts - generation resumes where it left off
-          </p>
         </CardContent>
       </Card>
     </div>
