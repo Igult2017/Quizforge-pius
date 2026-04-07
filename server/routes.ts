@@ -1038,7 +1038,8 @@ ${urls.map(url => `  <url>
       // Check if user is an admin or has an active subscription
       const userObj = await storage.getUser(userId);
       const subscription = await storage.getActiveSubscription(userId);
-      const hasFullAccess = userObj?.isAdmin || !!userObj?.adminGrantedAccess || !!subscription;
+      const adminAccessValid = !!userObj?.adminGrantedAccess && (!userObj?.adminAccessExpiresAt || userObj.adminAccessExpiresAt > new Date());
+      const hasFullAccess = userObj?.isAdmin || adminAccessValid || !!subscription;
 
       // Only limit for free trial users
       const questionCount = hasFullAccess ? (req.body.count || 50) : 5;
